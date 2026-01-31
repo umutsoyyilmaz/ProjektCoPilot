@@ -368,93 +368,127 @@
                 </div>
             </div>
 
-            <div id="view-analysis" class="view">
+   <div id="view-analysis" class="view">
                 <div class="page-header">
                     <div class="obj-top">
                         <div>
                             <h1 class="page-title">Analysis Workspace</h1>
                             <div class="page-subtitle">Fit-GAP Workshops & Process Discovery</div>
                         </div>
-                        <button class="btn btn-ai" onclick="showToast('Starting AI Workshop...')">
-                            <span>✨ Start New Session</span>
-                        </button>
+                        <button class="btn btn-ai" onclick="openNewSessionModal()">
+                            <span>✨</span> Start New Session</button>
                     </div>
                 </div>
 
-                <div class="smart-card" style="padding: 16px; margin-bottom: 24px; display: flex; gap: 16px; align-items: center;">
-                    <div style="flex: 1;">
-                        <label class="form-label" style="margin-bottom: 4px;">Project Stream</label>
-                        <select class="form-control" style="padding: 8px;"><option>All Streams</option><option>Finance (FI/CO)</option><option>Logistics (MM/SD)</option></select>
-                    </div>
-                    <div style="flex: 1;">
-                        <label class="form-label" style="margin-bottom: 4px;">Status</label>
-                        <select class="form-control" style="padding: 8px;"><option>Active</option><option>Completed</option></select>
-                    </div>
-                    <div style="margin-top: 20px;">
-                        <button class="btn btn-secondary">Filter</button>
+                <!-- Project Selection -->
+                <div class="smart-card" style="margin-bottom: 20px; padding: 20px;">
+                    <div class="form-group" style="margin-bottom: 0;">
+                        <label class="form-label" style="font-weight: 600;">📁 Select Project</label>
+                        <select id="analysisProjectSelect" class="form-control" onchange="onProjectSelectChange()" style="font-size: 16px; padding: 12px;">
+                            <option value="">-- Select a Project --</option>
+                        </select>
                     </div>
                 </div>
 
-                <div class="grid-dashboard" style="grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));">
-                    
-                    <div class="smart-card" style="padding: 0;">
-                        <div style="padding: 24px; border-bottom: 1px solid var(--border-light); display: flex; justify-content: space-between;">
-                            <div>
-                                <div class="card-title">Logistics Stream</div>
-                                <div style="font-size: 18px; font-weight: 700;">Procure to Pay (P2P)</div>
-                            </div>
-                            <div style="text-align: right;">
-                                <span class="pill green">In Progress</span>
-                            </div>
+                <!-- Selected Project Info -->
+                <div id="selectedProjectInfo" class="smart-card" style="margin-bottom: 20px; padding: 20px; display: none;">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <div>
+                            <h3 id="selectedProjectName" style="margin: 0; color: var(--primary);">Project Name</h3>
+                            <p id="selectedProjectDetails" style="margin: 5px 0 0 0; color: #666;">Customer | Modules</p>
                         </div>
-                        <div style="padding: 0;">
-                            <div class="process-step">
-                                <div class="step-icon">📝</div>
-                                <div style="flex: 1;">
-                                    <div style="font-weight: 600; font-size: 14px;">Requirement Gathering</div>
-                                    <div style="font-size: 12px; color: var(--text-secondary);">15 Questions Answered</div>
-                                </div>
-                                <div style="width: 100px; text-align: right;">
-                                    <div style="font-size: 12px; font-weight: bold;">100%</div>
-                                    <div class="progress-wrapper"><div class="progress-fill" style="width: 100%;"></div></div>
-                                </div>
-                            </div>
-                            <div class="process-step">
-                                <div class="step-icon">⚖️</div>
-                                <div style="flex: 1;">
-                                    <div style="font-weight: 600; font-size: 14px;">Fit-Gap Analysis</div>
-                                    <div style="font-size: 12px; color: var(--text-secondary);">AI Suggested 3 Gaps</div>
-                                </div>
-                                 <div style="width: 100px; text-align: right;">
-                                    <div style="font-size: 12px; font-weight: bold;">60%</div>
-                                    <div class="progress-wrapper"><div class="progress-fill warn" style="width: 60%;"></div></div>
-                                </div>
-                            </div>
+                        <span id="selectedProjectStatus" class="pill green">Active</span>
+                    </div>
+                </div>
+
+                <!-- Sessions List -->
+                <div id="sessionsContainer" style="display: none;">
+                    <h3 style="margin-bottom: 15px;">📋 Analysis Sessions</h3>
+                    <div class="smart-table-container">
+                        <table class="smart-table">
+                            <thead>
+                                <tr>
+                                    <th>Session Name</th>
+                                    <th>Module</th>
+                                    <th>Process Area</th>
+                                    <th>Status</th>
+                                    <th>Progress</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="sessions-table-body">
+                                <tr>
+                                    <td colspan="6" style="text-align: center; color: #999;">No sessions yet. Start a new session!</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Empty State -->
+                <div id="analysisEmptyState" class="smart-card" style="padding: 60px; text-align: center;">
+                    <div style="font-size: 48px; margin-bottom: 20px;">🚀</div>
+                    <h3 style="margin-bottom: 10px;">Select a Project to Begin</h3>
+                    <p style="color: #666;">Choose a project from the dropdown above to view and manage analysis sessions.</p>
+                </div>
+            </div>
+<!-- Session Detail View -->
+            <div id="view-session-detail" class="view">
+                <div class="page-header">
+                    <div class="obj-top">
+                        <div>
+                            <button class="btn btn-secondary" onclick="backToAnalysis()" style="margin-bottom: 10px;">
+                                ← Back to Sessions
+                            </button>
+                            <h1 class="page-title" id="sessionDetailTitle">Session Name</h1>
+                            <div class="page-subtitle" id="sessionDetailSubtitle">Project | Module | Status</div>
                         </div>
-                        <div style="padding: 16px; background: #FAFBFC; border-top: 1px solid var(--border-light); text-align: center;">
-                            <button class="btn btn-secondary" style="width: 100%; justify-content: center;" onclick="navTo('design')">Continue Analysis →</button>
+                        <div style="display: flex; gap: 10px;">
+                            <span id="sessionDetailProgress" class="pill blue">0%</span>
+                            <span id="sessionDetailStatus" class="pill green">Status</span>
                         </div>
                     </div>
+                </div>
 
-                    <div class="smart-card" style="padding: 0;">
-                        <div style="padding: 24px; border-bottom: 1px solid var(--border-light); display: flex; justify-content: space-between;">
-                            <div>
-                                <div class="card-title">Finance Stream</div>
-                                <div style="font-size: 18px; font-weight: 700;">Record to Report (R2R)</div>
-                            </div>
-                            <div style="text-align: right;">
-                                <span class="pill orange">Not Started</span>
-                            </div>
+                <!-- Questions & Answers Section -->
+                <div class="smart-card" style="margin-bottom: 20px; padding: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h3 style="margin: 0;">📋 Questions & Answers</h3>
+                        <button class="btn btn-primary" onclick="openAddQuestionModal()">+ Add Question</button>
+                    </div>
+                    <div id="questionsContainer">
+                        <div style="text-align: center; color: #999; padding: 40px;">
+                            No questions yet. Add your first question!
                         </div>
-                        <div style="padding: 24px; text-align: center; color: var(--text-secondary);">
-                            <div style="font-size: 40px; margin-bottom: 16px;">🚀</div>
-                            <p>Ready to start standard fit-gap workshops for General Ledger and Asset Accounting.</p>
-                            <button class="btn btn-ai" style="margin-top: 16px;">Start with Joule</button>
-                        </div>
+                    </div>
+                </div>
+
+                <!-- Fit-Gap Section -->
+                <div class="smart-card" style="padding: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h3 style="margin: 0;">🔍 Fit-Gap Analysis</h3>
+                        <button class="btn btn-primary" onclick="openAddGapModal()">+ Add Gap</button>
+                    </div>
+                    <div class="smart-table-container">
+                        <table class="smart-table">
+                            <thead>
+                                <tr>
+                                    <th>Gap ID</th>
+                                    <th>Description</th>
+                                    <th>Priority</th>
+                                    <th>Resolution</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="fitgap-table-body">
+                                <tr>
+                                    <td colspan="5" style="text-align: center; color: #999;">No gaps identified yet.</td>
+                                </tr>
+                            </tbody>
+                        </table>
                     </div>
                 </div>
             </div>
-
             <div id="view-requirements" class="view">
                 <div class="page-header">
                     <div class="obj-top">
@@ -754,6 +788,7 @@
             // Load data for specific views
         if(viewId === 'projects') loadProjects();
         if(viewId === 'dashboard') loadDashboardStats();
+        if(viewId === 'analysis') loadProjectsDropdown();
         }
 
         // --- Tabs ---
@@ -930,6 +965,359 @@ function saveAIGeneratedContent() {
 }
 // ============== DASHBOARD STATS ==============
 // ============== PROJECTS ==============
+// ============== ANALYSIS WORKSPACE ==============
+let selectedProjectId = null;
+
+async function loadProjectsDropdown() {
+    try {
+        const response = await fetch('/api/projects');
+        const projects = await response.json();
+        
+        const select = document.getElementById('analysisProjectSelect');
+        if(!select) return;
+        
+        select.innerHTML = '<option value="">-- Select a Project --</option>';
+        projects.forEach(p => {
+            select.innerHTML += `<option value="${p.id}">${p.project_code} - ${p.project_name}</option>`;
+        });
+    } catch(error) {
+        console.error('Error loading projects dropdown:', error);
+    }
+}
+
+function onProjectSelectChange() {
+    const select = document.getElementById('analysisProjectSelect');
+    const projectId = select.value;
+    
+    if(!projectId) {
+        document.getElementById('selectedProjectInfo').style.display = 'none';
+        document.getElementById('sessionsContainer').style.display = 'none';
+        document.getElementById('analysisEmptyState').style.display = 'block';
+        selectedProjectId = null;
+        return;
+    }
+    
+    selectedProjectId = projectId;
+    loadProjectInfo(projectId);
+    loadSessionsForProject(projectId);
+}
+
+async function loadProjectInfo(projectId) {
+    try {
+        const response = await fetch(`/api/projects/${projectId}`);
+        const project = await response.json();
+        
+        document.getElementById('selectedProjectName').textContent = project.project_name;
+        document.getElementById('selectedProjectDetails').textContent = 
+            `${project.customer_name || 'N/A'} | Modules: ${project.modules || 'N/A'}`;
+        document.getElementById('selectedProjectStatus').textContent = project.status;
+        document.getElementById('selectedProjectStatus').className = 
+            `pill ${project.status === 'Active' ? 'green' : 'blue'}`;
+        
+        document.getElementById('selectedProjectInfo').style.display = 'block';
+        document.getElementById('analysisEmptyState').style.display = 'none';
+    } catch(error) {
+        console.error('Error loading project info:', error);
+    }
+}
+
+async function loadSessionsForProject(projectId) {
+    try {
+        const response = await fetch(`/api/sessions?project_id=${projectId}`);
+        const sessions = await response.json();
+        
+        const tbody = document.getElementById('sessions-table-body');
+        const container = document.getElementById('sessionsContainer');
+        
+        if(!tbody || !container) return;
+        
+        container.style.display = 'block';
+        
+        if(sessions.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #999;">No sessions yet. Start a new session!</td></tr>';
+            return;
+        }
+        
+        tbody.innerHTML = sessions.map(s => `
+            <tr>
+                <td><strong>${s.session_name}</strong></td>
+                <td><span class="pill blue">${s.module || '-'}</span></td>
+                <td>${s.process_area || '-'}</td>
+                <td><span class="pill ${getStatusColor(s.status)}">${s.status}</span></td>
+                <td>
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <div style="flex: 1; height: 8px; background: #e0e0e0; border-radius: 4px;">
+                            <div style="width: ${s.progress || 0}%; height: 100%; background: var(--primary); border-radius: 4px;"></div>
+                        </div>
+                        <span>${s.progress || 0}%</span>
+                    </div>
+                </td>
+                <td>
+                    <button class="btn btn-small" onclick="openSession(${s.id})">
+                        ${s.status === 'Completed' ? 'View' : 'Continue'}
+                    </button>
+                </td>
+            </tr>
+        `).join('');
+    } catch(error) {
+        console.error('Error loading sessions:', error);
+    }
+}
+
+function getStatusColor(status) {
+    switch(status) {
+        case 'Completed': return 'green';
+        case 'In Progress': return 'yellow';
+        case 'Planned': return 'blue';
+        default: return 'gray';
+    }
+}
+
+function openSession(sessionId) {
+    alert('Session detail view - Coming soon! ID: ' + sessionId);
+}
+// ============== SESSION DETAIL ==============
+let currentSessionId = null;
+
+function openSession(sessionId) {
+    currentSessionId = sessionId;
+    loadSessionDetail(sessionId);
+    
+    // Switch to session detail view
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById('view-session-detail').classList.add('active');
+}
+
+function backToAnalysis() {
+    currentSessionId = null;
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById('view-analysis').classList.add('active');
+    if(selectedProjectId) {
+        loadSessionsForProject(selectedProjectId);
+    }
+}
+
+async function loadSessionDetail(sessionId) {
+    try {
+        const response = await fetch(`/api/sessions/${sessionId}`);
+        const session = await response.json();
+        
+        document.getElementById('sessionDetailTitle').textContent = session.session_name;
+        document.getElementById('sessionDetailSubtitle').textContent = 
+            `${session.project_name || 'Project'} | ${session.module || 'Module'} | ${session.process_area || 'Process'}`;
+        document.getElementById('sessionDetailProgress').textContent = `${session.progress || 0}%`;
+        document.getElementById('sessionDetailStatus').textContent = session.status;
+        document.getElementById('sessionDetailStatus').className = `pill ${getStatusColor(session.status)}`;
+        
+        loadQuestionsForSession(sessionId);
+        loadGapsForSession(sessionId);
+    } catch(error) {
+        console.error('Error loading session detail:', error);
+    }
+}
+
+async function loadQuestionsForSession(sessionId) {
+    try {
+        const response = await fetch(`/api/questions?session_id=${sessionId}`);
+        const questions = await response.json();
+        
+        const container = document.getElementById('questionsContainer');
+        
+        if(questions.length === 0) {
+            container.innerHTML = '<div style="text-align: center; color: #999; padding: 40px;">No questions yet. Add your first question!</div>';
+            return;
+        }
+        
+        container.innerHTML = questions.map((q, index) => `
+            <div class="smart-card" style="margin-bottom: 10px; padding: 15px; background: #f8f9fa;">
+                <div style="display: flex; justify-content: space-between; align-items: start;">
+                    <div style="flex: 1;">
+                        <strong style="color: var(--primary);">Q${index + 1}: ${q.question_text}</strong>
+                        <div style="margin-top: 10px; padding: 10px; background: white; border-radius: 8px; border-left: 3px solid ${q.answer_text ? 'var(--primary)' : '#ccc'};">
+                            ${q.answer_text || '<em style="color: #999;">Not answered yet</em>'}
+                        </div>
+                    </div>
+                    <button class="btn btn-small" onclick="editQuestion(${q.id})" style="margin-left: 10px;">Edit</button>
+                </div>
+            </div>
+        `).join('');
+    } catch(error) {
+        console.error('Error loading questions:', error);
+    }
+}
+
+async function loadGapsForSession(sessionId) {
+    try {
+        const response = await fetch(`/api/fitgap?session_id=${sessionId}`);
+        const gaps = await response.json();
+        
+        const tbody = document.getElementById('fitgap-table-body');
+        
+        if(gaps.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #999;">No gaps identified yet.</td></tr>';
+            return;
+        }
+        
+        tbody.innerHTML = gaps.map(g => `
+            <tr>
+                <td><strong>${g.gap_id || 'GAP-' + g.id}</strong></td>
+                <td>${g.description || '-'}</td>
+                <td><span class="pill ${g.priority === 'High' ? 'red' : g.priority === 'Medium' ? 'yellow' : 'blue'}">${g.priority || 'Low'}</span></td>
+                <td>${g.resolution_type || '-'}</td>
+                <td><button class="btn btn-small" onclick="editGap(${g.id})">Edit</button></td>
+            </tr>
+        `).join('');
+    } catch(error) {
+        console.error('Error loading gaps:', error);
+    }
+}
+
+function openAddQuestionModal() {
+    const modal = document.getElementById('addQuestionModal');
+    if(modal) modal.style.display = 'block';
+}
+
+function closeAddQuestionModal() {
+    const modal = document.getElementById('addQuestionModal');
+    if(modal) modal.style.display = 'none';
+}
+
+async function saveNewQuestion() {
+    const questionText = document.getElementById('newQuestionText').value;
+    const answerText = document.getElementById('newAnswerText').value;
+    
+    if(!questionText) {
+        alert('Question is required!');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/questions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                session_id: currentSessionId,
+                question_text: questionText,
+                answer_text: answerText
+            })
+        });
+        
+        if(response.ok) {
+            closeAddQuestionModal();
+            loadQuestionsForSession(currentSessionId);
+            document.getElementById('newQuestionText').value = '';
+            document.getElementById('newAnswerText').value = '';
+        }
+    } catch(error) {
+        console.error('Error saving question:', error);
+    }
+}
+
+function openAddGapModal() {
+    const modal = document.getElementById('addGapModal');
+    if(modal) modal.style.display = 'block';
+}
+
+function closeAddGapModal() {
+    const modal = document.getElementById('addGapModal');
+    if(modal) modal.style.display = 'none';
+}
+
+async function saveNewGap() {
+    const gapId = document.getElementById('newGapId').value;
+    const description = document.getElementById('newGapDescription').value;
+    const priority = document.getElementById('newGapPriority').value;
+    const resolution = document.getElementById('newGapResolution').value;
+    
+    if(!description) {
+        alert('Description is required!');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/fitgap', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                session_id: currentSessionId,
+                gap_id: gapId,
+                description: description,
+                priority: priority,
+                resolution_type: resolution
+            })
+        });
+        
+        if(response.ok) {
+            closeAddGapModal();
+            loadGapsForSession(currentSessionId);
+            document.getElementById('newGapId').value = '';
+            document.getElementById('newGapDescription').value = '';
+            document.getElementById('newGapPriority').value = 'Medium';
+            document.getElementById('newGapResolution').value = '';
+        }
+    } catch(error) {
+        console.error('Error saving gap:', error);
+    }
+}
+
+function editQuestion(id) {
+    alert('Edit question - Coming soon! ID: ' + id);
+}
+
+function editGap(id) {
+    alert('Edit gap - Coming soon! ID: ' + id);
+}
+function openNewSessionModal() {
+    if(!selectedProjectId) {
+        alert('Please select a project first!');
+        return;
+    }
+    const modal = document.getElementById('newSessionModal');
+    if(modal) modal.style.display = 'block';
+}
+
+function closeNewSessionModal() {
+    const modal = document.getElementById('newSessionModal');
+    if(modal) modal.style.display = 'none';
+}
+
+async function saveNewSession() {
+    const sessionName = document.getElementById('sessionName').value;
+    const module = document.getElementById('sessionModule').value;
+    const processArea = document.getElementById('sessionProcessArea').value;
+    
+    if(!sessionName || !module) {
+        alert('Session Name and Module are required!');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/sessions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                project_id: selectedProjectId,
+                session_name: sessionName,
+                module: module,
+                process_area: processArea,
+                status: 'Planned',
+                progress: 0
+            })
+        });
+        
+        if(response.ok) {
+            closeNewSessionModal();
+            loadSessionsForProject(selectedProjectId);
+            document.getElementById('sessionName').value = '';
+            document.getElementById('sessionModule').value = '';
+            document.getElementById('sessionProcessArea').value = '';
+            alert('Session created successfully!');
+        }
+    } catch(error) {
+        console.error('Error creating session:', error);
+        alert('Error creating session');
+    }
+}
 async function loadProjects() {
     try {
         const response = await fetch('/api/projects');
@@ -1096,5 +1484,90 @@ document.addEventListener('DOMContentLoaded', function() {
             </div>
         </div>
         <div id="projectModalOverlay" class="modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:999;" onclick="closeNewProjectModal()"></div>
-</body>
+<!-- New Session Modal -->
+        <div id="newSessionModal" class="smart-card" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); z-index:1000; width:500px; border: 2px solid var(--primary); background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
+            <h3 style="margin-top:0;">Start New Analysis Session</h3>
+            <div class="form-group">
+                <label class="form-label">Session Name</label>
+                <input type="text" id="sessionName" class="form-control" placeholder="e.g., MM Workshop - Week 1">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Module</label>
+                <select id="sessionModule" class="form-control">
+                    <option value="">-- Select Module --</option>
+                    <option value="MM">MM - Materials Management</option>
+                    <option value="SD">SD - Sales & Distribution</option>
+                    <option value="FI">FI - Financial Accounting</option>
+                    <option value="CO">CO - Controlling</option>
+                    <option value="PP">PP - Production Planning</option>
+                    <option value="HR">HR - Human Resources</option>
+                    <option value="QM">QM - Quality Management</option>
+                    <option value="PM">PM - Plant Maintenance</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Process Area</label>
+                <input type="text" id="sessionProcessArea" class="form-control" placeholder="e.g., Procure to Pay (P2P)">
+            </div>
+            <div style="display:flex; gap:10px; margin-top:20px;">
+                <button class="btn btn-primary" onclick="saveNewSession()">Create Session</button>
+                <button class="btn btn-secondary" onclick="closeNewSessionModal()">Cancel</button>
+            </div>
+        </div>
+        <div id="sessionModalOverlay" class="modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:999;" onclick="closeNewSessionModal()"></div>
+    <!-- Add Question Modal -->
+        <div id="addQuestionModal" class="smart-card" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); z-index:1000; width:600px; border: 2px solid var(--primary); background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
+            <h3 style="margin-top:0;">Add Question & Answer</h3>
+            <div class="form-group">
+                <label class="form-label">Question</label>
+                <textarea id="newQuestionText" class="form-control" rows="3" placeholder="e.g., How do you currently handle purchase requisitions?"></textarea>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Answer (optional)</label>
+                <textarea id="newAnswerText" class="form-control" rows="4" placeholder="e.g., We use ME51N transaction with approval workflow..."></textarea>
+            </div>
+            <div style="display:flex; gap:10px; margin-top:20px;">
+                <button class="btn btn-primary" onclick="saveNewQuestion()">Save Question</button>
+                <button class="btn btn-secondary" onclick="closeAddQuestionModal()">Cancel</button>
+            </div>
+        </div>
+        <div id="questionModalOverlay" class="modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:999;" onclick="closeAddQuestionModal()"></div>
+
+        <!-- Add Gap Modal -->
+        <div id="addGapModal" class="smart-card" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); z-index:1000; width:600px; border: 2px solid var(--primary); background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
+            <h3 style="margin-top:0;">Add Fit-Gap Item</h3>
+            <div class="form-group">
+                <label class="form-label">Gap ID</label>
+                <input type="text" id="newGapId" class="form-control" placeholder="e.g., GAP-001">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Description</label>
+                <textarea id="newGapDescription" class="form-control" rows="3" placeholder="e.g., Custom approval workflow required for purchase orders above $10,000"></textarea>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Priority</label>
+                <select id="newGapPriority" class="form-control">
+                    <option value="High">High</option>
+                    <option value="Medium" selected>Medium</option>
+                    <option value="Low">Low</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Resolution Type</label>
+                <select id="newGapResolution" class="form-control">
+                    <option value="">-- Select --</option>
+                    <option value="Configuration">Configuration</option>
+                    <option value="Development">Development (WRICEF)</option>
+                    <option value="Integration">Integration</option>
+                    <option value="Process Change">Process Change</option>
+                    <option value="Out of Scope">Out of Scope</option>
+                </select>
+            </div>
+            <div style="display:flex; gap:10px; margin-top:20px;">
+                <button class="btn btn-primary" onclick="saveNewGap()">Save Gap</button>
+                <button class="btn btn-secondary" onclick="closeAddGapModal()">Cancel</button>
+            </div>
+        </div>
+        <div id="gapModalOverlay" class="modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:999;" onclick="closeAddGapModal()"></div>
+    </body>
 </html>
