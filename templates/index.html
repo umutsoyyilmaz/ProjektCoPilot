@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAP AI Project Co-Pilot – Ultimate Prototype</title>
+    <style>
+        /* --- SMART DESIGN TOKENS (Fiori Horizon Inspired) --- */
+        :root {
+            /* Core Palette */
+            --bg-app: #F5F6F7;
+            --bg-surface: #FFFFFF;
+            --bg-sidebar: #1d2330; /* Deep Midnight */
+            
+            /* Typography */
+            --text-primary: #1D2330;    
+            --text-secondary: #5E6977;
+            --text-on-dark: #FFFFFF;
+            
+            /* Brand & AI Colors */
+            --primary: #0070F2; /* SAP Blue */
+            --primary-hover: #0050c0;
+            --success: #107e3e;
+            --warn: #e9730c;
+            --error: #bb0000;
+            --ai-gradient: linear-gradient(135deg, #8900B4 0%, #2565AE 100%); /* Magic Purple-Blue */
+            
+            /* Shapes & Shadows */
+            --radius-s: 6px;
+            --radius-m: 12px;
+            --radius-l: 16px;
+            --shadow-card: 0 2px 12px rgba(0,0,0,0.04);
+            --shadow-hover: 0 8px 24px rgba(0,0,0,0.08);
+            --border-light: #EAECEF;
+            
+            /* Dimensions */
+            --header-height: 60px;
+            --sidenav-width-collapsed: 68px;
+            --sidenav-width-expanded: 260px;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: '72', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-app);
+            color: var(--text-primary);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* --- 1. SMART HEADER --- */
+        .shell-bar {
+            height: var(--header-height);
+            background: var(--bg-surface);
+            border-bottom: 1px solid var(--border-light);
+            display: flex;
+            align-items: center;
+            padding: 0 24px;
+            justify-content: space-between;
+            z-index: 100;
+            position: relative;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+        }
+
+        .brand-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 700;
+            font-size: 18px;
+            letter-spacing: -0.5px;
+            color: var(--text-primary);
+        }
+        
+        .ai-badge {
+            background: var(--ai-gradient);
+            color: white;
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 800;
+        }
+
+        .user-actions { display: flex; gap: 16px; }
+        .icon-btn {
+            width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: all 0.2s ease; color: var(--text-secondary);
+        }
+        .icon-btn:hover { background: #F0F2F5; color: var(--primary); }
+        .avatar { background: #2C3E50; color: white; font-size: 14px; font-weight: 600; }
+
+        /* --- 2. LAYOUT --- */
+        .main-layout { display: flex; flex: 1; height: calc(100vh - var(--header-height)); }
+
+        /* --- 3. SMART SIDEBAR --- */
+        .sidebar {
+            width: var(--sidenav-width-collapsed);
+            background: var(--bg-sidebar);
+            display: flex;
+            flex-direction: column;
+            padding: 16px 8px;
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow-x: hidden;
+            z-index: 90;
+        }
+        .sidebar:hover { width: var(--sidenav-width-expanded); }
+
+        .nav-item {
+            display: flex; align-items: center; height: 44px; padding: 0 14px; margin-bottom: 4px;
+            color: #A1AAB7; border-radius: var(--radius-m); cursor: pointer; transition: all 0.2s; white-space: nowrap;
+        }
+        .nav-item:hover { background: rgba(255,255,255,0.1); color: white; padding-left: 18px; }
+        .nav-item.active { background: var(--primary); color: white; font-weight: 500; box-shadow: 0 4px 12px rgba(0, 112, 242, 0.4); }
+        .nav-icon { font-size: 20px; min-width: 36px; display: flex; justify-content: center; }
+        .nav-text { margin-left: 12px; font-size: 14px; opacity: 0; transition: opacity 0.2s; }
+        .sidebar:hover .nav-text { opacity: 1; }
+
+        /* --- 4. CONTENT AREA --- */
+        .content { flex: 1; padding: 32px; overflow-y: auto; background: var(--bg-app); }
+
+        /* --- 5. COMPONENTS --- */
+        .page-header { margin-bottom: 32px; }
+        .page-title { font-size: 28px; font-weight: 700; margin: 0 0 8px 0; color: var(--text-primary); }
+        .page-subtitle { color: var(--text-secondary); font-size: 14px; }
+
+        /* Cards */
+        .grid-dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; margin-bottom: 32px; }
+        .smart-card {
+            background: var(--bg-surface); border-radius: var(--radius-l); padding: 24px;
+            box-shadow: var(--shadow-card); border: 1px solid rgba(0,0,0,0.03);
+            transition: transform 0.25s, box-shadow 0.25s; position: relative; overflow: hidden;
+        }
+        .smart-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-hover); }
+        .card-ai { background: white; border: 1px solid rgba(137, 0, 180, 0.1); }
+        .card-ai::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--ai-gradient); }
+        .card-icon { font-size: 24px; margin-bottom: 16px; display: block; }
+        .card-title { font-size: 14px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+        .card-value { font-size: 36px; font-weight: 700; color: var(--text-primary); letter-spacing: -1px; }
+        .card-meta { font-size: 13px; color: var(--text-secondary); margin-top: 12px; display: flex; align-items: center; gap: 6px; }
+        
+        /* Tables */
+        .smart-table-container { background: var(--bg-surface); border-radius: var(--radius-l); box-shadow: var(--shadow-card); overflow: hidden; }
+        .smart-table { width: 100%; border-collapse: collapse; }
+        .smart-table th { text-align: left; padding: 18px 24px; font-size: 12px; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; border-bottom: 1px solid var(--border-light); background: #FAFBFC; }
+        .smart-table td { padding: 20px 24px; border-bottom: 1px solid var(--border-light); color: var(--text-primary); font-size: 14px; }
+        .smart-table tr:hover td { background: #F8F9FA; cursor: pointer; color: var(--primary); }
+
+        /* Pills */
+        .pill { display: inline-flex; align-items: center; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+        .pill.green { background: #E6F6EB; color: #0E8A40; }
+        .pill.orange { background: #FFF3E0; color: #B76E00; }
+        .pill.blue { background: #E8F2FF; color: #0070F2; }
+        .pill.red { background: #ffe5e5; color: #bb0000; }
+
+        /* --- NEW: FORM & ADVANCED COMPONENTS --- */
+        .form-group { margin-bottom: 20px; }
+        .form-label { display: block; margin-bottom: 8px; font-size: 13px; font-weight: 600; color: var(--text-secondary); }
+        .form-control {
+            width: 100%; padding: 12px; border: 1px solid var(--border-light);
+            border-radius: var(--radius-s); font-family: inherit; font-size: 14px;
+            transition: border 0.2s, box-shadow 0.2s;
+        }
+        .form-control:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 3px rgba(0, 112, 242, 0.1); }
+
+        /* Toggle Switch */
+        .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #ccc; transition: .4s; border-radius: 24px;
+        }
+        .slider:before {
+            position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px;
+            background-color: white; transition: .4s; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        input:checked + .slider { background-color: var(--primary); }
+        input:checked + .slider:before { transform: translateX(20px); }
+
+        /* Progress Bar */
+        .progress-wrapper { width: 100%; background: #eee; height: 6px; border-radius: 3px; overflow: hidden; margin-top: 8px; }
+        .progress-fill { height: 100%; background: var(--success); width: 0%; transition: width 1s ease; }
+        .progress-fill.warn { background: #E69A17; }
+
+        /* Process Step */
+        .process-step { display: flex; align-items: center; padding: 16px; border-bottom: 1px solid var(--border-light); transition: background 0.2s; }
+        .process-step:last-child { border-bottom: none; }
+        .process-step:hover { background: #FAFBFC; }
+        .step-icon { 
+            width: 40px; height: 40px; border-radius: 8px; background: #E8F2FF; color: var(--primary);
+            display: flex; align-items: center; justify-content: center; font-size: 18px; margin-right: 16px;
+        }
+
+        /* --- 6. OBJECT PAGE (FS DESIGNER) --- */
+        .obj-header { background: var(--bg-surface); padding: 32px 32px 0 32px; border-radius: var(--radius-l); box-shadow: var(--shadow-card); margin-bottom: 24px; }
+        .obj-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
+        .tab-bar { display: flex; gap: 32px; }
+        .tab-item {
+            padding-bottom: 16px; font-size: 14px; font-weight: 500; color: var(--text-secondary);
+            cursor: pointer; position: relative; transition: color 0.2s;
+        }
+        .tab-item:hover { color: var(--text-primary); }
+        .tab-item.active { color: var(--primary); font-weight: 600; }
+        .tab-item.active::after {
+            content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 3px;
+            background: var(--primary); border-radius: 3px 3px 0 0;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 10px 20px; border-radius: var(--radius-s); font-size: 14px; font-weight: 600;
+            cursor: pointer; border: none; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px;
+        }
+        .btn-secondary { background: #F0F2F5; color: var(--text-primary); }
+        .btn-secondary:hover { background: #E1E4E8; }
+        .btn-ai { background: var(--ai-gradient); color: white; box-shadow: 0 4px 12px rgba(137, 0, 180, 0.3); }
+        .btn-ai:hover { box-shadow: 0 6px 16px rgba(137, 0, 180, 0.4); transform: translateY(-1px); }
+
+        /* Chat */
+        .chat-interface { background: white; border-radius: var(--radius-m); border: 1px solid var(--border-light); display: flex; flex-direction: column; height: 400px; overflow: hidden; }
+        .chat-area { flex: 1; padding: 24px; overflow-y: auto; background: #FAFBFC; }
+        .message { display: flex; gap: 12px; margin-bottom: 20px; max-width: 80%; }
+        .message.ai .bubble { background: white; border: 1px solid var(--border-light); border-top-left-radius: 0; }
+        .message.me { margin-left: auto; flex-direction: row-reverse; }
+        .message.me .bubble { background: var(--primary); color: white; border-top-right-radius: 0; }
+        .bubble { padding: 12px 16px; border-radius: 12px; font-size: 14px; line-height: 1.5; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .chat-input-area { padding: 16px; background: white; border-top: 1px solid var(--border-light); display: flex; gap: 12px; }
+        .chat-input { flex: 1; padding: 12px; border: 1px solid var(--border-light); border-radius: var(--radius-s); outline: none; transition: border 0.2s; }
+        .chat-input:focus { border-color: var(--primary); }
+
+        /* Utils */
+        .view { display: none; animation: fadeScale 0.3s ease-out; }
+        .view.active { display: block; }
+        @keyframes fadeScale { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
+        
+        .toast {
+            position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(100px);
+            background: #323232; color: white; padding: 12px 24px; border-radius: 50px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2); font-size: 14px; opacity: 0; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex; align-items: center; gap: 10px; z-index: 200;
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+    </style>
+</head>
+<body>
+
+    <header class="shell-bar">
+        <div class="brand-area">
+            <div style="color:var(--primary); font-size: 24px;">◆</div>
+            <span>AI Project Co-Pilot</span>
+            <span class="ai-badge">BETA</span>
+        </div>
+        <div class="user-actions">
+            <div class="icon-btn" onclick="showToast('Global Search')">🔍</div>
+            <div class="icon-btn" onclick="showToast('No new notifications')">🔔</div>
+            <div class="icon-btn avatar">JD</div>
+        </div>
+    </header>
+
+    <div class="main-layout">
+  <nav class="sidebar">
+    <div class="nav-item active" onclick="navTo('dashboard', this)">
+        <div class="nav-icon">🏠</div> <span class="nav-text">Cockpit</span>
+    </div>
+    <div class="nav-item" onclick="navTo('analysis', this)">
+        <div class="nav-icon">⚡</div> <span class="nav-text">Analysis</span>
+    </div>
+    <div class="nav-item" onclick="navTo('requirements', this)">
+        <div class="nav-icon">📑</div> <span class="nav-text">Requirements</span>
+    </div>
+    <div class="nav-item" onclick="navTo('design', this)">
+        <div class="nav-icon">🎨</div> <span class="nav-text">Design (FS/TS)</span>
+    </div>
+    <div class="nav-item" onclick="navTo('projects', this)">
+                    <div class="nav-icon">📁</div> <span class="nav-text">Projects</span>
+                </div>
+    <div class="nav-item" onclick="navTo('config', this)">
+   
+        <div class="nav-icon">⚙️</div> <span class="nav-text">Settings</span>
+    </div>
+</nav>
+
+        <main class="content">
+            
+            <div id="view-dashboard" class="view active">
+                <div class="page-header">
+                    <h1 class="page-title">Good Morning, John</h1>
+                    <div class="page-subtitle">Project: S/4HANA Migration - Realize Phase</div>
+                </div>
+
+                <div class="grid-dashboard">
+                    <div class="smart-card">
+                        <span class="card-icon">🎯</span>
+                        <div class="card-title">Project Health</div>
+                        <div class="card-value stat-projects">94%</div>
+                        <div class="card-meta"><span style="color: #0E8A40;">▲ 2%</span> vs last week</div>
+                    </div>
+                    <div class="smart-card card-ai">
+                        <span class="card-icon">✨</span>
+                        <div class="card-title">Joule Insights</div>
+                        <div style="font-size: 16px; font-weight: 500; line-height: 1.5;">
+                            "I've detected 3 potential scope creeps in the MM stream based on recent FS updates."
+                        </div>
+                        <div class="card-meta" style="color: var(--primary); font-weight: 600; cursor: pointer;" onclick="navTo('analysis')">Review Insights →</div>
+                    </div>
+                    <div class="smart-card">
+                        <span class="card-icon">🚧</span>
+                        <div class="card-title">Open Gaps</div>
+                        <div class="card-value stat-gaps">12</div>
+                        <div class="card-meta">4 Critical Priority</div>
+                    </div>
+                </div>
+
+                <h3 style="margin-bottom: 16px;">Recent Activities</h3>
+                <div class="smart-table-container">
+                    <table class="smart-table">
+                        <thead>
+                            <tr>
+                                <th>Object</th>
+                                <th>Type</th>
+                                <th>Status</th>
+                                <th>Last Modified</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+    {% if recent_activities %}
+        {% for activity in recent_activities %}
+        <tr onclick="loadRequirementDetails({{ activity['id'] }})">
+            <td><b>{{ activity['code'] }}</b> - {{ activity['title'] }}</td>
+            <td>
+                {% if activity['module'] == 'MM' %}
+                    <span class="pill blue">MM</span>
+                {% elif activity['module'] == 'SD' %}
+                    <span class="pill blue">SD</span>
+                {% elif activity['module'] == 'FI' %}
+                    <span class="pill blue">FI</span>
+                {% else %}
+                    <span class="pill blue">{{ activity['module'] }}</span>
+                {% endif %}
+            </td>
+            <td>
+                {% if activity['status'] == 'Draft' %}
+                    <span class="pill orange">Draft</span>
+                {% elif activity['status'] == 'In Progress' %}
+                    <span class="pill orange">In Progress</span>
+                {% elif activity['status'] == 'Ready' or activity['status'] == 'Approved' %}
+                    <span class="pill green">{{ activity['status'] }}</span>
+                {% else %}
+                    <span class="pill blue">{{ activity['status'] }}</span>
+                {% endif %}
+            </td>
+            <td>Recently Updated</td>
+        </tr>
+        {% endfor %}
+    {% else %}
+        <tr>
+            <td colspan="4" style="text-align: center; color: #999;">No recent activities</td>
+        </tr>
+    {% endif %}
+</tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="view-analysis" class="view">
+                <div class="page-header">
+                    <div class="obj-top">
+                        <div>
+                            <h1 class="page-title">Analysis Workspace</h1>
+                            <div class="page-subtitle">Fit-GAP Workshops & Process Discovery</div>
+                        </div>
+                        <button class="btn btn-ai" onclick="showToast('Starting AI Workshop...')">
+                            <span>✨ Start New Session</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="smart-card" style="padding: 16px; margin-bottom: 24px; display: flex; gap: 16px; align-items: center;">
+                    <div style="flex: 1;">
+                        <label class="form-label" style="margin-bottom: 4px;">Project Stream</label>
+                        <select class="form-control" style="padding: 8px;"><option>All Streams</option><option>Finance (FI/CO)</option><option>Logistics (MM/SD)</option></select>
+                    </div>
+                    <div style="flex: 1;">
+                        <label class="form-label" style="margin-bottom: 4px;">Status</label>
+                        <select class="form-control" style="padding: 8px;"><option>Active</option><option>Completed</option></select>
+                    </div>
+                    <div style="margin-top: 20px;">
+                        <button class="btn btn-secondary">Filter</button>
+                    </div>
+                </div>
+
+                <div class="grid-dashboard" style="grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));">
+                    
+                    <div class="smart-card" style="padding: 0;">
+                        <div style="padding: 24px; border-bottom: 1px solid var(--border-light); display: flex; justify-content: space-between;">
+                            <div>
+                                <div class="card-title">Logistics Stream</div>
+                                <div style="font-size: 18px; font-weight: 700;">Procure to Pay (P2P)</div>
+                            </div>
+                            <div style="text-align: right;">
+                                <span class="pill green">In Progress</span>
+                            </div>
+                        </div>
+                        <div style="padding: 0;">
+                            <div class="process-step">
+                                <div class="step-icon">📝</div>
+                                <div style="flex: 1;">
+                                    <div style="font-weight: 600; font-size: 14px;">Requirement Gathering</div>
+                                    <div style="font-size: 12px; color: var(--text-secondary);">15 Questions Answered</div>
+                                </div>
+                                <div style="width: 100px; text-align: right;">
+                                    <div style="font-size: 12px; font-weight: bold;">100%</div>
+                                    <div class="progress-wrapper"><div class="progress-fill" style="width: 100%;"></div></div>
+                                </div>
+                            </div>
+                            <div class="process-step">
+                                <div class="step-icon">⚖️</div>
+                                <div style="flex: 1;">
+                                    <div style="font-weight: 600; font-size: 14px;">Fit-Gap Analysis</div>
+                                    <div style="font-size: 12px; color: var(--text-secondary);">AI Suggested 3 Gaps</div>
+                                </div>
+                                 <div style="width: 100px; text-align: right;">
+                                    <div style="font-size: 12px; font-weight: bold;">60%</div>
+                                    <div class="progress-wrapper"><div class="progress-fill warn" style="width: 60%;"></div></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div style="padding: 16px; background: #FAFBFC; border-top: 1px solid var(--border-light); text-align: center;">
+                            <button class="btn btn-secondary" style="width: 100%; justify-content: center;" onclick="navTo('design')">Continue Analysis →</button>
+                        </div>
+                    </div>
+
+                    <div class="smart-card" style="padding: 0;">
+                        <div style="padding: 24px; border-bottom: 1px solid var(--border-light); display: flex; justify-content: space-between;">
+                            <div>
+                                <div class="card-title">Finance Stream</div>
+                                <div style="font-size: 18px; font-weight: 700;">Record to Report (R2R)</div>
+                            </div>
+                            <div style="text-align: right;">
+                                <span class="pill orange">Not Started</span>
+                            </div>
+                        </div>
+                        <div style="padding: 24px; text-align: center; color: var(--text-secondary);">
+                            <div style="font-size: 40px; margin-bottom: 16px;">🚀</div>
+                            <p>Ready to start standard fit-gap workshops for General Ledger and Asset Accounting.</p>
+                            <button class="btn btn-ai" style="margin-top: 16px;">Start with Joule</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-requirements" class="view">
+                <div class="page-header">
+                    <div class="obj-top">
+                        <div>
+                            <h1 class="page-title">Requirement Explorer</h1>
+                            <div class="page-subtitle">WRICEF Objects & Backlog Management</div>
+                        </div>
+                        <div style="display: flex; gap: 12px;">
+                            <button class="btn btn-secondary">Import from Excel</button>
+                            <!-- New Project Modal -->
+        
+                            <button class="btn btn-ai" onclick="document.getElementById('addModal').style.display='block'">+ New WRICEF</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-bar" style="margin-bottom: 24px; border-bottom: 1px solid var(--border-light);">
+                    <div class="tab-item active" onclick="showToast('Filtering: All')">All Objects (14)</div>
+                    <div class="tab-item" onclick="showToast('Filtering: Reports')">Reports (5)</div>
+                    <div class="tab-item" onclick="showToast('Filtering: Interfaces')">Interfaces (3)</div>
+                    <div class="tab-item" onclick="showToast('Filtering: Enhancements')">Enhancements (6)</div>
+                </div>
+
+                <div class="smart-table-container">
+                    <table class="smart-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Title</th>
+                                <th>Type</th>
+                                <th>Complexity</th>
+                                <th>Status</th>
+                                <th>AI Enrichment</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="requirements-table-body">
+    {% for req in requirements %}
+    <tr onclick="loadRequirementDetails({{ req.id }})">
+        <td><b>{{ req.code }}</b></td>
+        <td>{{ req.title }}</td>
+        <td><span class="pill blue">{{ req.module }}</span></td>
+        <td>{{ req.complexity }}</td>
+        <td>
+            <span class="pill {% if req.status == 'Ready' or req.status == 'Approved' %}green{% elif req.status == 'In Progress' or req.status == 'FS Draft' %}orange{% elif req.status == 'Blocked' %}red{% else %}blue{% endif %}">
+                {{ req.status }}
+            </span>
+        </td>
+        <td>
+            <span style="color: #8900B4; font-size: 12px;">
+                {% if req.ai_status == 'Full' %}✦ Full{% elif req.ai_status == 'Draft' or req.ai_status == 'Partial' %}✦ Partial{% else %}○ None{% endif %}
+            </span>
+        <td style="color: var(--primary);" onclick="event.stopPropagation(); document.getElementById('addModal').style.display='block'">Edit</td>
+    </tr>
+    {% endfor %}
+</tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="view-design" class="view">
+                <div style="margin-bottom: 16px; color: var(--text-secondary); cursor: pointer; font-size: 13px;" onclick="navTo('requirements')">
+                    ← Back to Cockpit
+                </div>
+
+                <div class="obj-header">
+                    <div class="obj-top">
+                        <div>
+                            <h1 class="page-title">FS_MM_041</h1>
+                            <div class="page-subtitle">Purchase Order Approval Workflow • REQ-205</div>
+                        </div>
+                        <div style="display: flex; gap: 12px;">
+                            <button class="btn btn-secondary" onclick="navTo('requirements')">Discard</button>
+                            <button class="btn btn-ai" id="generate-btn" onclick="startAIGeneration()"><span>✦ Generate Content</span></button>
+                        </div>
+                    </div>
+                    <div class="tab-bar">
+                        <div class="tab-item active" onclick="switchTab('overview', this)">Overview</div>
+                        <div class="tab-item" onclick="switchTab('business', this)">Business Logic</div>
+                        <div class="tab-item" onclick="switchTab('technical', this)">Technical (TS)</div>
+                        <div class="tab-item" onclick="switchTab('copilot', this)" style="color: #8900B4;">Co-Pilot Chat</div>
+                    </div>
+                </div>
+
+                <div id="tab-overview" class="tab-content">
+                    <div class="smart-card">
+                        <h3 style="margin-top: 0;">AI Summary</h3>
+                        <p style="line-height: 1.6; color: var(--text-secondary);">
+                            This specification defines a multi-level release strategy for Purchase Orders exceeding €10,000. 
+                            It utilizes standard SAP Workflow features with a custom BAdI implementation for dynamic agent determination based on cost center hierarchy.
+                        </p>
+                        <div style="margin-top: 24px; display: flex; gap: 40px;">
+                            <div>
+                                <div class="card-title">Complexity</div>
+                                <div class="pill orange">Medium</div>
+                            </div>
+                            <div>
+                                <div class="card-title">Effort</div>
+                                <div>8 Days</div>
+                            </div>
+                            <div>
+                                <div class="card-title">Module</div>
+                                <div>MM-PUR</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="tab-copilot" class="tab-content" style="display: none;">
+                    <div class="chat-interface">
+                        <div class="chat-area" id="chatArea">
+                            <div class="message ai">
+                                <div class="icon-btn" style="background: linear-gradient(135deg, #8900B4, #2565AE); color: white; font-size: 12px;">AI</div>
+                                <div class="bubble">
+                                    Hello! I've analyzed the requirement REQ-205. I can help you draft the logic for the 'Cost Center Owner' determination. Should I generate a pseudo-code?
+                                </div>
+                            </div>
+                            <div class="message me">
+                                <div class="bubble">Yes, please focus on the ZTABLE lookup logic.</div>
+                            </div>
+                        </div>
+                        <div class="chat-input-area">
+                            <input type="text" class="chat-input" placeholder="Ask Co-Pilot to refine the spec..." id="chatInput" onkeypress="handleEnter(event)">
+                            <button class="btn btn-secondary" onclick="sendMessage()">Send</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="tab-business" class="tab-content" style="display:none">
+                     <div class="smart-card">
+                        <h3>Process Flow</h3>
+                        <div style="background: #F5F6F7; height: 200px; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #aaa; border: 2px dashed #ddd;">
+                            [ BPMN Visual Placeholder ]
+                        </div>
+                     </div>
+                </div>
+
+                <div id="tab-technical" class="tab-content" style="display:none">
+                    <div class="smart-card">
+                        <div style="font-family: 'Courier New', monospace; font-size: 13px; color: #333;">
+                            <span style="color: blue;">METHOD</span> get_approvers.<br><br>
+                            &nbsp;&nbsp;<span style="color: green;">" 1. Check Amount</span><br>
+                            &nbsp;&nbsp;<span style="color: blue;">IF</span> iv_net_value > 10000.<br><br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;<span style="color: green;">" 2. Select from Custom Table</span><br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue;">SELECT SINGLE</span> approver <span style="color: blue;">FROM</span> zmm_auth_limit<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue;">INTO</span> rv_approver<br>
+                            &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color: blue;">WHERE</span> cost_center = iv_kostl.<br><br>
+                            &nbsp;&nbsp;<span style="color: blue;">ENDIF.</span><br><br>
+                            <span style="color: blue;">ENDMETHOD.</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-config" class="view">
+                <div class="page-header">
+                    <h1 class="page-title">Configuration</h1>
+                    <div class="page-subtitle">Manage AI Models, Integrations and System Preferences</div>
+                </div>
+
+                <div class="grid-dashboard" style="grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));">
+                    
+                    <div class="smart-card">
+                        <div class="card-title" style="margin-bottom: 20px; font-size: 16px; color: var(--primary);">🤖 AI Model Settings</div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Default LLM Provider</label>
+                            <select class="form-control">
+                                <option>OpenAI GPT-4 Turbo (via Azure)</option>
+                                <option>SAP Joule (Native)</option>
+                                <option>Mistral Large</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <label class="form-label" style="margin:0;">Creativity Level (Temperature)</label>
+                                <span style="font-size: 12px; color: #666;">0.7</span>
+                            </div>
+                            <input type="range" style="width: 100%;" min="0" max="1" step="0.1" value="0.7">
+                        </div>
+
+                        <div class="form-group" style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <label class="form-label" style="margin:0;">Auto-Enrich WRICEFs</label>
+                                <div style="font-size: 12px; color: var(--text-secondary);">Automatically use AI to fill tech specs</div>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="smart-card">
+                        <div class="card-title" style="margin-bottom: 20px; font-size: 16px; color: var(--primary);">🔗 Integrations</div>
+                        
+                        <div class="process-step">
+                            <div class="step-icon" style="background: #0052CC; color: white;">J</div>
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; font-size: 14px;">Jira Software</div>
+                                <div style="font-size: 12px; color: var(--success);">Connected • Sync Active</div>
+                            </div>
+                            <button class="btn btn-secondary" style="padding: 4px 10px; font-size: 12px;">Config</button>
+                        </div>
+
+                        <div class="process-step">
+                            <div class="step-icon" style="background: #036C70; color: white;">S</div>
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; font-size: 14px;">SharePoint Online</div>
+                                <div style="font-size: 12px; color: var(--success);">Connected • Docs Stored</div>
+                            </div>
+                            <button class="btn btn-secondary" style="padding: 4px 10px; font-size: 12px;">Config</button>
+                        </div>
+
+                        <div class="process-step">
+                            <div class="step-icon" style="background: #F0AB00; color: black;">SolMan</div>
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; font-size: 14px;">SAP Solution Manager</div>
+                                <div style="font-size: 12px; color: var(--text-secondary);">Disconnected</div>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 32px; text-align: right; padding-top: 20px; border-top: 1px solid var(--border-light);">
+                    <button class="btn btn-secondary" style="margin-right: 12px;">Reset to Default</button>
+                    <button class="btn btn-ai" onclick="showToast('Configuration Saved Successfully! ✅')">Save Configuration</button>
+                </div>
+            </div>
+<!-- Projects View -->
+            <div id="view-projects" class="view">
+                <div class="page-header">
+                    <h1 class="page-title">Projects</h1>
+                    <div class="page-subtitle">Manage your SAP implementation projects</div>
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <button class="btn btn-primary" onclick="openNewProjectModal()">+ New Project</button>
+                </div>
+                
+                <div class="smart-table-container">
+                    <table class="smart-table">
+                        <thead>
+                            <tr>
+                                <th>Project Code</th>
+                                <th>Project Name</th>
+                                <th>Customer</th>
+                                <th>Status</th>
+                                <th>Modules</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="projects-table-body">
+                            <tr>
+                                <td colspan="6" style="text-align: center; color: #999;">Loading projects...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="toast" id="toast">
+        <span>✅</span> <span id="toast-msg">Action Completed</span>
+    </div>
+
+    <script>
+        // --- Navigation ---
+        function navTo(viewId, navEl) {
+            // Eğer çağrı menü dışından geldiyse (örn. tablo satırından), sidebar'ı manuel güncelle
+            if (!navEl) {
+                document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+                // Basit eşleştirme (id'den bulma)
+                const mapping = {
+                    'dashboard': 0, 'analysis': 1, 'requirements': 2, 'design': 3, 'config': 4, 'projects': 5
+                };
+                const idx = mapping[viewId];
+                if (idx !== undefined) {
+                     document.querySelectorAll('.nav-item')[idx].classList.add('active');
+                }
+            } else {
+                document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+                navEl.classList.add('active');
+            }
+
+            // View Switching
+            document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+            const target = document.getElementById('view-' + viewId);
+            if(target) target.classList.add('active');
+            else showToast('View not implemented yet');
+            // Load data for specific views
+        if(viewId === 'projects') loadProjects();
+        if(viewId === 'dashboard') loadDashboardStats();
+        }
+
+        // --- Tabs ---
+        function switchTab(tabId, tabEl) {
+            document.querySelectorAll('.tab-item').forEach(el => el.classList.remove('active'));
+            tabEl.classList.add('active');
+
+            const parent = tabEl.closest('#view-design');
+            parent.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+            document.getElementById('tab-' + tabId).style.display = 'block';
+        }
+
+        // --- Interactions ---
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            document.getElementById('toast-msg').innerText = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 3000);
+        }
+
+        function simulateAI() {
+            showToast('AI Generating Content... (GPT-4)');
+            setTimeout(() => {
+                showToast('Draft updated successfully!');
+                const techTab = document.querySelectorAll('.tab-item')[2];
+                switchTab('technical', techTab);
+            }, 1500);
+        }
+        function loadRequirementDetails(id) {
+        fetch(`/api/requirements/${id}`)
+        .then(res => res.json())
+        .then(data => {
+            // Detay sayfasındaki başlıkları güncelle
+            document.querySelector('#view-design .page-title').innerText = data.code;
+            document.querySelector('#view-design .page-subtitle').innerText = data.title;
+            
+            // Overview sekmesindeki özeti güncelle
+            const summaryBox = document.querySelector('#tab-overview p');
+            if(summaryBox) summaryBox.innerText = data.summary || "Bu gereksinim için henüz AI analizi yapılmamış.";
+            
+            // Sayfayı değiştir
+            navTo('design');
+        })
+        .catch(err => console.error("Hata:", err));
+        }
+        // --- Chat ---
+        function sendMessage() {
+            const input = document.getElementById('chatInput');
+            const text = input.value;
+            if(!text) return;
+
+            const area = document.getElementById('chatArea');
+            
+            // User Msg
+            const userDiv = document.createElement('div');
+            userDiv.className = 'message me';
+            userDiv.innerHTML = `<div class="bubble">${text}</div>`;
+            area.appendChild(userDiv);
+            
+            input.value = '';
+            area.scrollTop = area.scrollHeight;
+
+            // Fake AI Reply
+            setTimeout(() => {
+                const aiDiv = document.createElement('div');
+                aiDiv.className = 'message ai';
+                aiDiv.innerHTML = `
+                    <div class="icon-btn" style="background: linear-gradient(135deg, #8900B4, #2565AE); color: white; font-size: 12px;">AI</div>
+                    <div class="bubble">I've updated the Technical Specification with the ZTABLE logic as requested. Check the "Technical" tab.</div>
+                `;
+                area.appendChild(aiDiv);
+                area.scrollTop = area.scrollHeight;
+            }, 1000);
+        }
+
+        function handleEnter(e) {
+            if(e.key === 'Enter') sendMessage();
+        }
+        function saveRequirement() {
+    const data = {
+        code: document.getElementById('newCode').value,
+        title: document.getElementById('newTitle').value,
+        module: document.getElementById('newModule').value,
+        complexity: document.getElementById('newComplexity').value
+    };
+
+    if(!data.code || !data.title) {
+        alert("Lütfen tüm alanları doldurun!");
+        return;
+    }
+
+    fetch('/api/requirements', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    }).then(response => {
+        if(response.ok) {
+            location.reload(); // Başarılıysa sayfayı yenile
+        } else {
+            alert("Kaydedilirken bir hata oluştu!");
+        }
+        // AI İçerik Üretimini Başlatma (Şimdilik simülasyon, bir sonraki adımda OpenAI'ye bağlanacak)
+function startAIGeneration() {
+    showToast('AI is analyzing requirements and generating technical specs...');
+    const btn = document.getElementById('generate-btn');
+    btn.disabled = true;
+    btn.innerHTML = '<span>⌛ Generating...</span>';
+    
+    // Simülasyon: 2 saniye sonra içerik gelmiş gibi yapalım
+    setTimeout(() => {
+        btn.disabled = false;
+        btn.innerHTML = '<span>✦ Generate Content</span>';
+        switchTab('technical', document.querySelectorAll('.tab-item')[2]);
+        showToast('Technical Specification generated successfully!');
+    }, 2000);
+}
+
+// AI İçeriğini Veritabanına Kaydetme
+function saveAIGeneratedContent() {
+    showToast('Saving changes to database...');
+    // Burada ileride veritabanı güncelleme (UPDATE) işlemi yapılacak
+    setTimeout(() => {
+        showToast('Changes saved successfully!');
+    }, 1000);
+}
+
+        function loadRequirementDetails(id) {
+    fetch(`/api/requirements/${id}`)
+        .then(res => res.json())
+        .then(data => {
+            // Detay sayfasındaki başlıkları ve içerikleri güncelle
+            document.querySelector('#view-design .page-title').innerText = data.code;
+            document.querySelector('#view-design .page-subtitle').innerText = data.title;
+            
+            // Overview sekmesindeki özet kısmını güncelle
+            const summaryBox = document.querySelector('#tab-overview p');
+            if(summaryBox) summaryBox.innerText = data.summary || "Bu gereksinim için henüz AI analizi yapılmamış.";
+            
+            // Detay görünümüne geç
+            navTo('design');
+            function loadRequirementDetails(id) {
+    console.log("Yüklenen ID:", id); // Tarayıcı konsolunda kontrol etmek için
+    fetch(`/api/requirements/${id}`)
+        .then(res => {
+            if (!res.ok) throw new Error('Veri alınamadı');
+            return res.json();
+        })
+        .then(data => {
+            // Detay sayfasındaki (Object Page) başlıkları güncelle
+            // 'view-design' ID'li div içindeki page-title ve page-subtitle'ı bulur
+            const designView = document.getElementById('view-design');
+            if (designView) {
+                designView.querySelector('.page-title').innerText = data.code;
+                designView.querySelector('.page-subtitle').innerText = data.title;
+                
+                // AI Summary (Özet) kısmını güncelle
+                const summaryBox = document.getElementById('tab-overview').querySelector('p');
+                if (summaryBox) {
+                    summaryBox.innerText = data.summary || "Bu gereksinim için henüz AI analizi yapılmamış.";
+                }
+            }
+            
+            // Görünümü değiştir
+            navTo('design');
+        })
+        .catch(err => {
+            console.error("Hata:", err);
+            showToast("Veri yüklenirken bir hata oluştu!");
+        });
+}
+        });
+}
+    });
+}
+// ============== DASHBOARD STATS ==============
+// ============== PROJECTS ==============
+async function loadProjects() {
+    try {
+        const response = await fetch('/api/projects');
+        const projects = await response.json();
+        
+        const tbody = document.getElementById('projects-table-body');
+        if(!tbody) return;
+        
+        if(projects.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align: center; color: #999;">No projects found. Create your first project!</td></tr>';
+            return;
+        }
+        
+        tbody.innerHTML = projects.map(p => `
+            <tr>
+                <td><strong>${p.project_code}</strong></td>
+                <td>${p.project_name}</td>
+                <td>${p.customer_name || '-'}</td>
+                <td><span class="pill ${p.status === 'Active' ? 'green' : 'blue'}">${p.status}</span></td>
+                <td>${p.modules || '-'}</td>
+                <td>
+                    <button class="btn btn-small" onclick="viewProject(${p.id})">View</button>
+                </td>
+            </tr>
+        `).join('');
+    } catch(error) {
+        console.error('Error loading projects:', error);
+    }
+}
+
+function openNewProjectModal() {
+    const modal = document.getElementById('newProjectModal');
+    if(modal) modal.style.display = 'block';
+}
+
+function closeNewProjectModal() {
+    const modal = document.getElementById('newProjectModal');
+    if(modal) modal.style.display = 'none';
+}
+
+async function saveNewProject() {
+    const projectCode = document.getElementById('projectCode').value;
+    const projectName = document.getElementById('projectName').value;
+    const customerName = document.getElementById('customerName').value;
+    const modules = document.getElementById('projectModules').value;
+    
+    if(!projectCode || !projectName) {
+        alert('Project Code and Name are required!');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/projects', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                project_code: projectCode,
+                project_name: projectName,
+                customer_name: customerName,
+                modules: modules,
+                status: 'Planning'
+            })
+        });
+        
+        if(response.ok) {
+            closeNewProjectModal();
+            loadProjects();
+            loadDashboardStats();
+            alert('Project created successfully!');
+        }
+    } catch(error) {
+        console.error('Error creating project:', error);
+        alert('Error creating project');
+    }
+}
+
+function viewProject(id) {
+    alert('Project details - Coming soon! ID: ' + id);
+}
+async function loadDashboardStats() {
+    try {
+        const response = await fetch('/api/dashboard/stats');
+        const data = await response.json();
+        
+        // Total Projects
+        const projectsEl = document.querySelector('.stat-projects');
+        if(projectsEl) projectsEl.textContent = data.total_projects || 0;
+        
+        // Total Requirements  
+        const reqEl = document.querySelector('.stat-requirements');
+        if(reqEl) reqEl.textContent = data.total_requirements || 0;
+        
+        // Total Gaps
+        const gapsEl = document.querySelector('.stat-gaps');
+        if(gapsEl) gapsEl.textContent = data.total_gaps || 0;
+        
+        // Total Sessions
+        const sessionsEl = document.querySelector('.stat-sessions');
+        if(sessionsEl) sessionsEl.textContent = data.total_sessions || 0;
+        
+        console.log('Dashboard stats loaded:', data);
+    } catch(error) {
+        console.error('Dashboard stats error:', error);
+    }
+}
+
+// Sayfa yuklenince dashboard stats'i yukle
+document.addEventListener('DOMContentLoaded', function() {
+    // Eger dashboard gorunuyorsa yukle
+    if(document.getElementById('view-dashboard')) {
+        loadDashboardStats();
+    }
+});
+    </script>
+<!-- Yeni Gereksinim Ekleme Formu (Modal) -->
+<div id="addModal" class="smart-card" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); z-index:1000; width:400px; border: 2px solid var(--primary); background: white; box-shadow: 0 0 20px rgba(0,0,0,0.5);">
+    <h3 style="margin-top:0;">Add New SAP Requirement</h3>
+    <div class="form-group">
+        <label class="form-label">Requirement Code</label>
+        <input type="text" id="newCode" class="form-control" placeholder="Örn: WRICEF_SD_001">
+    </div>
+    <div class="form-group">
+        <label class="form-label">Title / Description</label>
+        <input type="text" id="newTitle" class="form-control" placeholder="Örn: Sales Order Upload">
+    </div>
+    <div class="form-group">
+        <label class="form-label">SAP Module</label>
+        <select id="newModule" class="form-control">
+            <option>SD</option><option>MM</option><option>FI</option><option>PP</option><option>ABAP</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label class="form-label">Complexity</label>
+        <select id="newComplexity" class="form-control">
+            <option>Low</option><option>Medium</option><option>High</option>
+        </select>
+    </div>
+    <div style="display:flex; gap:10px; margin-top:20px; justify-content: flex-end;">
+        <button class="btn btn-secondary" onclick="document.getElementById('addModal').style.display='none'">Cancel</button>
+        <button class="btn btn-ai" onclick="saveRequirement()">Save to Database</button>
+    </div>
+</div>
+<div id="newProjectModal" class="smart-card" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); z-index:1000; width:500px; border: 2px solid var(--primary); background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
+            <h3 style="margin-top:0;">Create New Project</h3>
+            <div class="form-group">
+                <label class="form-label">Project Code</label>
+                <input type="text" id="projectCode" class="form-control" placeholder="e.g., PRJ-2026-002">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Project Name</label>
+                <input type="text" id="projectName" class="form-control" placeholder="e.g., ACME Corp S/4HANA Implementation">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Customer Name</label>
+                <input type="text" id="customerName" class="form-control" placeholder="e.g., ACME Corporation">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Modules (comma separated)</label>
+                <input type="text" id="projectModules" class="form-control" placeholder="e.g., MM,SD,FI,CO">
+            </div>
+            <div style="display:flex; gap:10px; margin-top:20px;">
+                <button class="btn btn-primary" onclick="saveNewProject()">Create Project</button>
+                <button class="btn btn-secondary" onclick="closeNewProjectModal()">Cancel</button>
+            </div>
+        </div>
+        <div id="projectModalOverlay" class="modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:999;" onclick="closeNewProjectModal()"></div>
+</body>
+</html>
