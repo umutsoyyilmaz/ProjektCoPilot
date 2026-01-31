@@ -111,21 +111,51 @@ def get_project_detail(project_id):
 # ============== ANALYSIS SESSIONS API ==============
 
 @app.route('/api/sessions', methods=['GET'])
+@app.route('/api/sessions', methods=['GET'])
 def get_sessions():
     """Tum analiz oturumlarini listele"""
+    project_id = request.args.get('project_id')
     try:
         conn = get_db_connection()
-        sessions = conn.execute('''
-            SELECT s.*, p.project_name 
-            FROM analysis_sessions s 
-            LEFT JOIN projects p ON s.project_id = p.id 
-            ORDER BY s.created_at DESC
-        ''').fetchall()
+        if project_id:
+            sessions = conn.execute('''
+                SELECT s.*, p.project_name
+                FROM analysis_sessions s
+                LEFT JOIN projects p ON s.project_id = p.id
+                WHERE s.project_id = ?
+                ORDER BY s.created_at DESC
+            ''', (project_id,)).fetchall()
+        else:
+            sessions = conn.execute('''
+                SELECT s.*, p.project_name
+                FROM analysis_sessions s
+                LEFT JOIN projects p ON s.project_id = p.id
+                ORDER BY s.created_at DESC
+            ''').fetchall()
         conn.close()
         return jsonify([dict(row) for row in sessions])
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+
+@app.route('/api/sessions/<int:session_id>', methods=['GET'])
+def get_session_detail(session_id):
+    """Tek bir session detayi"""
+    try:
+        conn = get_db_connection()
+        session = conn.execute('''
+            SELECT s.*, p.project_name
+            FROM analysis_sessions s
+            LEFT JOIN projects p ON s.project_id = p.id
+            WHERE s.id = ?
+        ''', (session_id,)).fetchone()
+        conn.close()
+        if session:
+            return jsonify(dict(session))
+        return jsonify({"error": "Not found"}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
 @app.route('/api/sessions', methods=['POST'])
 def add_session():
     """Yeni analiz oturumu ekle"""
@@ -143,14 +173,71 @@ def add_session():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+# ============== QUESTIONS API ==============
+
+@app.route('/api/questions', methods=['GET'])
+def get_questions():
+    """Sorulari listele"""
+    session_id = request.args.get('session_id')
+    try:
+        conn = get_db_connection()
+        if session_id:
+            questions = conn.execute('''
+                SELECT q.*, a.answer_text
+                FROM questions q
+                LEFT JOIN answers a ON q.id = a.question_id
+                WHERE q.session_id = ?
+                ORDER BY q.created_at ASC
+            ''', (session_id,)).fetchall()
+        else:
+            questions = conn.execute('''
+                SELECT q.*, a.answer_text
+                FROM questions q
+                LEFT JOIN answers a ON q.id = a.question_id
+                ORDER BY q.created_at DESC
+            ''').fetchall()
+        conn.close()
+        return jsonify([dict(row) for row in questions])
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/questions', methods=['POST'])
+def add_question():
+    """Yeni soru ekle"""
+    try:
+        data = request.json
+        conn = get_db_connection()
+        cursor = conn.execute('''
+            INSERT INTO questions (session_id, question_text, created_at)
+            VALUES (?, ?, datetime('now'))
+        ''', (data.get('session_id'), data.get('question_text')))
+        question_id = cursor.lastrowid
+        
+        # Eger cevap da varsa ekle
+        if data.get('answer_text'):
+            conn.execute('''
+                INSERT INTO answers (question_id, answer_text, answered_at)
+                VALUES (?, ?, datetime('now'))
+            ''', (question_id, data.get('answer_text')))
+        
+        conn.commit()
+        conn.close()
+        return jsonify({"success": True, "id": question_id}), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    
 # ============== FITGAP API ==============
 
 @app.route('/api/fitgap', methods=['GET'])
 def get_fitgap():
     """Tum FitGap kayitlarini listele"""
+    session_id = request.args.get('session_id')
     try:
         conn = get_db_connection()
-        gaps = conn.execute('SELECT * FROM fitgap ORDER BY created_at DESC').fetchall()
+        if session_id:
+            gaps = conn.execute('SELECT * FROM fitgap WHERE session_id = ? ORDER BY created_at DESC', (session_id,)).fetchall()
+        else:
+            gaps = conn.execute('SELECT * FROM fitgap ORDER BY created_at DESC').fetchall()
         conn.close()
         return jsonify([dict(row) for row in gaps])
     except Exception as e:
