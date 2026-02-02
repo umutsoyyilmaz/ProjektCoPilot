@@ -1,28 +1,29 @@
 import sqlite3
 
+
 def init_db():
-    conn = sqlite3.connect('project_copilot.db')
+    conn = sqlite3.connect("project_copilot.db")
     cursor = conn.cursor()
-    
-# 1. Requirements Tablosu (WRICEF)
-cursor.execute('''
-    CREATE TABLE IF NOT EXISTS requirements (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        project_id INTEGER,
-        code TEXT NOT NULL,
-        title TEXT NOT NULL,
-        module TEXT,
-        complexity TEXT,
-        status TEXT DEFAULT 'Draft',
-        ai_status TEXT DEFAULT 'Pending',
-        effort_days INTEGER,
-        summary TEXT,
-        FOREIGN KEY (project_id) REFERENCES projects(id)
-    )
-''')
-    
+
+    # 1. Requirements Tablosu (WRICEF)
+    cursor.execute("""
+        CREATE TABLE IF NOT EXISTS requirements (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            project_id INTEGER,
+            code TEXT NOT NULL,
+            title TEXT NOT NULL,
+            module TEXT,
+            complexity TEXT,
+            status TEXT DEFAULT 'Draft',
+            ai_status TEXT DEFAULT 'Pending',
+            effort_days INTEGER,
+            summary TEXT,
+            FOREIGN KEY (project_id) REFERENCES projects(id)
+        )
+    """)
+
     # 2. Projeler Tablosu
-    cursor.execute('''
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS projects (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             project_code TEXT NOT NULL,
@@ -36,10 +37,10 @@ cursor.execute('''
             description TEXT,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
-    ''')
-    
+    """)
+
     # 3. Analysis Sessions Tablosu
-    cursor.execute('''
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS analysis_sessions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             project_id INTEGER NOT NULL,
@@ -53,10 +54,10 @@ cursor.execute('''
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (project_id) REFERENCES projects(id)
         )
-    ''')
-    
+    """)
+
     # 4. Questions Tablosu
-    cursor.execute('''
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS questions (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             session_id INTEGER NOT NULL,
@@ -67,10 +68,10 @@ cursor.execute('''
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (session_id) REFERENCES analysis_sessions(id)
         )
-    ''')
-    
+    """)
+
     # 5. Answers Tablosu
-    cursor.execute('''
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS answers (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             question_id INTEGER NOT NULL,
@@ -80,10 +81,10 @@ cursor.execute('''
             confidence_score REAL,
             FOREIGN KEY (question_id) REFERENCES questions(id)
         )
-    ''')
-    
+    """)
+
     # 6. FitGap Tablosu
-    cursor.execute('''
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS fitgap (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             session_id INTEGER NOT NULL,
@@ -100,10 +101,10 @@ cursor.execute('''
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (session_id) REFERENCES analysis_sessions(id)
         )
-    ''')
-    
+    """)
+
     # 7. FS/TS Documents Tablosu
-    cursor.execute('''
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS fs_ts_documents (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             requirement_id INTEGER NOT NULL,
@@ -120,10 +121,10 @@ cursor.execute('''
             updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (requirement_id) REFERENCES requirements(id)
         )
-    ''')
-    
+    """)
+
     # 8. Test Cases Tablosu
-    cursor.execute('''
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS test_cases (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             fs_ts_id INTEGER NOT NULL,
@@ -141,10 +142,10 @@ cursor.execute('''
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             FOREIGN KEY (fs_ts_id) REFERENCES fs_ts_documents(id)
         )
-    ''')
-    
+    """)
+
     # 9. Audit Log Tablosu
-    cursor.execute('''
+    cursor.execute("""
         CREATE TABLE IF NOT EXISTS audit_log (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             table_name TEXT NOT NULL,
@@ -155,32 +156,35 @@ cursor.execute('''
             changed_by TEXT,
             changed_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
-    ''')
-    
+    """)
+
     # Ornek veri ekle (requirements tablosu bossa)
     cursor.execute("SELECT COUNT(*) FROM requirements")
     if cursor.fetchone()[0] == 0:
-        cursor.execute('''
+        cursor.execute("""
             INSERT INTO requirements (code, title, module, complexity, status, ai_status, effort_days)
             VALUES ('FS_MM_041', 'Purchase Order Approval Workflow', 'MM', 'Medium', 'In Progress', 'Draft', 8)
-        ''')
-        cursor.execute('''
+        """)
+        cursor.execute("""
             INSERT INTO requirements (code, title, module, complexity, status, ai_status, effort_days)
             VALUES ('FS_SD_012', 'Sales Order Output Management', 'SD', 'Low', 'Ready', 'Full', 3)
-        ''')
-    
+        """)
+
     # Ornek proje ekle (projects tablosu bossa)
     cursor.execute("SELECT COUNT(*) FROM projects")
     if cursor.fetchone()[0] == 0:
-        cursor.execute('''
+        cursor.execute("""
             INSERT INTO projects (project_code, project_name, customer_name, status, modules, environment)
             VALUES ('PRJ-2026-001', 'ACME Corp S/4HANA Migration', 'ACME Corporation', 'Active', 'MM,SD,FI,CO', 'DEV')
-        ''')
-    
+        """)
+
     conn.commit()
     conn.close()
     print("Veritabani basariyla kuruldu!")
-    print("Tablolar: requirements, projects, analysis_sessions, questions, answers, fitgap, fs_ts_documents, test_cases, audit_log")
+    print(
+        "Tablolar: requirements, projects, analysis_sessions, questions, answers, fitgap, fs_ts_documents, test_cases, audit_log"
+    )
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     init_db()
