@@ -37,8 +37,8 @@ jobs:
           if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
           pip install black isort flake8 pytest pre-commit
 
-      - name: Run Black (check)
-        run: black --check .
+      - name: Run Black (check) (exclude backups)
+        run: black --check --exclude "(^|/)(backups)/" .
 
       - name: Run isort (check)
         run: isort --check-only .
