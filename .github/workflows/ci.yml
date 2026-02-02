@@ -114,17 +114,14 @@ jobs:
         with:
           node-version: 18
 
-      - name: Install pa11y
-        run: npm install -g pa11y
+      - name: Install node a11y scanner deps
+        run: npm ci
 
       - name: Install puppeteer deps
         run: sudo apt-get update && sudo apt-get install -y libatk1.0-0 libatk-bridge2.0-0 libgtk-3-0 libx11-xcb1 libxkbcommon0 libgbm1 libasound2 || true
 
-      - name: Run pa11y accessibility scan
-        run: |
-          # Use puppeteer launch config to disable sandbox in the runner environment
-          # Try passing launch args via --args (array JSON) — pa11y forwards to puppeteer runner
-          npx pa11y http://127.0.0.1:8080 --runner puppeteer --args '["--no-sandbox","--disable-setuid-sandbox"]'
+      - name: Run node-based a11y scan (puppeteer + axe-core)
+        run: npm run test:a11y:ci
 
   e2e:
     runs-on: ubuntu-latest

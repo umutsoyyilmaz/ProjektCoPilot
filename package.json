@@ -4,11 +4,14 @@
   "private": true,
   "scripts": {
     "test:a11y": "pa11y http://127.0.0.1:8080",
+    "test:a11y:ci": "node scripts/a11y-scan.js",
     "test:e2e": "cypress run --config baseUrl=http://127.0.0.1:8080"
   },
   "devDependencies": {
     "pa11y": "^6.0.0",
     "cypress": "^12.0.0",
-    "cypress-axe": "^1.0.0"
+    "cypress-axe": "^1.0.0",
+    "puppeteer": "^20.0.0",
+    "axe-core": "^4.5.0"
   }
 }
