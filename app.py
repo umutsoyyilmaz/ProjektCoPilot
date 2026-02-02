@@ -669,10 +669,6 @@ def update_testcase(tc_id):
     # ============== AI SERVICES API (Mock) ==============
 
 
-import random
-import time
-
-
 @app.route("/api/ai/generate-fs", methods=["POST"])
 def generate_fs_content():
     """AI ile Functional Spec içeriği üret (Mock)"""

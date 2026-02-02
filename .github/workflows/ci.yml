@@ -44,7 +44,7 @@ jobs:
         run: isort --check-only --skip backups .
 
       - name: Run flake8 (exclude backups)
-        run: flake8 --exclude backups .
+        run: flake8 --max-line-length 120 --exclude backups .
 
       - name: Run tests with coverage
         run: |
