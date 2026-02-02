@@ -77,7 +77,7 @@ jobs:
             await github.rest.issues.createComment({ ...context.repo, issue_number: pr, body });
 
       - name: Run pre-commit hooks
-        uses: pre-commit/action@v4
+        uses: pre-commit/action@v3
         with:
           extra_args: --all-files
 
