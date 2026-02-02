@@ -14,7 +14,7 @@
             
             /* Typography */
             --text-primary: #1D2330;    
-            --text-secondary: #5E6977;
+            --text-secondary: #495057; /* darker for better contrast */
             --text-on-dark: #FFFFFF;
             
             /* Brand & AI Colors */
@@ -253,8 +253,8 @@
 <header class="shell-bar">
     <!-- Global Project Selector - EN SOLDA -->
     <div class="global-project-selector" style="display: flex; align-items: center; gap: 12px;">
-        <span style="font-size: 13px; color: var(--text-secondary); font-weight: 600;">📁 Project:</span>
-        <select id="globalProjectSelect" onchange="onGlobalProjectChange()" style="padding: 8px 16px; border: 2px solid var(--border-light); border-radius: var(--radius-s); font-size: 14px; font-weight: 600; min-width: 300px; cursor: pointer; background: white;">
+        <label for="globalProjectSelect" style="font-size: 13px; color: var(--text-secondary); font-weight: 600; cursor: pointer;">📁 Project:</label>
+        <select id="globalProjectSelect" onchange="onGlobalProjectChange()" aria-label="Global project" style="padding: 8px 16px; border: 2px solid var(--border-light); border-radius: var(--radius-s); font-size: 14px; font-weight: 600; min-width: 300px; cursor: pointer; background: white;">
             <option value="">-- Select Project --</option>
         </select>
         <span id="globalProjectStatus" class="pill blue" style="display: none;">Active</span>
@@ -301,7 +301,7 @@
     </div>
 </nav>
 
-        <main class="content">
+        <main class="content" role="main" tabindex="0" aria-label="Main Content">
             
             <div id="view-dashboard" class="view active">
                 <div class="page-header">
@@ -346,7 +346,7 @@
     </div>
 </div>
 
-                <h3 style="margin-bottom: 16px;">Recent Activities</h3>
+                <h2 style="margin-bottom: 16px;">Recent Activities</h2>
                 <div class="smart-table-container">
                     <table class="smart-table">
                         <thead>
@@ -850,7 +850,7 @@
         </main>
     </div>
 
-    <div class="toast" id="toast">
+    <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true">
         <span>✅</span> <span id="toast-msg">Action Completed</span>
     </div>
 
