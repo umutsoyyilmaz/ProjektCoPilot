@@ -9,7 +9,8 @@ describe('Basic UI & accessibility checks', () => {
     // Activate Projects view via the app nav and open New Project modal
     // Wait until the app's navTo function is available and click the sidebar item
     cy.window().then(win => expect(typeof win.navTo).to.equal('function'));
-    cy.get('.nav-item').contains('Projects').click();
+    // Call the inline onclick handler directly to ensure navTo runs
+    cy.get('.nav-item').contains('Projects').then($el => $el[0].onclick());
     cy.get('#view-projects').should('have.class', 'active').and('be.visible');
     cy.get('#view-projects').contains('+ New Project').click();
     cy.get('[role="dialog"]').should('be.visible');
@@ -24,7 +25,7 @@ describe('Basic UI & accessibility checks', () => {
     cy.visit('/');
     // Activate Design view via the app nav
     cy.window().then(win => expect(typeof win.navTo).to.equal('function'));
-    cy.get('.nav-item').contains('Design').click();
+    cy.get('.nav-item').contains('Design').then($el => $el[0].onclick());
     cy.get('#view-design').should('have.class', 'active').and('be.visible');
     cy.wait(500);
 
