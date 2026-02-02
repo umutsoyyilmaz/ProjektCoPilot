@@ -6,7 +6,8 @@ describe('Basic UI & accessibility checks', () => {
     cy.visit('/');
     cy.title().should('include', 'AI Project Co-Pilot');
 
-    // Open New Project modal
+    // Make sure Projects view is active then open New Project modal
+    cy.contains('Projects').click({ force: true });
     cy.contains('+ New Project').click();
     cy.get('[role="dialog"]').should('be.visible');
     cy.get('[role="dialog"]').should('have.attr', 'aria-modal', 'true');
@@ -18,13 +19,8 @@ describe('Basic UI & accessibility checks', () => {
 
   it('prevents XSS in document chat (sanitizes input)', () => {
     cy.visit('/');
-    // Open a document detail quickly (if any doc exists)
-    cy.get('body').then($body => {
-      if($body.find('#view-design').length) {
-        // Navigate to design
-        cy.contains('Design').click({ force: true });
-      }
-    });
+    // Ensure Design view is active before trying to open a document
+    cy.contains('Design').click({ force: true });
 
     // Open document detail if there is one
     cy.get('table').then($tbl => {
