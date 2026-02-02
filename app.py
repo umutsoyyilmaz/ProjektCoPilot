@@ -856,7 +856,6 @@ ENDMETHOD.
 def analyze_gap():
     """AI ile Gap analizi yap (Mock)"""
     try:
-        data = request.json
 
         time.sleep(0.5)
 
