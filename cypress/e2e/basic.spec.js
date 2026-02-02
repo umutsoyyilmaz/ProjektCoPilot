@@ -14,9 +14,16 @@ describe('Basic UI & accessibility checks', () => {
     cy.window().then(win => win.openNewProjectModal());
     cy.get('#newProjectModal').should('be.visible').and('contain.text', 'Create New Project');
 
-    // Run axe accessibility scan
+    // Run axe accessibility scan and log failures for debugging
     cy.injectAxe();
-    cy.checkA11y();
+    cy.checkA11y(null, null, (violations) => {
+      if(violations.length) {
+        // Log details to CI output
+        // eslint-disable-next-line no-console
+        console.log('A11Y VIOLATIONS:', JSON.stringify(violations, null, 2));
+      }
+      expect(violations.length).to.equal(0);
+    });
   });
 
   it('prevents XSS in document chat (sanitizes input)', () => {
