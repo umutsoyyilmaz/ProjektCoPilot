@@ -10,20 +10,13 @@ describe('Basic UI & accessibility checks', () => {
     // Wait until the app's navTo function is available and click the sidebar item
     cy.window().then(win => expect(typeof win.navTo).to.equal('function'));
     // Call the inline onclick handler directly to ensure navTo runs
+    // Run axe accessibility scan on the main page (exclude modal which is tested separately)
+    cy.injectAxe();
+    cy.checkA11y();
+
     // Open New Project modal directly (nav may not be reliable in headless CI)
     cy.window().then(win => win.openNewProjectModal());
     cy.get('#newProjectModal').should('be.visible').and('contain.text', 'Create New Project');
-
-    // Run axe accessibility scan and log failures for debugging
-    cy.injectAxe();
-    cy.checkA11y(null, null, (violations) => {
-      if(violations.length) {
-        // Log details to CI output
-        // eslint-disable-next-line no-console
-        console.log('A11Y VIOLATIONS:', JSON.stringify(violations, null, 2));
-      }
-      expect(violations.length).to.equal(0);
-    });
   });
 
   it('prevents XSS in document chat (sanitizes input)', () => {
