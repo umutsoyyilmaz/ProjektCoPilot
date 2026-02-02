@@ -7,8 +7,9 @@ describe('Basic UI & accessibility checks', () => {
     cy.title().should('include', 'AI Project Co-Pilot');
 
     // Activate Projects view via the app nav and open New Project modal
-    cy.window().then(win => win.navTo('projects'));
-    cy.get('#view-projects').should('be.visible');
+    // Click the actual sidebar item so the onclick handler fires reliably
+    cy.get('.nav-item').contains('Projects').click();
+    cy.get('#view-projects').should('have.class', 'active').and('be.visible');
     cy.get('#view-projects').contains('+ New Project').click();
     cy.get('[role="dialog"]').should('be.visible');
     cy.get('[role="dialog"]').should('have.attr', 'aria-modal', 'true');
@@ -21,16 +22,18 @@ describe('Basic UI & accessibility checks', () => {
   it('prevents XSS in document chat (sanitizes input)', () => {
     cy.visit('/');
     // Activate Design view via the app nav
-    cy.window().then(win => win.navTo('design'));
-    cy.get('#view-design').should('be.visible');
+    cy.get('.nav-item').contains('Design').click();
+    cy.get('#view-design').should('have.class', 'active').and('be.visible');
+    cy.wait(500);
 
-    // Open document detail if there is one
-    cy.get('#view-design table').then($tbl => {
-      // try to open first document row
-      if($tbl.find('tbody tr').length) {
-        cy.get('#view-design tbody tr').first().click({ force: true });
+    // Open document detail if there is one (only proceed if table contains a real document row)
+    cy.get('#view-design tbody tr').first().then($tr => {
+      const txt = $tr.text().trim();
+      if(!txt.includes('Select a project') && !txt.includes('No documents') && !txt.includes('Loading')) {
+        cy.wrap($tr).click({ force: true });
 
         // Switch to Co-Pilot tab inside document detail and ensure chat input is visible
+        cy.get('#view-document-detail').should('have.class', 'active');
         cy.get('#view-document-detail').contains('Co-Pilot').click();
         cy.get('#docChatInput').should('be.visible');
 
