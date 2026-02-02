@@ -40,8 +40,8 @@ jobs:
       - name: Run Black (check) (exclude backups)
         run: black --check --exclude "(^|/)(backups)/" .
 
-      - name: Run isort (check)
-        run: isort --check-only .
+      - name: Run isort (check) (exclude backups)
+        run: isort --check-only --skip backups .
 
       - name: Run flake8
         run: flake8 .

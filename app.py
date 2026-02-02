@@ -1,6 +1,7 @@
-from flask import Flask, render_template, jsonify, request
-import sqlite3
 import os
+import sqlite3
+
+from flask import Flask, jsonify, render_template, request
 
 app = Flask(__name__)
 
@@ -666,8 +667,8 @@ def update_testcase(tc_id):
     # ============== AI SERVICES API (Mock) ==============
 
 
-import time
 import random
+import time
 
 
 @app.route("/api/ai/generate-fs", methods=["POST"])
