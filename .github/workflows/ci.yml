@@ -123,7 +123,8 @@ jobs:
       - name: Run pa11y accessibility scan
         run: |
           # Use puppeteer launch config to disable sandbox in the runner environment
-          npx pa11y http://127.0.0.1:8080 --runner puppeteer --puppeteer-launch-config '{"args":["--no-sandbox","--disable-setuid-sandbox"]}'
+          # Try passing launch args via --args (array JSON) — pa11y forwards to puppeteer runner
+          npx pa11y http://127.0.0.1:8080 --runner puppeteer --args '["--no-sandbox","--disable-setuid-sandbox"]'
 
   e2e:
     runs-on: ubuntu-latest
