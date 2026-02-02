@@ -1,5 +1,7 @@
 import os
 import sqlite3
+import random
+import time
 
 from flask import Flask, jsonify, render_template, request
 
@@ -23,8 +25,8 @@ def index():
 
         # Recent Activities (Son 5 değişiklik)
         recent_activities = conn.execute("""
-            SELECT * FROM requirements 
-            ORDER BY id DESC 
+            SELECT * FROM requirements
+            ORDER BY id DESC
             LIMIT 5
         """).fetchall()
 
@@ -407,8 +409,8 @@ def get_dashboard_stats():
             # Recent activities for this project
             recent_activities = conn.execute(
                 """
-                SELECT * FROM analysis_sessions 
-                WHERE project_id = ? 
+                SELECT * FROM analysis_sessions
+                WHERE project_id = ?
                 ORDER BY created_at DESC LIMIT 5
             """,
                 (project_id,),
@@ -557,7 +559,7 @@ def update_document(doc_id):
         conn = get_db_connection()
         conn.execute(
             """
-            UPDATE fs_ts_documents 
+            UPDATE fs_ts_documents
             SET content = ?, updated_at = CURRENT_TIMESTAMP
             WHERE id = ?
         """,
@@ -653,7 +655,7 @@ def update_testcase(tc_id):
         conn = get_db_connection()
         conn.execute(
             """
-            UPDATE test_cases 
+            UPDATE test_cases
             SET status = ?, executed_by = ?, executed_at = CURRENT_TIMESTAMP
             WHERE id = ?
         """,
@@ -802,12 +804,12 @@ METHOD process_document.
   IF iv_docnr IS INITIAL.
     RAISE EXCEPTION invalid_input.
   ENDIF.
-  
+
   " 2. Read master data
   SELECT SINGLE * FROM z{module.lower()}_custom_data
     INTO @DATA(ls_data)
     WHERE docnr = @iv_docnr.
-    
+
   " 3. Execute business logic
   CASE ls_data-status.
     WHEN '01'. " New
@@ -815,7 +817,7 @@ METHOD process_document.
     WHEN '02'. " In Process
       perform_update_processing( ).
   ENDCASE.
-  
+
   " 4. Update status
   UPDATE z{module.lower()}_custom_data
     SET status = '03'
@@ -859,7 +861,6 @@ def analyze_gap():
     """AI ile Gap analizi yap (Mock)"""
     try:
         data = request.json
-        gap_description = data.get("description", "")
 
         time.sleep(0.5)
 
@@ -904,7 +905,6 @@ def ai_chat():
     try:
         data = request.json
         message = data.get("message", "")
-        context = data.get("context", "")
 
         time.sleep(0.5)
 
