@@ -43,8 +43,8 @@ jobs:
       - name: Run isort (check) (exclude backups)
         run: isort --check-only --skip backups .
 
-      - name: Run flake8
-        run: flake8 .
+      - name: Run flake8 (exclude backups)
+        run: flake8 --exclude backups .
 
       - name: Run tests with coverage
         run: |
