@@ -12,7 +12,19 @@ describe('Basic UI & accessibility checks', () => {
     // Call the inline onclick handler directly to ensure navTo runs
     // Run axe accessibility scan on the main page (exclude modal which is tested separately)
     cy.injectAxe();
-    cy.checkA11y();
+    // Log axe violations to the CI output for easier debugging
+    cy.checkA11y(null, null, (violations) => {
+      if (violations.length) {
+        const simplified = violations.map(v => ({
+          id: v.id,
+          impact: v.impact,
+          description: v.description,
+          nodes: v.nodes.map(n => ({ html: n.html, failureSummary: n.failureSummary }))
+        }));
+        cy.task('log', `Axe Violations: ${JSON.stringify(simplified, null, 2)}`);
+      }
+      expect(violations.length).to.equal(0);
+    });
 
     // Open New Project modal directly (nav may not be reliable in headless CI)
     cy.window().then(win => win.openNewProjectModal());
