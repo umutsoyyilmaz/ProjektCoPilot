@@ -11,12 +11,12 @@
             --bg-app: #F5F6F7;
             --bg-surface: #FFFFFF;
             --bg-sidebar: #1d2330; /* Deep Midnight */
-            
+
             /* Typography */
-            --text-primary: #1D2330;    
+            --text-primary: #1D2330;
             --text-secondary: #5E6977;
             --text-on-dark: #FFFFFF;
-            
+
             /* Brand & AI Colors */
             --primary: #0070F2; /* SAP Blue */
             --primary-hover: #0050c0;
@@ -24,7 +24,7 @@
             --warn: #e9730c;
             --error: #bb0000;
             --ai-gradient: linear-gradient(135deg, #8900B4 0%, #2565AE 100%); /* Magic Purple-Blue */
-            
+
             /* Shapes & Shadows */
             --radius-s: 6px;
             --radius-m: 12px;
@@ -32,7 +32,7 @@
             --shadow-card: 0 2px 12px rgba(0,0,0,0.04);
             --shadow-hover: 0 8px 24px rgba(0,0,0,0.08);
             --border-light: #EAECEF;
-            
+
             /* Dimensions */
             --header-height: 60px;
             --sidenav-width-collapsed: 68px;
@@ -75,7 +75,7 @@
             letter-spacing: -0.5px;
             color: var(--text-primary);
         }
-        
+
         .ai-badge {
             background: var(--ai-gradient);
             color: white;
@@ -143,7 +143,7 @@
         .card-title { font-size: 14px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
         .card-value { font-size: 36px; font-weight: 700; color: var(--text-primary); letter-spacing: -1px; }
         .card-meta { font-size: 13px; color: var(--text-secondary); margin-top: 12px; display: flex; align-items: center; gap: 6px; }
-        
+
         /* Tables */
         .smart-table-container { background: var(--bg-surface); border-radius: var(--radius-l); box-shadow: var(--shadow-card); overflow: hidden; }
         .smart-table { width: 100%; border-collapse: collapse; }
@@ -191,7 +191,7 @@
         .process-step { display: flex; align-items: center; padding: 16px; border-bottom: 1px solid var(--border-light); transition: background 0.2s; }
         .process-step:last-child { border-bottom: none; }
         .process-step:hover { background: #FAFBFC; }
-        .step-icon { 
+        .step-icon {
             width: 40px; height: 40px; border-radius: 8px; background: #E8F2FF; color: var(--primary);
             display: flex; align-items: center; justify-content: center; font-size: 18px; margin-right: 16px;
         }
@@ -237,7 +237,7 @@
         .view { display: none; animation: fadeScale 0.3s ease-out; }
         .view.active { display: block; }
         @keyframes fadeScale { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
-        
+
         .toast {
             position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(100px);
             background: #323232; color: white; padding: 12px 24px; border-radius: 50px;
@@ -293,13 +293,13 @@
                     <div class="nav-icon">📁</div> <span class="nav-text">Projects</span>
                 </div>
     <div class="nav-item" onclick="navTo('config', this)">
-   
+
         <div class="nav-icon">⚙️</div> <span class="nav-text">Settings</span>
     </div>
 </nav>
 
         <main class="content">
-            
+
             <div id="view-dashboard" class="view active">
                 <div class="page-header">
                     <h1 class="page-title">Good Morning, John</h1>
@@ -490,7 +490,7 @@
                         <div style="display: flex; gap: 12px;">
                             <button class="btn btn-secondary">Import from Excel</button>
                             <!-- New Project Modal -->
-        
+
                             <button class="btn btn-ai" onclick="document.getElementById('addModal').style.display='block'">+ New WRICEF</button>
                         </div>
                     </div>
@@ -568,7 +568,7 @@
                     <div class="smart-card">
                         <h3 style="margin-top: 0;">AI Summary</h3>
                         <p style="line-height: 1.6; color: var(--text-secondary);">
-                            This specification defines a multi-level release strategy for Purchase Orders exceeding €10,000. 
+                            This specification defines a multi-level release strategy for Purchase Orders exceeding €10,000.
                             It utilizes standard SAP Workflow features with a custom BAdI implementation for dynamic agent determination based on cost center hierarchy.
                         </p>
                         <div style="margin-top: 24px; display: flex; gap: 40px;">
@@ -641,10 +641,10 @@
                 </div>
 
                 <div class="grid-dashboard" style="grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));">
-                    
+
                     <div class="smart-card">
                         <div class="card-title" style="margin-bottom: 20px; font-size: 16px; color: var(--primary);">🤖 AI Model Settings</div>
-                        
+
                         <div class="form-group">
                             <label class="form-label">Default LLM Provider</label>
                             <select class="form-control">
@@ -676,7 +676,7 @@
 
                     <div class="smart-card">
                         <div class="card-title" style="margin-bottom: 20px; font-size: 16px; color: var(--primary);">🔗 Integrations</div>
-                        
+
                         <div class="process-step">
                             <div class="step-icon" style="background: #0052CC; color: white;">J</div>
                             <div style="flex: 1;">
@@ -720,11 +720,11 @@
                     <h1 class="page-title">Projects</h1>
                     <div class="page-subtitle">Manage your SAP implementation projects</div>
                 </div>
-                
+
                 <div style="margin-bottom: 20px;">
                     <button class="btn btn-primary" onclick="openNewProjectModal()">+ New Project</button>
                 </div>
-                
+
                 <div class="smart-table-container">
                     <table class="smart-table">
                         <thead>
@@ -761,13 +761,13 @@ let currentFilter = { module: '', status: '', search: '' };
 // ============== UYGULAMA BAŞLATICI ==============
 async function initializeApp() {
     await loadGlobalProjectDropdown();
-    
+
     if(globalProjectId) {
         const select = document.getElementById('globalProjectSelect');
         if(select) select.value = globalProjectId;
         await updateProjectStatus();
     }
-    
+
     navTo('dashboard');
 }
 
@@ -775,14 +775,13 @@ async function loadGlobalProjectDropdown() {
     try {
         const response = await fetch('/api/projects');
         const projects = await response.json();
-        
+
         const select = document.getElementById('globalProjectSelect');
         if(!select) return;
-        
-        select.innerHTML = '<option value="">-- Select Project --</option>';
-        projects.forEach(p => {
-            select.innerHTML += `<option value="${p.id}">${p.project_code} - ${p.project_name}</option>`;
-        });
+
+        while(select.firstChild) select.removeChild(select.firstChild);
+        const defaultOpt = document.createElement('option'); defaultOpt.value = ''; defaultOpt.textContent = '-- Select Project --'; select.appendChild(defaultOpt);
+        projects.forEach(p => { const opt = document.createElement('option'); opt.value = p.id; opt.textContent = `${p.project_code} - ${p.project_name}`; select.appendChild(opt); });
     } catch(error) {
         console.error('Error loading projects:', error);
     }
@@ -791,7 +790,7 @@ async function loadGlobalProjectDropdown() {
 async function onGlobalProjectChange() {
     const select = document.getElementById('globalProjectSelect');
     globalProjectId = select.value;
-    
+
     if(!globalProjectId) {
         localStorage.removeItem('selectedProjectId');
         document.getElementById('globalProjectStatus').style.display = 'none';
@@ -800,14 +799,14 @@ async function onGlobalProjectChange() {
         await updateProjectStatus();
         showToast('Project selected!');
     }
-    
+
     refreshCurrentView();
 }
 
 async function updateProjectStatus() {
     const statusBadge = document.getElementById('globalProjectStatus');
     if(!statusBadge || !globalProjectId) return;
-    
+
     try {
         const response = await fetch(`/api/projects/${globalProjectId}`);
         const project = await response.json();
@@ -830,7 +829,7 @@ function refreshCurrentView() {
 function navTo(viewId, navEl) {
     // 1. Sidebar güncelle
     document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-    
+
     if(navEl) {
         navEl.classList.add('active');
     } else {
@@ -861,10 +860,10 @@ async function loadDashboardStats() {
         if(globalProjectId) {
             url += `?project_id=${globalProjectId}`;
         }
-        
+
         const response = await fetch(url);
         const data = await response.json();
-        
+
         // Proje bilgisi güncelle
         const subtitleEl = document.querySelector('#view-dashboard .page-subtitle');
         if(subtitleEl) {
@@ -874,20 +873,20 @@ async function loadDashboardStats() {
                 subtitleEl.textContent = 'Select a project from header to see project-specific data';
             }
         }
-        
+
         // İstatistik kartları
         const projectsEl = document.querySelector('.stat-projects');
         if(projectsEl) projectsEl.textContent = data.total_projects || 0;
-        
+
         const gapsEl = document.querySelector('.stat-gaps');
         if(gapsEl) gapsEl.textContent = data.total_gaps || 0;
-        
+
         const sessionsEl = document.querySelector('.stat-sessions');
         if(sessionsEl) sessionsEl.textContent = data.total_sessions || 0;
-        
+
         const questionsEl = document.querySelector('.stat-questions');
         if(questionsEl) questionsEl.textContent = data.total_questions || 0;
-        
+
         // Recent Activities tablosu
         const tbody = document.querySelector('#view-dashboard .smart-table tbody');
         if(tbody && data.recent_activities && data.recent_activities.length > 0) {
@@ -902,7 +901,7 @@ async function loadDashboardStats() {
         } else if(tbody) {
             tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#999;">No recent activities</td></tr>';
         }
-        
+
         console.log('Dashboard loaded:', data);
     } catch(error) {
         console.error('Dashboard error:', error);
@@ -914,25 +913,21 @@ async function loadProjects() {
     try {
         const response = await fetch('/api/projects');
         const projects = await response.json();
-        
+
         const tbody = document.getElementById('projects-table-body');
         if(!tbody) return;
-        
-        if(projects.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#999;">No projects found.</td></tr>';
-            return;
-        }
-        
-        tbody.innerHTML = projects.map(p => `
-            <tr>
-                <td><strong>${p.project_code}</strong></td>
-                <td>${p.project_name}</td>
-                <td>${p.customer_name || '-'}</td>
-                <td><span class="pill ${p.status === 'Active' ? 'green' : 'blue'}">${p.status}</span></td>
-                <td>${p.modules || '-'}</td>
-                <td><button class="btn btn-small" onclick="selectProject(${p.id})">Select</button></td>
-            </tr>
-        `).join('');
+        while(tbody.firstChild) tbody.removeChild(tbody.firstChild);
+        if(projects.length === 0) { const tr = document.createElement('tr'); const td = document.createElement('td'); td.colSpan=6; td.style.textAlign='center'; td.style.color='#999'; td.textContent='No projects found.'; tr.appendChild(td); tbody.appendChild(tr); return; }
+        projects.forEach(p => {
+            const tr = document.createElement('tr');
+            const tdCode = document.createElement('td'); const strong = document.createElement('strong'); strong.textContent = p.project_code; tdCode.appendChild(strong); tr.appendChild(tdCode);
+            const tdName = document.createElement('td'); tdName.textContent = p.project_name; tr.appendChild(tdName);
+            const tdCust = document.createElement('td'); tdCust.textContent = p.customer_name || '-'; tr.appendChild(tdCust);
+            const tdStatus = document.createElement('td'); const spanStatus = document.createElement('span'); spanStatus.className = p.status === 'Active' ? 'pill green' : 'pill blue'; spanStatus.textContent = p.status; tdStatus.appendChild(spanStatus); tr.appendChild(tdStatus);
+            const tdModules = document.createElement('td'); tdModules.textContent = p.modules || '-'; tr.appendChild(tdModules);
+            const tdAction = document.createElement('td'); const btn = document.createElement('button'); btn.className='btn btn-small'; btn.textContent='Select'; btn.addEventListener('click', ()=>selectProject(p.id)); tdAction.appendChild(btn); tr.appendChild(tdAction);
+            tbody.appendChild(tr);
+        });
     } catch(error) {
         console.error('Error:', error);
     }
@@ -959,19 +954,19 @@ async function saveNewProject() {
         modules: document.getElementById('projectModules').value,
         status: 'Planning'
     };
-    
+
     if(!data.project_code || !data.project_name) {
         alert('Project Code and Name required!');
         return;
     }
-    
+
     try {
         const response = await fetch('/api/projects', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
         });
-        
+
         if(response.ok) {
             closeNewProjectModal();
             loadProjects();
@@ -987,21 +982,21 @@ async function saveNewProject() {
 async function loadSessionsForGlobalProject() {
     const tbody = document.getElementById('sessions-table-body');
     if(!tbody) return;
-    
+
     if(!globalProjectId) {
         tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#999;">Please select a project from the header first.</td></tr>';
         return;
     }
-    
+
     try {
         const response = await fetch(`/api/sessions?project_id=${globalProjectId}`);
         const sessions = await response.json();
-        
+
         if(sessions.length === 0) {
             tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#999;">No sessions yet. Start a new session!</td></tr>';
             return;
         }
-        
+
         tbody.innerHTML = sessions.map(s => `
             <tr>
                 <td><strong>${s.session_name}</strong></td>
@@ -1037,19 +1032,19 @@ async function saveNewSession() {
         process_name: document.getElementById('sessionProcessArea').value,
         status: 'Planned'
     };
-    
+
     if(!data.session_name || !data.module) {
         alert('Session Name and Module required!');
         return;
     }
-    
+
     try {
         const response = await fetch('/api/sessions', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
         });
-        
+
         if(response.ok) {
             closeNewSessionModal();
             loadSessionsForGlobalProject();
@@ -1076,11 +1071,11 @@ async function loadSessionDetail(sessionId) {
     try {
         const response = await fetch(`/api/sessions/${sessionId}`);
         const session = await response.json();
-        
+
         document.getElementById('sessionDetailTitle').textContent = session.session_name;
         document.getElementById('sessionDetailSubtitle').textContent = `${session.module || 'Module'} | ${session.process_name || 'Process'}`;
         document.getElementById('sessionDetailStatus').textContent = session.status;
-        
+
         loadQuestionsForSession(sessionId);
         loadGapsForSession(sessionId);
     } catch(error) {
@@ -1092,13 +1087,13 @@ async function loadQuestionsForSession(sessionId) {
     try {
         const response = await fetch(`/api/questions?session_id=${sessionId}`);
         const questions = await response.json();
-        
+
         const container = document.getElementById('questionsContainer');
         if(questions.length === 0) {
             container.innerHTML = '<div style="text-align:center;color:#999;padding:40px;">No questions yet.</div>';
             return;
         }
-        
+
         container.innerHTML = questions.map((q, i) => `
             <div class="smart-card" style="margin-bottom:10px;padding:15px;background:#f8f9fa;">
                 <strong style="color:var(--primary);">Q${i+1}: ${q.question_text}</strong>
@@ -1116,13 +1111,13 @@ async function loadGapsForSession(sessionId) {
     try {
         const response = await fetch(`/api/fitgap?session_id=${sessionId}`);
         const gaps = await response.json();
-        
+
         const tbody = document.getElementById('fitgap-table-body');
         if(gaps.length === 0) {
             tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#999;">No gaps yet.</td></tr>';
             return;
         }
-        
+
         tbody.innerHTML = gaps.map(g => `
             <tr>
                 <td><strong>${g.gap_id || 'GAP-' + g.id}</strong></td>
@@ -1148,9 +1143,9 @@ async function saveNewQuestion() {
         question_text: document.getElementById('newQuestionText').value,
         answer_text: document.getElementById('newAnswerText').value
     };
-    
+
     if(!data.question_text) { alert('Question required!'); return; }
-    
+
     try {
         const response = await fetch('/api/questions', {
             method: 'POST',
@@ -1174,9 +1169,9 @@ async function saveNewGap() {
         priority: document.getElementById('newGapPriority').value,
         resolution_type: document.getElementById('newGapResolution').value
     };
-    
+
     if(!data.description) { alert('Description required!'); return; }
-    
+
     try {
         const response = await fetch('/api/fitgap', {
             method: 'POST',
@@ -1195,10 +1190,10 @@ async function loadRequirements() {
     try {
         let url = '/api/requirements';
         if(globalProjectId) url += `?project_id=${globalProjectId}`;
-        
+
         const response = await fetch(url);
         const requirements = await response.json();
-        
+
         renderRequirementsTable(requirements);
         updateRequirementsTabs(requirements);
     } catch(error) {
@@ -1209,12 +1204,12 @@ async function loadRequirements() {
 function renderRequirementsTable(requirements) {
     const tbody = document.getElementById('requirements-table-body');
     if(!tbody) return;
-    
+
     if(requirements.length === 0) {
         tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#999;">No requirements found.</td></tr>';
         return;
     }
-    
+
     tbody.innerHTML = requirements.map(req => `
         <tr onclick="loadRequirementDetails(${req.id})">
             <td><b>${req.code || '-'}</b></td>
@@ -1251,7 +1246,7 @@ function saveRequirement() {
         alert('Please select a project first!');
         return;
     }
-    
+
     const data = {
         project_id: globalProjectId,
         code: document.getElementById('newCode').value,
@@ -1259,9 +1254,9 @@ function saveRequirement() {
         module: document.getElementById('newModule').value,
         complexity: document.getElementById('newComplexity').value
     };
-    
+
     if(!data.code || !data.title) { alert('Fill all fields!'); return; }
-    
+
     fetch('/api/requirements', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1294,11 +1289,11 @@ function sendMessage() {
     const input = document.getElementById('chatInput');
     const text = input.value;
     if(!text) return;
-    
+
     const area = document.getElementById('chatArea');
     area.innerHTML += `<div class="message me"><div class="bubble">${text}</div></div>`;
     input.value = '';
-    
+
     setTimeout(() => {
         area.innerHTML += `<div class="message ai"><div class="bubble">AI response here...</div></div>`;
         area.scrollTop = area.scrollHeight;

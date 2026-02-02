@@ -11,12 +11,12 @@
             --bg-app: #F5F6F7;
             --bg-surface: #FFFFFF;
             --bg-sidebar: #1d2330; /* Deep Midnight */
-            
+
             /* Typography */
-            --text-primary: #1D2330;    
+            --text-primary: #1D2330;
             --text-secondary: #5E6977;
             --text-on-dark: #FFFFFF;
-            
+
             /* Brand & AI Colors */
             --primary: #0070F2; /* SAP Blue */
             --primary-hover: #0050c0;
@@ -24,7 +24,7 @@
             --warn: #e9730c;
             --error: #bb0000;
             --ai-gradient: linear-gradient(135deg, #8900B4 0%, #2565AE 100%); /* Magic Purple-Blue */
-            
+
             /* Shapes & Shadows */
             --radius-s: 6px;
             --radius-m: 12px;
@@ -32,7 +32,7 @@
             --shadow-card: 0 2px 12px rgba(0,0,0,0.04);
             --shadow-hover: 0 8px 24px rgba(0,0,0,0.08);
             --border-light: #EAECEF;
-            
+
             /* Dimensions */
             --header-height: 60px;
             --sidenav-width-collapsed: 68px;
@@ -75,7 +75,7 @@
             letter-spacing: -0.5px;
             color: var(--text-primary);
         }
-        
+
         .ai-badge {
             background: var(--ai-gradient);
             color: white;
@@ -143,7 +143,7 @@
         .card-title { font-size: 14px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
         .card-value { font-size: 36px; font-weight: 700; color: var(--text-primary); letter-spacing: -1px; }
         .card-meta { font-size: 13px; color: var(--text-secondary); margin-top: 12px; display: flex; align-items: center; gap: 6px; }
-        
+
         /* Tables */
         .smart-table-container { background: var(--bg-surface); border-radius: var(--radius-l); box-shadow: var(--shadow-card); overflow: hidden; }
         .smart-table { width: 100%; border-collapse: collapse; }
@@ -191,7 +191,7 @@
         .process-step { display: flex; align-items: center; padding: 16px; border-bottom: 1px solid var(--border-light); transition: background 0.2s; }
         .process-step:last-child { border-bottom: none; }
         .process-step:hover { background: #FAFBFC; }
-        .step-icon { 
+        .step-icon {
             width: 40px; height: 40px; border-radius: 8px; background: #E8F2FF; color: var(--primary);
             display: flex; align-items: center; justify-content: center; font-size: 18px; margin-right: 16px;
         }
@@ -237,7 +237,7 @@
         .view { display: none; animation: fadeScale 0.3s ease-out; }
         .view.active { display: block; }
         @keyframes fadeScale { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
-        
+
         .toast {
             position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(100px);
             background: #323232; color: white; padding: 12px 24px; border-radius: 50px;
@@ -296,13 +296,13 @@
                     <div class="nav-icon">📁</div> <span class="nav-text">Projects</span>
                 </div>
     <div class="nav-item" onclick="navTo('config', this)">
-   
+
         <div class="nav-icon">⚙️</div> <span class="nav-text">Settings</span>
     </div>
 </nav>
 
         <main class="content">
-            
+
             <div id="view-dashboard" class="view active">
                 <div class="page-header">
                     <h1 class="page-title">Good Morning, John</h1>
@@ -503,7 +503,7 @@
                         <div style="display: flex; gap: 12px;">
                             <button class="btn btn-secondary">Import from Excel</button>
                             <!-- New Project Modal -->
-        
+
                             <button class="btn btn-ai" onclick="document.getElementById('addModal').style.display='block'">+ New WRICEF</button>
                         </div>
                     </div>
@@ -676,10 +676,10 @@
                 </div>
 
                 <div class="grid-dashboard" style="grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));">
-                    
+
                     <div class="smart-card">
                         <div class="card-title" style="margin-bottom: 20px; font-size: 16px; color: var(--primary);">🤖 AI Model Settings</div>
-                        
+
                         <div class="form-group">
                             <label class="form-label">Default LLM Provider</label>
                             <select class="form-control">
@@ -711,7 +711,7 @@
 
                     <div class="smart-card">
                         <div class="card-title" style="margin-bottom: 20px; font-size: 16px; color: var(--primary);">🔗 Integrations</div>
-                        
+
                         <div class="process-step">
                             <div class="step-icon" style="background: #0052CC; color: white;">J</div>
                             <div style="flex: 1;">
@@ -822,11 +822,11 @@
                     <h1 class="page-title">Projects</h1>
                     <div class="page-subtitle">Manage your SAP implementation projects</div>
                 </div>
-                
+
                 <div style="margin-bottom: 20px;">
                     <button class="btn btn-primary" onclick="openNewProjectModal()">+ New Project</button>
                 </div>
-                
+
                 <div class="smart-table-container">
                     <table class="smart-table">
                         <thead>
@@ -863,13 +863,13 @@ let currentFilter = { module: '', status: '', search: '' };
 // ============== UYGULAMA BAŞLATICI ==============
 async function initializeApp() {
     await loadGlobalProjectDropdown();
-    
+
     if(globalProjectId) {
         const select = document.getElementById('globalProjectSelect');
         if(select) select.value = globalProjectId;
         await updateProjectStatus();
     }
-    
+
     navTo('dashboard');
 }
 
@@ -877,13 +877,15 @@ async function loadGlobalProjectDropdown() {
     try {
         const response = await fetch('/api/projects');
         const projects = await response.json();
-        
+
         const select = document.getElementById('globalProjectSelect');
         if(!select) return;
-        
-        select.innerHTML = '<option value="">-- Select Project --</option>';
+
+        // populate using safe DOM methods
+        while(select.firstChild) select.removeChild(select.firstChild);
+        const defaultOpt = document.createElement('option'); defaultOpt.value = ''; defaultOpt.textContent = '-- Select Project --'; select.appendChild(defaultOpt);
         projects.forEach(p => {
-            select.innerHTML += `<option value="${p.id}">${p.project_code} - ${p.project_name}</option>`;
+            const opt = document.createElement('option'); opt.value = p.id; opt.textContent = `${p.project_code} - ${p.project_name}`; select.appendChild(opt);
         });
     } catch(error) {
         console.error('Error loading projects:', error);
@@ -893,7 +895,7 @@ async function loadGlobalProjectDropdown() {
 async function onGlobalProjectChange() {
     const select = document.getElementById('globalProjectSelect');
     globalProjectId = select.value;
-    
+
     if(!globalProjectId) {
         localStorage.removeItem('selectedProjectId');
         document.getElementById('globalProjectStatus').style.display = 'none';
@@ -902,14 +904,14 @@ async function onGlobalProjectChange() {
         await updateProjectStatus();
         showToast('Project selected!');
     }
-    
+
     refreshCurrentView();
 }
 
 async function updateProjectStatus() {
     const statusBadge = document.getElementById('globalProjectStatus');
     if(!statusBadge || !globalProjectId) return;
-    
+
     try {
         const response = await fetch(`/api/projects/${globalProjectId}`);
         const project = await response.json();
@@ -932,7 +934,7 @@ function refreshCurrentView() {
 function navTo(viewId, navEl) {
     // 1. Sidebar güncelle
     document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-    
+
     if(navEl) {
         navEl.classList.add('active');
     } else {
@@ -965,10 +967,10 @@ async function loadDashboardStats() {
         if(globalProjectId) {
             url += `?project_id=${globalProjectId}`;
         }
-        
+
         const response = await fetch(url);
         const data = await response.json();
-        
+
         // Proje bilgisi güncelle
         const subtitleEl = document.querySelector('#view-dashboard .page-subtitle');
         if(subtitleEl) {
@@ -978,35 +980,43 @@ async function loadDashboardStats() {
                 subtitleEl.textContent = 'Select a project from header to see project-specific data';
             }
         }
-        
+
         // İstatistik kartları
         const projectsEl = document.querySelector('.stat-projects');
         if(projectsEl) projectsEl.textContent = data.total_projects || 0;
-        
+
         const gapsEl = document.querySelector('.stat-gaps');
         if(gapsEl) gapsEl.textContent = data.total_gaps || 0;
-        
+
         const sessionsEl = document.querySelector('.stat-sessions');
         if(sessionsEl) sessionsEl.textContent = data.total_sessions || 0;
-        
+
         const questionsEl = document.querySelector('.stat-questions');
         if(questionsEl) questionsEl.textContent = data.total_questions || 0;
-        
+
         // Recent Activities tablosu
         const tbody = document.querySelector('#view-dashboard .smart-table tbody');
-        if(tbody && data.recent_activities && data.recent_activities.length > 0) {
-            tbody.innerHTML = data.recent_activities.map(activity => `
-                <tr onclick="openSession(${activity.id})">
-                    <td><b>${activity.session_name}</b></td>
-                    <td><span class="pill blue">${activity.module || '-'}</span></td>
-                    <td><span class="pill ${activity.status === 'Completed' ? 'green' : 'orange'}">${activity.status}</span></td>
-                    <td>${activity.created_at ? 'Recently' : '-'}</td>
-                </tr>
-            `).join('');
-        } else if(tbody) {
-            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#999;">No recent activities</td></tr>';
+        if(tbody) {
+            while(tbody.firstChild) tbody.removeChild(tbody.firstChild);
+            if(data.recent_activities && data.recent_activities.length > 0) {
+                data.recent_activities.forEach(activity => {
+                    const tr = document.createElement('tr');
+                    tr.tabIndex = 0; tr.setAttribute('role','button');
+                    tr.addEventListener('click', () => openSession(activity.id));
+                    tr.addEventListener('keydown', (e) => { if(e.key === 'Enter' || e.key === ' ') openSession(activity.id); });
+
+                    const td1 = document.createElement('td'); const b = document.createElement('b'); b.textContent = activity.session_name; td1.appendChild(b); tr.appendChild(td1);
+                    const td2 = document.createElement('td'); const spanModule = document.createElement('span'); spanModule.className = 'pill blue'; spanModule.textContent = activity.module || '-'; td2.appendChild(spanModule); tr.appendChild(td2);
+                    const td3 = document.createElement('td'); const spanStatus = document.createElement('span'); spanStatus.className = activity.status === 'Completed' ? 'pill green' : 'pill orange'; spanStatus.textContent = activity.status; td3.appendChild(spanStatus); tr.appendChild(td3);
+                    const td4 = document.createElement('td'); td4.textContent = activity.created_at ? 'Recently' : '-'; tr.appendChild(td4);
+
+                    tbody.appendChild(tr);
+                });
+            } else {
+                const tr = document.createElement('tr'); const td = document.createElement('td'); td.colSpan = 4; td.style.textAlign = 'center'; td.style.color = '#999'; td.textContent = 'No recent activities'; tr.appendChild(td); tbody.appendChild(tr);
+            }
         }
-        
+
         console.log('Dashboard loaded:', data);
     } catch(error) {
         console.error('Dashboard error:', error);
@@ -1018,25 +1028,24 @@ async function loadProjects() {
     try {
         const response = await fetch('/api/projects');
         const projects = await response.json();
-        
+
         const tbody = document.getElementById('projects-table-body');
         if(!tbody) return;
-        
+
+        while(tbody.firstChild) tbody.removeChild(tbody.firstChild);
         if(projects.length === 0) {
-            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#999;">No projects found.</td></tr>';
-            return;
+            const tr = document.createElement('tr'); const td = document.createElement('td'); td.colSpan = 6; td.style.textAlign='center'; td.style.color='#999'; td.textContent='No projects found.'; tr.appendChild(td); tbody.appendChild(tr); return;
         }
-        
-        tbody.innerHTML = projects.map(p => `
-            <tr>
-                <td><strong>${p.project_code}</strong></td>
-                <td>${p.project_name}</td>
-                <td>${p.customer_name || '-'}</td>
-                <td><span class="pill ${p.status === 'Active' ? 'green' : 'blue'}">${p.status}</span></td>
-                <td>${p.modules || '-'}</td>
-                <td><button class="btn btn-small" onclick="selectProject(${p.id})">Select</button></td>
-            </tr>
-        `).join('');
+        projects.forEach(p => {
+            const tr = document.createElement('tr');
+            const tdCode = document.createElement('td'); const strong = document.createElement('strong'); strong.textContent = p.project_code; tdCode.appendChild(strong); tr.appendChild(tdCode);
+            const tdName = document.createElement('td'); tdName.textContent = p.project_name; tr.appendChild(tdName);
+            const tdCust = document.createElement('td'); tdCust.textContent = p.customer_name || '-'; tr.appendChild(tdCust);
+            const tdStatus = document.createElement('td'); const spanStatus = document.createElement('span'); spanStatus.className = p.status === 'Active' ? 'pill green' : 'pill blue'; spanStatus.textContent = p.status; tdStatus.appendChild(spanStatus); tr.appendChild(tdStatus);
+            const tdModules = document.createElement('td'); tdModules.textContent = p.modules || '-'; tr.appendChild(tdModules);
+            const tdAction = document.createElement('td'); const btn = document.createElement('button'); btn.className='btn btn-small'; btn.textContent='Select'; btn.addEventListener('click', ()=>selectProject(p.id)); tdAction.appendChild(btn); tr.appendChild(tdAction);
+            tbody.appendChild(tr);
+        });
     } catch(error) {
         console.error('Error:', error);
     }
@@ -1063,19 +1072,19 @@ async function saveNewProject() {
         modules: document.getElementById('projectModules').value,
         status: 'Planning'
     };
-    
+
     if(!data.project_code || !data.project_name) {
         alert('Project Code and Name required!');
         return;
     }
-    
+
     try {
         const response = await fetch('/api/projects', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
         });
-        
+
         if(response.ok) {
             closeNewProjectModal();
             loadProjects();
@@ -1091,21 +1100,21 @@ async function saveNewProject() {
 async function loadSessionsForGlobalProject() {
     const tbody = document.getElementById('sessions-table-body');
     if(!tbody) return;
-    
+
     if(!globalProjectId) {
         tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#999;">Please select a project from the header first.</td></tr>';
         return;
     }
-    
+
     try {
         const response = await fetch(`/api/sessions?project_id=${globalProjectId}`);
         const sessions = await response.json();
-        
+
         if(sessions.length === 0) {
             tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#999;">No sessions yet. Start a new session!</td></tr>';
             return;
         }
-        
+
         tbody.innerHTML = sessions.map(s => `
             <tr>
                 <td><strong>${s.session_name}</strong></td>
@@ -1141,19 +1150,19 @@ async function saveNewSession() {
         process_name: document.getElementById('sessionProcessArea').value,
         status: 'Planned'
     };
-    
+
     if(!data.session_name || !data.module) {
         alert('Session Name and Module required!');
         return;
     }
-    
+
     try {
         const response = await fetch('/api/sessions', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
         });
-        
+
         if(response.ok) {
             closeNewSessionModal();
             loadSessionsForGlobalProject();
@@ -1180,11 +1189,11 @@ async function loadSessionDetail(sessionId) {
     try {
         const response = await fetch(`/api/sessions/${sessionId}`);
         const session = await response.json();
-        
+
         document.getElementById('sessionDetailTitle').textContent = session.session_name;
         document.getElementById('sessionDetailSubtitle').textContent = `${session.module || 'Module'} | ${session.process_name || 'Process'}`;
         document.getElementById('sessionDetailStatus').textContent = session.status;
-        
+
         loadQuestionsForSession(sessionId);
         loadGapsForSession(sessionId);
     } catch(error) {
@@ -1196,13 +1205,13 @@ async function loadQuestionsForSession(sessionId) {
     try {
         const response = await fetch(`/api/questions?session_id=${sessionId}`);
         const questions = await response.json();
-        
+
         const container = document.getElementById('questionsContainer');
         if(questions.length === 0) {
             container.innerHTML = '<div style="text-align:center;color:#999;padding:40px;">No questions yet.</div>';
             return;
         }
-        
+
         container.innerHTML = questions.map((q, i) => `
             <div class="smart-card" style="margin-bottom:10px;padding:15px;background:#f8f9fa;">
                 <strong style="color:var(--primary);">Q${i+1}: ${q.question_text}</strong>
@@ -1220,13 +1229,13 @@ async function loadGapsForSession(sessionId) {
     try {
         const response = await fetch(`/api/fitgap?session_id=${sessionId}`);
         const gaps = await response.json();
-        
+
         const tbody = document.getElementById('fitgap-table-body');
         if(gaps.length === 0) {
             tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#999;">No gaps yet.</td></tr>';
             return;
         }
-        
+
         tbody.innerHTML = gaps.map(g => `
             <tr>
                 <td><strong>${g.gap_id || 'GAP-' + g.id}</strong></td>
@@ -1252,9 +1261,9 @@ async function saveNewQuestion() {
         question_text: document.getElementById('newQuestionText').value,
         answer_text: document.getElementById('newAnswerText').value
     };
-    
+
     if(!data.question_text) { alert('Question required!'); return; }
-    
+
     try {
         const response = await fetch('/api/questions', {
             method: 'POST',
@@ -1278,9 +1287,9 @@ async function saveNewGap() {
         priority: document.getElementById('newGapPriority').value,
         resolution_type: document.getElementById('newGapResolution').value
     };
-    
+
     if(!data.description) { alert('Description required!'); return; }
-    
+
     try {
         const response = await fetch('/api/fitgap', {
             method: 'POST',
@@ -1300,27 +1309,27 @@ let currentDocFilter = 'all';
 async function loadDocuments() {
     const tbody = document.getElementById('documents-table-body');
     if(!tbody) return;
-    
+
     if(!globalProjectId) {
         tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#999;">Please select a project from the header first.</td></tr>';
         return;
     }
-    
+
     try {
         const response = await fetch(`/api/documents?project_id=${globalProjectId}`);
         const documents = await response.json();
-        
+
         // Filter if needed
         let filtered = documents;
         if(currentDocFilter !== 'all') {
             filtered = documents.filter(d => d.document_type === currentDocFilter);
         }
-        
+
         if(filtered.length === 0) {
             tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#999;">No documents found. Create your first document!</td></tr>';
             return;
         }
-        
+
         tbody.innerHTML = filtered.map(doc => `
             <tr onclick="openDocument(${doc.id})">
                 <td><strong>${doc.document_type}-${doc.requirement_code}</strong></td>
@@ -1346,36 +1355,36 @@ function filterDocuments(type, tabEl) {
 
 async function openDocument(docId) {
     currentDocumentId = docId;
-    
+
     try {
         const response = await fetch(`/api/documents/${docId}`);
         const doc = await response.json();
-        
+
         // Update header
         document.getElementById('docDetailTitle').textContent = `${doc.document_type}-${doc.requirement_code}`;
         document.getElementById('docDetailSubtitle').textContent = `${doc.requirement_title || 'Requirement'} • ${doc.document_type === 'FS' ? 'Functional Spec' : 'Technical Spec'}`;
         document.getElementById('docDetailStatus').textContent = doc.status || 'Draft';
         document.getElementById('docDetailStatus').className = `pill ${doc.status === 'Approved' ? 'green' : 'blue'}`;
-        
+
         // Update overview
         document.getElementById('docInfoType').textContent = doc.document_type === 'FS' ? 'Functional Spec' : 'Technical Spec';
         document.getElementById('docInfoVersion').textContent = 'v' + (doc.version || '1.0');
         document.getElementById('docInfoTemplate').textContent = doc.template_used || 'Standard';
         document.getElementById('docInfoStatus').textContent = doc.status || 'Draft';
-        
+
         // Update content
         document.getElementById('docContentArea').value = doc.content || '';
-        
+
         // Switch view
         document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
         document.getElementById('view-document-detail').classList.add('active');
-        
+
         // Reset tabs
         document.querySelectorAll('#view-document-detail .tab-item').forEach(t => t.classList.remove('active'));
         document.querySelector('#view-document-detail .tab-item').classList.add('active');
         document.querySelectorAll('#view-document-detail .tab-content').forEach(c => c.style.display = 'none');
         document.getElementById('doc-overview').style.display = 'block';
-        
+
     } catch(error) {
         console.error('Error:', error);
         showToast('Error loading document');
@@ -1413,7 +1422,7 @@ async function loadRequirementsForDocModal() {
     try {
         const response = await fetch(`/api/requirements?project_id=${globalProjectId}`);
         const requirements = await response.json();
-        
+
         const select = document.getElementById('docRequirementSelect');
         select.innerHTML = '<option value="">-- Select Requirement --</option>';
         requirements.forEach(r => {
@@ -1431,19 +1440,19 @@ async function saveNewDocument() {
         template_used: document.getElementById('docTemplateSelect').value,
         status: 'Draft'
     };
-    
+
     if(!data.requirement_id || !data.document_type) {
         alert('Please select requirement and document type!');
         return;
     }
-    
+
     try {
         const response = await fetch('/api/documents', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
         });
-        
+
         if(response.ok) {
             closeNewDocumentModal();
             loadDocuments();
@@ -1456,16 +1465,16 @@ async function saveNewDocument() {
 
 async function saveDocumentContent() {
     if(!currentDocumentId) return;
-    
+
     const content = document.getElementById('docContentArea').value;
-    
+
     try {
         const response = await fetch(`/api/documents/${currentDocumentId}`, {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ content: content })
         });
-        
+
         if(response.ok) {
             showToast('Content saved!');
         }
@@ -1483,13 +1492,15 @@ function sendDocChat() {
     const input = document.getElementById('docChatInput');
     const text = input.value;
     if(!text) return;
-    
+
     const area = document.getElementById('docChatArea');
-    area.innerHTML += `<div style="text-align:right;margin-bottom:10px;"><span style="background:var(--primary);color:white;padding:8px 12px;border-radius:12px;">${text}</span></div>`;
+    const userWrap = document.createElement('div'); userWrap.style.textAlign='right'; userWrap.style.marginBottom='10px';
+    const userSpan = document.createElement('span'); userSpan.style.cssText = 'background:var(--primary);color:white;padding:8px 12px;border-radius:12px;'; userSpan.textContent = text; userWrap.appendChild(userSpan); area.appendChild(userWrap);
     input.value = '';
-    
+
     setTimeout(() => {
-        area.innerHTML += `<div style="margin-bottom:10px;"><span style="background:white;padding:8px 12px;border-radius:12px;border:1px solid #ddd;">AI: I'll help you with "${text}". This feature is coming soon!</span></div>`;
+        const aiWrap = document.createElement('div'); aiWrap.style.marginBottom='10px';
+        const aiSpan = document.createElement('span'); aiSpan.style.cssText = 'background:white;padding:8px 12px;border-radius:12px;border:1px solid #ddd;'; aiSpan.textContent = `AI: I'll help you with "${text}". This feature is coming soon!`; aiWrap.appendChild(aiSpan); area.appendChild(aiWrap);
         area.scrollTop = area.scrollHeight;
     }, 500);
 }// ============== TESTING ==============
@@ -1498,30 +1509,30 @@ let currentTestFilter = 'all';
 async function loadTestCases() {
     const tbody = document.getElementById('testcases-table-body');
     if(!tbody) return;
-    
+
     if(!globalProjectId) {
         tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#999;">Please select a project from the header first.</td></tr>';
         updateTestStats([]);
         return;
     }
-    
+
     try {
         const response = await fetch(`/api/testcases?project_id=${globalProjectId}`);
         const testcases = await response.json();
-        
+
         updateTestStats(testcases);
-        
+
         // Filter if needed
         let filtered = testcases;
         if(currentTestFilter !== 'all') {
             filtered = testcases.filter(tc => tc.status === currentTestFilter);
         }
-        
+
         if(filtered.length === 0) {
             tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#999;">No test cases found.</td></tr>';
             return;
         }
-        
+
         tbody.innerHTML = filtered.map(tc => `
             <tr>
                 <td><strong>${tc.test_case_id || 'TC-' + tc.id}</strong></td>
@@ -1550,12 +1561,12 @@ function updateTestStats(testcases) {
     const passed = testcases.filter(tc => tc.status === 'Passed').length;
     const failed = testcases.filter(tc => tc.status === 'Failed').length;
     const pending = testcases.filter(tc => tc.status === 'Not Started').length;
-    
+
     const totalEl = document.querySelector('.stat-total-tests');
     const passedEl = document.querySelector('.stat-passed-tests');
     const failedEl = document.querySelector('.stat-failed-tests');
     const pendingEl = document.querySelector('.stat-pending-tests');
-    
+
     if(totalEl) totalEl.textContent = total;
     if(passedEl) passedEl.textContent = passed;
     if(failedEl) failedEl.textContent = failed;
@@ -1576,7 +1587,7 @@ async function updateTestStatus(tcId, status) {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ status: status, executed_by: 'Current User' })
         });
-        
+
         if(response.ok) {
             showToast(`Test status updated to ${status}`);
             loadTestCases();
@@ -1607,7 +1618,7 @@ async function loadDocumentsForTestModal() {
     try {
         const response = await fetch(`/api/documents?project_id=${globalProjectId}`);
         const documents = await response.json();
-        
+
         const select = document.getElementById('testDocumentSelect');
         select.innerHTML = '<option value="">-- Select FS/TS Document --</option>';
         documents.forEach(d => {
@@ -1629,19 +1640,19 @@ async function saveNewTestCase() {
         expected_result: document.getElementById('testExpectedResult').value,
         status: 'Not Started'
     };
-    
+
     if(!data.fs_ts_id || !data.test_scenario) {
         alert('Please select document and enter test scenario!');
         return;
     }
-    
+
     try {
         const response = await fetch('/api/testcases', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(data)
         });
-        
+
         if(response.ok) {
             closeNewTestCaseModal();
             loadTestCases();
@@ -1662,10 +1673,10 @@ async function loadRequirements() {
     try {
         let url = '/api/requirements';
         if(globalProjectId) url += `?project_id=${globalProjectId}`;
-        
+
         const response = await fetch(url);
         const requirements = await response.json();
-        
+
         renderRequirementsTable(requirements);
         updateRequirementsTabs(requirements);
     } catch(error) {
@@ -1676,12 +1687,12 @@ async function loadRequirements() {
 function renderRequirementsTable(requirements) {
     const tbody = document.getElementById('requirements-table-body');
     if(!tbody) return;
-    
+
     if(requirements.length === 0) {
         tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#999;">No requirements found.</td></tr>';
         return;
     }
-    
+
     tbody.innerHTML = requirements.map(req => `
         <tr onclick="loadRequirementDetails(${req.id})">
             <td><b>${req.code || '-'}</b></td>
@@ -1718,7 +1729,7 @@ function saveRequirement() {
         alert('Please select a project first!');
         return;
     }
-    
+
     const data = {
         project_id: globalProjectId,
         code: document.getElementById('newCode').value,
@@ -1726,9 +1737,9 @@ function saveRequirement() {
         module: document.getElementById('newModule').value,
         complexity: document.getElementById('newComplexity').value
     };
-    
+
     if(!data.code || !data.title) { alert('Fill all fields!'); return; }
-    
+
     fetch('/api/requirements', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -1748,20 +1759,20 @@ async function generateAIContent() {
         showToast('Please open a document first');
         return;
     }
-    
+
     const btn = document.querySelector('#view-document-detail .btn-ai');
     const originalText = btn.innerHTML;
     btn.innerHTML = '<span>⏳</span> Generating...';
     btn.disabled = true;
-    
+
     try {
         // Get document info
         const docResponse = await fetch(`/api/documents/${currentDocumentId}`);
         const doc = await docResponse.json();
-        
+
         // Determine endpoint based on document type
         const endpoint = doc.document_type === 'FS' ? '/api/ai/generate-fs' : '/api/ai/generate-ts';
-        
+
         const response = await fetch(endpoint, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -1771,17 +1782,17 @@ async function generateAIContent() {
                 module: doc.requirement_code ? doc.requirement_code.split('_')[1] : 'MM'
             })
         });
-        
+
         const result = await response.json();
-        
+
         if(result.status === 'success') {
             // Update content area
             document.getElementById('docContentArea').value = result.content;
-            
+
             // Switch to content tab
             const contentTab = document.querySelectorAll('#view-document-detail .tab-item')[1];
             switchDocTab('doc-content', contentTab);
-            
+
             showToast(`✨ AI generated ${doc.document_type} content! (${result.tokens_used} tokens)`);
         }
     } catch(error) {
@@ -1797,15 +1808,15 @@ async function getAIInsights() {
         showToast('Please select a project first');
         return;
     }
-    
+
     const insightEl = document.getElementById('ai-insight-text');
     insightEl.innerHTML = '🤖 Analyzing project data...';
-    
+
     try {
         // Get project stats
         const response = await fetch(`/api/dashboard/stats?project_id=${globalProjectId}`);
         const stats = await response.json();
-        
+
         // Generate mock insight based on real data
         const insights = [
             `📊 I found ${stats.total_gaps} gaps in this project. ${stats.total_gaps > 5 ? 'Consider prioritizing critical gaps first.' : 'Gap count is manageable.'}`,
@@ -1813,28 +1824,28 @@ async function getAIInsights() {
             `💡 Based on the current progress, I recommend focusing on completing gap resolutions before moving to testing phase.`,
             `🎯 Project "${stats.project_name}" is ${stats.project_status}. ${stats.total_gaps > 0 ? 'There are gaps that need attention.' : 'Looking good!'}`
         ];
-        
+
         // Simulate delay
         setTimeout(() => {
             insightEl.innerHTML = insights[Math.floor(Math.random() * insights.length)];
         }, 1000);
-        
+
     } catch(error) {
         insightEl.innerHTML = 'Error getting insights';
     }
 }
 async function analyzeGapWithAI(gapId, description) {
     showToast('🤖 AI analyzing gap...');
-    
+
     try {
         const response = await fetch('/api/ai/analyze-gap', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ description: description })
         });
-        
+
         const result = await response.json();
-        
+
         if(result.status === 'success') {
             const analysis = result.analysis;
             alert(`🤖 AI Analysis (${result.confidence}% confidence)\n\n` +
@@ -1853,9 +1864,9 @@ async function sendDocChat() {
     const input = document.getElementById('docChatInput');
     const text = input.value.trim();
     if(!text) return;
-    
+
     const area = document.getElementById('docChatArea');
-    
+
     // Add user message
     area.innerHTML += `
         <div style="text-align:right;margin-bottom:10px;">
@@ -1863,26 +1874,26 @@ async function sendDocChat() {
         </div>`;
     input.value = '';
     area.scrollTop = area.scrollHeight;
-    
+
     // Show typing indicator
-    area.innerHTML += `<div id="typing-indicator" style="margin-bottom:10px;"><span style="color:#999;">🤖 AI is typing...</span></div>`;
+    const typing = document.createElement('div'); typing.id = 'typing-indicator'; typing.style.marginBottom = '10px'; const typingSpan = document.createElement('span'); typingSpan.style.color = '#999'; typingSpan.textContent = '🤖 AI is typing...'; typing.appendChild(typingSpan); area.appendChild(typing);
     area.scrollTop = area.scrollHeight;
-    
+
     try {
         const response = await fetch('/api/ai/chat', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ 
+            body: JSON.stringify({
                 message: text,
                 context: document.getElementById('docContentArea')?.value || ''
             })
         });
-        
+
         const result = await response.json();
-        
+
         // Remove typing indicator
         document.getElementById('typing-indicator')?.remove();
-        
+
         if(result.status === 'success') {
             // Add AI response
             area.innerHTML += `
@@ -1892,7 +1903,7 @@ async function sendDocChat() {
                         ${result.response}
                     </div>
                 </div>`;
-            
+
             // Add suggestion buttons
             if(result.suggestions && result.suggestions.length > 0) {
                 area.innerHTML += `
@@ -1905,7 +1916,7 @@ async function sendDocChat() {
         document.getElementById('typing-indicator')?.remove();
         area.innerHTML += `<div style="margin-bottom:10px;"><span style="color:var(--error);">Error getting AI response</span></div>`;
     }
-    
+
     area.scrollTop = area.scrollHeight;
 }
 
@@ -1915,7 +1926,7 @@ async function askAIAboutGap() {
         showToast('Please enter a gap description first');
         return;
     }
-    
+
     await analyzeGapWithAI(null, gapDesc);
 }
 // ============== UTILITIES ==============
@@ -1938,11 +1949,11 @@ function sendMessage() {
     const input = document.getElementById('chatInput');
     const text = input.value;
     if(!text) return;
-    
+
     const area = document.getElementById('chatArea');
     area.innerHTML += `<div class="message me"><div class="bubble">${text}</div></div>`;
     input.value = '';
-    
+
     setTimeout(() => {
         area.innerHTML += `<div class="message ai"><div class="bubble">AI response here...</div></div>`;
         area.scrollTop = area.scrollHeight;
@@ -2174,6 +2185,6 @@ document.addEventListener('DOMContentLoaded', initializeApp);
         <button class="btn btn-secondary" onclick="closeNewTestCaseModal()">Cancel</button>
     </div>
 </div>
-<div id="testCaseModalOverlay" class="modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:999;" onclick="closeNewTestCaseModal()"></div>    
+<div id="testCaseModalOverlay" class="modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:999;" onclick="closeNewTestCaseModal()"></div>
 </body>
 </html>
