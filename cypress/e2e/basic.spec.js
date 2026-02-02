@@ -7,7 +7,8 @@ describe('Basic UI & accessibility checks', () => {
     cy.title().should('include', 'AI Project Co-Pilot');
 
     // Activate Projects view via the app nav and open New Project modal
-    // Click the actual sidebar item so the onclick handler fires reliably
+    // Wait until the app's navTo function is available and click the sidebar item
+    cy.window().then(win => expect(typeof win.navTo).to.equal('function'));
     cy.get('.nav-item').contains('Projects').click();
     cy.get('#view-projects').should('have.class', 'active').and('be.visible');
     cy.get('#view-projects').contains('+ New Project').click();
@@ -22,6 +23,7 @@ describe('Basic UI & accessibility checks', () => {
   it('prevents XSS in document chat (sanitizes input)', () => {
     cy.visit('/');
     // Activate Design view via the app nav
+    cy.window().then(win => expect(typeof win.navTo).to.equal('function'));
     cy.get('.nav-item').contains('Design').click();
     cy.get('#view-design').should('have.class', 'active').and('be.visible');
     cy.wait(500);
