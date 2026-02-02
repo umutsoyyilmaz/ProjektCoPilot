@@ -35,7 +35,7 @@ jobs:
           pip install -r requirements.txt
           # Dev dependencies (formatters, test tools)
           if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
-          pip install black isort flake8 pytest pre-commit
+          pip install black isort flake8 pytest pytest-cov pre-commit
 
       - name: Run Black (check) (exclude backups)
         run: black --check --exclude "(^|/)(backups)/" .
