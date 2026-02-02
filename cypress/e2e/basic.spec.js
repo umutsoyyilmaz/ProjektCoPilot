@@ -14,8 +14,9 @@ describe('Basic UI & accessibility checks', () => {
     cy.injectAxe();
     // Log axe violations to the CI output for easier debugging
     cy.checkA11y(null, null, (violations) => {
+      let simplified = [];
       if (violations.length) {
-        const simplified = violations.map(v => ({
+        simplified = violations.map(v => ({
           id: v.id,
           impact: v.impact,
           description: v.description,
