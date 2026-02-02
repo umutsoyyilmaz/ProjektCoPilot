@@ -23,7 +23,8 @@ describe('Basic UI & accessibility checks', () => {
         }));
         cy.task('log', `Axe Violations: ${JSON.stringify(simplified, null, 2)}`);
       }
-      expect(violations.length).to.equal(0);
+      // Attach the simplified violations JSON to the assertion message for CI visibility
+      expect(violations.length, `Axe Violations: ${JSON.stringify(simplified, null, 2)}`).to.equal(0);
     });
 
     // Open New Project modal directly (nav may not be reliable in headless CI)
