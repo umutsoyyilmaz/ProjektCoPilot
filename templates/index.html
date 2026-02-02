@@ -1048,11 +1048,20 @@ function selectProject(id) {
 }
 
 function openNewProjectModal() {
-    document.getElementById('newProjectModal').style.display = 'block';
+    const modal = document.getElementById('newProjectModal');
+    const overlay = document.getElementById('projectModalOverlay');
+    if(modal) {
+        modal.style.display = 'block';
+        modal.focus();
+    }
+    if(overlay) overlay.style.display = 'block';
 }
 
 function closeNewProjectModal() {
-    document.getElementById('newProjectModal').style.display = 'none';
+    const modal = document.getElementById('newProjectModal');
+    const overlay = document.getElementById('projectModalOverlay');
+    if(modal) modal.style.display = 'none';
+    if(overlay) overlay.style.display = 'none';
 }
 
 async function saveNewProject() {
@@ -1991,8 +2000,8 @@ document.addEventListener('DOMContentLoaded', initializeApp);
         <button class="btn btn-ai" onclick="saveRequirement()">Save to Database</button>
     </div>
 </div>
-<div id="newProjectModal" class="smart-card" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); z-index:1000; width:500px; border: 2px solid var(--primary); background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
-            <h3 style="margin-top:0;">Create New Project</h3>
+<div id="newProjectModal" class="smart-card" role="dialog" aria-modal="true" aria-labelledby="newProjectModalTitle" tabindex="-1" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); z-index:1000; width:500px; border: 2px solid var(--primary); background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
+            <h3 id="newProjectModalTitle" style="margin-top:0;">Create New Project</h3>
             <div class="form-group">
                 <label class="form-label">Project Code</label>
                 <input type="text" id="projectCode" class="form-control" placeholder="e.g., PRJ-2026-002">
