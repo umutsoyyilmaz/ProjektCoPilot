@@ -10,6 +10,62 @@ def get_db_connection():
     conn.row_factory = sqlite3.Row
     return conn
 
+def generate_auto_id(project_id, item_type):
+    """
+    Proje bazlı otomatik ID üretir
+    item_type: Q (Question), G (Gap), D (Decision), R (Risk), I (Issue), A (Action), W (Workshop)
+    """
+    conn = get_db_connection()
+    
+    # Proje kodunu al
+    project = conn.execute("SELECT project_code FROM projects WHERE id = ?", (project_id,)).fetchone()
+    project_code = project["project_code"] if project else f"P{project_id}"
+    
+    # Tabloya göre sayacı bul
+    table_map = {
+        "Q": ("questions", "question_id"),
+        "G": ("fitgap", "gap_id"),
+        "D": ("decisions", "decision_id"),
+        "R": ("risks_issues", "item_id"),
+        "I": ("risks_issues", "item_id"),
+        "A": ("action_items", "action_id"),
+        "W": ("analysis_sessions", "session_code"),
+        "S": ("scenarios", "scenario_id"),
+        "WR": ("wricef", "wricef_id"),
+        "C": ("configs", "config_id"),
+    }
+    
+    if item_type not in table_map:
+        conn.close()
+        return None
+    
+    table, id_column = table_map[item_type]
+    
+    # Bu proje için bu tipteki son ID yi bul
+    pattern = f"{project_code}-{item_type}%"
+    
+    if table == "risks_issues":
+        type_filter = "Risk" if item_type == "R" else "Issue"
+        result = conn.execute(f"SELECT {id_column} FROM {table} WHERE {id_column} LIKE ? AND type = ? ORDER BY id DESC LIMIT 1", (pattern, type_filter)).fetchone()
+    elif table == "analysis_sessions":
+        result = conn.execute(f"SELECT session_code FROM {table} WHERE project_id = ? ORDER BY id DESC LIMIT 1", (project_id,)).fetchone()
+    else:
+        result = conn.execute(f"SELECT {id_column} FROM {table} WHERE {id_column} LIKE ? ORDER BY id DESC LIMIT 1", (pattern,)).fetchone()
+    
+    conn.close()
+    
+    # Yeni numara hesapla
+    if result and result[0]:
+        try:
+            last_num = int(result[0].split("-")[-1][1:])
+            new_num = last_num + 1
+        except:
+            new_num = 1
+    else:
+        new_num = 1
+    
+    return f"{project_code}-{item_type}{new_num:03d}"
+
 @app.route('/')
 def index():
     try:
@@ -92,20 +148,32 @@ def get_projects():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@app.route('/api/projects', methods=['POST'])
+@app.route("/api/projects", methods=["POST"])
 def add_project():
-    """Yeni proje ekle"""
     try:
         data = request.json
         conn = get_db_connection()
-        conn.execute('''
-            INSERT INTO projects (project_code, project_name, customer_name, status, modules, environment, description)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        ''', (data['project_code'], data['project_name'], data.get('customer_name'), 
-              data.get('status', 'Planning'), data.get('modules'), data.get('environment'), data.get('description')))
+        conn.execute("""INSERT INTO projects (
+            project_code, project_name, description, status,
+            customer_name, customer_industry, customer_country,
+            customer_contact, customer_email, deployment_type,
+            implementation_approach, sap_modules, start_date,
+            golive_planned, golive_actual, project_manager,
+            solution_architect, functional_lead, technical_lead,
+            total_budget, current_phase, completion_percent
+        ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+            (data.get("project_code"), data.get("project_name"), data.get("description"),
+             data.get("status", "Planning"), data.get("customer_name"), data.get("customer_industry"),
+             data.get("customer_country"), data.get("customer_contact"), data.get("customer_email"),
+             data.get("deployment_type"), data.get("implementation_approach"), data.get("sap_modules"),
+             data.get("start_date"), data.get("golive_planned"), data.get("golive_actual"),
+             data.get("project_manager"), data.get("solution_architect"), data.get("functional_lead"),
+             data.get("technical_lead"), data.get("total_budget"), data.get("current_phase"),
+             data.get("completion_percent", 0)))
         conn.commit()
+        new_id = conn.execute("SELECT last_insert_rowid()").fetchone()[0]
         conn.close()
-        return jsonify({"status": "success"}), 200
+        return jsonify({"status": "success", "id": new_id}), 201
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -122,6 +190,45 @@ def get_project_detail(project_id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+@app.route("/api/projects/<int:id>", methods=["PUT"])
+def update_project(id):
+    try:
+        data = request.json
+        conn = get_db_connection()
+        conn.execute("""UPDATE projects SET 
+            project_code = ?, project_name = ?, description = ?, status = ?,
+            customer_name = ?, customer_industry = ?, customer_country = ?,
+            customer_contact = ?, customer_email = ?, deployment_type = ?,
+            implementation_approach = ?, sap_modules = ?, start_date = ?,
+            golive_planned = ?, golive_actual = ?, project_manager = ?,
+            solution_architect = ?, functional_lead = ?, technical_lead = ?,
+            total_budget = ?, current_phase = ?, completion_percent = ?
+            WHERE id = ?""",
+            (data.get("project_code"), data.get("project_name"), data.get("description"),
+             data.get("status"), data.get("customer_name"), data.get("customer_industry"),
+             data.get("customer_country"), data.get("customer_contact"), data.get("customer_email"),
+             data.get("deployment_type"), data.get("implementation_approach"), data.get("sap_modules"),
+             data.get("start_date"), data.get("golive_planned"), data.get("golive_actual"),
+             data.get("project_manager"), data.get("solution_architect"), data.get("functional_lead"),
+             data.get("technical_lead"), data.get("total_budget"), data.get("current_phase"),
+             data.get("completion_percent"), id))
+        conn.commit()
+        conn.close()
+        return jsonify({"status": "success"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/api/projects/<int:id>", methods=["DELETE"])
+def delete_project(id):
+    try:
+        conn = get_db_connection()
+        conn.execute("DELETE FROM projects WHERE id = ?", (id,))
+        conn.commit()
+        conn.close()
+        return jsonify({"status": "success"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
 # ============== ANALYSIS SESSIONS API ==============
 
 @app.route('/api/sessions', methods=['GET'])
@@ -132,20 +239,22 @@ def get_sessions():
     try:
         conn = get_db_connection()
         if project_id:
-            sessions = conn.execute('''
-                SELECT s.*, p.project_name
+            sessions = conn.execute("""
+                SELECT s.*, p.project_name, sc.name as scenario_name, sc.scenario_id as scenario_code
                 FROM analysis_sessions s
                 LEFT JOIN projects p ON s.project_id = p.id
+                LEFT JOIN scenarios sc ON s.scenario_id = sc.id
                 WHERE s.project_id = ?
                 ORDER BY s.created_at DESC
-            ''', (project_id,)).fetchall()
+            """, (project_id,)).fetchall()
         else:
-            sessions = conn.execute('''
-                SELECT s.*, p.project_name
+            sessions = conn.execute("""
+                SELECT s.*, p.project_name, sc.name as scenario_name, sc.scenario_id as scenario_code
                 FROM analysis_sessions s
                 LEFT JOIN projects p ON s.project_id = p.id
+                LEFT JOIN scenarios sc ON s.scenario_id = sc.id
                 ORDER BY s.created_at DESC
-            ''').fetchall()
+            """).fetchall()
         conn.close()
         return jsonify([dict(row) for row in sessions])
     except Exception as e:
@@ -157,12 +266,13 @@ def get_session_detail(session_id):
     """Tek bir session detayi"""
     try:
         conn = get_db_connection()
-        session = conn.execute('''
-            SELECT s.*, p.project_name
+        session = conn.execute("""
+            SELECT s.*, p.project_name, sc.name as scenario_name, sc.scenario_id as scenario_code
             FROM analysis_sessions s
             LEFT JOIN projects p ON s.project_id = p.id
+            LEFT JOIN scenarios sc ON s.scenario_id = sc.id
             WHERE s.id = ?
-        ''', (session_id,)).fetchone()
+        """, (session_id,)).fetchone()
         conn.close()
         if session:
             return jsonify(dict(session))
@@ -177,9 +287,9 @@ def add_session():
         data = request.json
         conn = get_db_connection()
         conn.execute('''
-            INSERT INTO analysis_sessions (project_id, session_name, module, process_name, facilitator, status, notes)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        ''', (data['project_id'], data['session_name'], data.get('module'), 
+            INSERT INTO analysis_sessions (project_id, scenario_id, session_name, module, process_name, facilitator, status, notes)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (data['project_id'], data.get('scenario_id'), data['session_name'], data.get('module'), 
               data.get('process_name'), data.get('facilitator'), data.get('status', 'Planned'), data.get('notes')))
         conn.commit()
         conn.close()
@@ -215,28 +325,29 @@ def get_questions():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@app.route('/api/questions', methods=['POST'])
+@app.route("/api/questions", methods=["POST"])
 def add_question():
-    """Yeni soru ekle"""
     try:
         data = request.json
+        session_id = data.get("session_id")
         conn = get_db_connection()
-        cursor = conn.execute('''
-            INSERT INTO questions (session_id, question_text, created_at)
-            VALUES (?, ?, datetime('now'))
-        ''', (data.get('session_id'), data.get('question_text')))
-        question_id = cursor.lastrowid
         
-        # Eger cevap da varsa ekle
-        if data.get('answer_text'):
-            conn.execute('''
-                INSERT INTO answers (question_id, answer_text, answered_at)
-                VALUES (?, ?, datetime('now'))
-            ''', (question_id, data.get('answer_text')))
+        # Session dan project_id al
+        session = conn.execute("SELECT project_id FROM analysis_sessions WHERE id = ?", (session_id,)).fetchone()
+        project_id = session["project_id"] if session else None
+        
+        # Otomatik ID uret
+        auto_id = generate_auto_id(project_id, "Q") if project_id else None
+        
+        cursor = conn.execute("""
+            INSERT INTO questions (session_id, question_id, question_text, answer_text, status, assigned_to, due_date, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, datetime("now"))
+        """, (session_id, auto_id, data.get("question_text"), data.get("answer_text"),
+              data.get("status", "Open"), data.get("assigned_to"), data.get("due_date")))
         
         conn.commit()
         conn.close()
-        return jsonify({"success": True, "id": question_id}), 201
+        return jsonify({"success": True, "id": cursor.lastrowid, "question_id": auto_id}), 201
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     
@@ -257,21 +368,32 @@ def get_fitgap():
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
-@app.route('/api/fitgap', methods=['POST'])
+@app.route("/api/fitgap", methods=["POST"])
 def add_fitgap():
-    """Yeni FitGap kaydi ekle"""
     try:
         data = request.json
+        session_id = data.get("session_id")
         conn = get_db_connection()
-        conn.execute('''
-            INSERT INTO fitgap (session_id, gap_id, process_name, gap_description, impact_area, solution_type, risk_level, effort_estimate, priority, status, notes)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (data['session_id'], data['gap_id'], data.get('process_name'), data.get('description'), 
-              data.get('impact_area'), data.get('resolution_type'), data.get('risk_level'),
-              data.get('effort_estimate'), data.get('priority', 'Medium'), data.get('status', 'Identified'), data.get('notes')))
+        
+        # Session dan project_id al
+        session = conn.execute("SELECT project_id FROM analysis_sessions WHERE id = ?", (session_id,)).fetchone()
+        project_id = session["project_id"] if session else None
+        
+        # Otomatik ID uret
+        auto_id = generate_auto_id(project_id, "G") if project_id else None
+        
+        conn.execute("""
+            INSERT INTO fitgap (session_id, gap_id, process_name, gap_description, requirement_description,
+            sap_standard_solution, impact_area, solution_type, priority, status, decision_rationale, module)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (session_id, auto_id, data.get("process_name"), data.get("description"),
+              data.get("requirement_description"), data.get("sap_standard_solution"),
+              data.get("impact_area"), data.get("resolution_type"), data.get("priority", "Medium"),
+              data.get("status", "Gap"), data.get("decision_rationale"), data.get("module")))
+        
         conn.commit()
         conn.close()
-        return jsonify({"status": "success"}), 200
+        return jsonify({"status": "success", "gap_id": auto_id}), 201
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
@@ -748,5 +870,706 @@ def ai_chat():
         })
     except Exception as e:
         return jsonify({"error": str(e)}), 500
-if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=8080, debug=True)
+    cat >> app.py << 'APIEOF'
+
+# ============== ATTENDEES API ==============
+
+@app.route('/api/attendees', methods=['GET'])
+def get_attendees():
+    session_id = request.args.get('session_id')
+    try:
+        conn = get_db_connection()
+        if session_id:
+            attendees = conn.execute('SELECT * FROM session_attendees WHERE session_id = ? ORDER BY name', (session_id,)).fetchall()
+        else:
+            attendees = conn.execute('SELECT * FROM session_attendees ORDER BY created_at DESC').fetchall()
+        conn.close()
+        return jsonify([dict(row) for row in attendees])
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/attendees', methods=['POST'])
+def add_attendee():
+    try:
+        data = request.json
+        conn = get_db_connection()
+        conn.execute('''
+            INSERT INTO session_attendees (session_id, name, email, role, department, company, is_required, attendance_status, notes)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (data['session_id'], data['name'], data.get('email'), data.get('role'), 
+              data.get('department'), data.get('company'), data.get('is_required', 1),
+              data.get('attendance_status', 'Invited'), data.get('notes')))
+        conn.commit()
+        conn.close()
+        return jsonify({"status": "success"}), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/attendees/<int:id>', methods=['PUT'])
+def update_attendee(id):
+    try:
+        data = request.json
+        conn = get_db_connection()
+        conn.execute('UPDATE session_attendees SET attendance_status = ?, notes = ? WHERE id = ?',
+            (data.get('attendance_status'), data.get('notes'), id))
+        conn.commit()
+        conn.close()
+        return jsonify({"status": "success"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/attendees/<int:id>', methods=['DELETE'])
+def delete_attendee(id):
+    try:
+        conn = get_db_connection()
+        conn.execute('DELETE FROM session_attendees WHERE id = ?', (id,))
+        conn.commit()
+        conn.close()
+        return jsonify({"status": "success"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# ============== AGENDA API ==============
+
+@app.route('/api/agenda', methods=['GET'])
+def get_agenda():
+    session_id = request.args.get('session_id')
+    try:
+        conn = get_db_connection()
+        if session_id:
+            items = conn.execute('SELECT * FROM session_agenda WHERE session_id = ? ORDER BY item_order', (session_id,)).fetchall()
+        else:
+            items = conn.execute('SELECT * FROM session_agenda ORDER BY created_at DESC').fetchall()
+        conn.close()
+        return jsonify([dict(row) for row in items])
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/agenda', methods=['POST'])
+def add_agenda_item():
+    try:
+        data = request.json
+        conn = get_db_connection()
+        conn.execute('''
+            INSERT INTO session_agenda (session_id, item_order, topic, description, duration_minutes, presenter, status, notes)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (data['session_id'], data.get('item_order', 1), data['topic'], data.get('description'),
+              data.get('duration_minutes', 30), data.get('presenter'), data.get('status', 'Planned'), data.get('notes')))
+        conn.commit()
+        conn.close()
+        return jsonify({"status": "success"}), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/agenda/<int:id>', methods=['DELETE'])
+def delete_agenda_item(id):
+    try:
+        conn = get_db_connection()
+        conn.execute('DELETE FROM session_agenda WHERE id = ?', (id,))
+        conn.commit()
+        conn.close()
+        return jsonify({"status": "success"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# ============== MEETING MINUTES API ==============
+
+@app.route('/api/minutes', methods=['GET'])
+def get_minutes():
+    session_id = request.args.get('session_id')
+    try:
+        conn = get_db_connection()
+        if session_id:
+            minutes = conn.execute('SELECT * FROM meeting_minutes WHERE session_id = ? ORDER BY minute_order', (session_id,)).fetchall()
+        else:
+            minutes = conn.execute('SELECT * FROM meeting_minutes ORDER BY created_at DESC').fetchall()
+        conn.close()
+        return jsonify([dict(row) for row in minutes])
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/minutes', methods=['POST'])
+def add_minute():
+    try:
+        data = request.json
+        conn = get_db_connection()
+        conn.execute('''
+            INSERT INTO meeting_minutes (session_id, minute_order, topic, discussion, key_points, recorded_by)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (data['session_id'], data.get('minute_order', 1), data.get('topic'), 
+              data.get('discussion'), data.get('key_points'), data.get('recorded_by')))
+        conn.commit()
+        conn.close()
+        return jsonify({"status": "success"}), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/minutes/<int:id>', methods=['DELETE'])
+def delete_minute(id):
+    try:
+        conn = get_db_connection()
+        conn.execute('DELETE FROM meeting_minutes WHERE id = ?', (id,))
+        conn.commit()
+        conn.close()
+        return jsonify({"status": "success"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# ============== ACTION ITEMS API ==============
+
+@app.route('/api/actions', methods=['GET'])
+def get_actions():
+    session_id = request.args.get('session_id')
+    project_id = request.args.get('project_id')
+    try:
+        conn = get_db_connection()
+        if session_id:
+            actions = conn.execute('SELECT * FROM action_items WHERE session_id = ? ORDER BY due_date', (session_id,)).fetchall()
+        elif project_id:
+            actions = conn.execute('''
+                SELECT a.* FROM action_items a
+                JOIN analysis_sessions s ON a.session_id = s.id
+                WHERE s.project_id = ? ORDER BY a.due_date
+            ''', (project_id,)).fetchall()
+        else:
+            actions = conn.execute('SELECT * FROM action_items ORDER BY due_date').fetchall()
+        conn.close()
+        return jsonify([dict(row) for row in actions])
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/api/actions", methods=["POST"])
+def add_action():
+    try:
+        data = request.json
+        session_id = data.get("session_id")
+        conn = get_db_connection()
+        
+        # Session dan project_id al
+        session = conn.execute("SELECT project_id FROM analysis_sessions WHERE id = ?", (session_id,)).fetchone()
+        project_id = session["project_id"] if session else None
+        
+        # Otomatik ID uret
+        auto_id = generate_auto_id(project_id, "A") if project_id else None
+        
+        conn.execute("""
+            INSERT INTO action_items (session_id, action_id, title, description, assigned_to,
+            assigned_email, due_date, priority, status, notes)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (session_id, auto_id, data.get("title"), data.get("description"),
+              data.get("assigned_to"), data.get("assigned_email"), data.get("due_date"),
+              data.get("priority", "Medium"), data.get("status", "Open"), data.get("notes")))
+        
+        conn.commit()
+        conn.close()
+        return jsonify({"status": "success", "action_id": auto_id}), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/actions/<int:id>', methods=['PUT'])
+def update_action(id):
+    try:
+        data = request.json
+        conn = get_db_connection()
+        conn.execute('UPDATE action_items SET status = ?, completion_date = ?, notes = ? WHERE id = ?',
+            (data.get('status'), data.get('completion_date'), data.get('notes'), id))
+        conn.commit()
+        conn.close()
+        return jsonify({"status": "success"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/actions/<int:id>', methods=['DELETE'])
+def delete_action(id):
+    try:
+        conn = get_db_connection()
+        conn.execute('DELETE FROM action_items WHERE id = ?', (id,))
+        conn.commit()
+        conn.close()
+        return jsonify({"status": "success"}), 200
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# ============== DECISIONS API ==============
+
+@app.route('/api/decisions', methods=['GET'])
+def get_decisions():
+    session_id = request.args.get('session_id')
+    project_id = request.args.get('project_id')
+    try:
+        conn = get_db_connection()
+        if session_id:
+            decisions = conn.execute('SELECT * FROM decisions WHERE session_id = ? ORDER BY created_at DESC', (session_id,)).fetchall()
+        elif project_id:
+            decisions = conn.execute('SELECT * FROM decisions WHERE project_id = ? ORDER BY created_at DESC', (project_id,)).fetchall()
+        else:
+            decisions = conn.execute('SELECT * FROM decisions ORDER BY created_at DESC').fetchall()
+        conn.close()
+        return jsonify([dict(row) for row in decisions])
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/api/decisions", methods=["POST"])
+def add_decision():
+    try:
+        data = request.json
+        session_id = data.get("session_id")
+        project_id = data.get("project_id")
+        conn = get_db_connection()
+        
+        # Eger project_id yoksa session dan al
+        if not project_id and session_id:
+            session = conn.execute("SELECT project_id FROM analysis_sessions WHERE id = ?", (session_id,)).fetchone()
+            project_id = session["project_id"] if session else None
+        
+        # Otomatik ID uret
+        auto_id = generate_auto_id(project_id, "D") if project_id else None
+        
+        conn.execute("""
+            INSERT INTO decisions (session_id, project_id, decision_id, topic, description, options_considered,
+            decision_made, rationale, decision_maker, decision_date, impact_areas, status, related_gap_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (session_id, project_id, auto_id, data.get("topic"), data.get("description"),
+              data.get("options_considered"), data.get("decision_made"), data.get("rationale"),
+              data.get("decision_maker"), data.get("decision_date"), data.get("impact_areas"),
+              data.get("status", "Draft"), data.get("related_gap_id")))
+        
+        conn.commit()
+        conn.close()
+        return jsonify({"status": "success", "decision_id": auto_id}), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+# ============== RISKS & ISSUES API ==============
+
+@app.route('/api/risks', methods=['GET'])
+def get_risks():
+    session_id = request.args.get('session_id')
+    project_id = request.args.get('project_id')
+    item_type = request.args.get('type')
+    try:
+        conn = get_db_connection()
+        query = 'SELECT * FROM risks_issues WHERE 1=1'
+        params = []
+        if session_id:
+            query += ' AND session_id = ?'
+            params.append(session_id)
+        if project_id:
+            query += ' AND project_id = ?'
+            params.append(project_id)
+        if item_type:
+            query += ' AND type = ?'
+            params.append(item_type)
+        query += ' ORDER BY risk_score DESC, created_at DESC'
+        risks = conn.execute(query, params).fetchall()
+        conn.close()
+        return jsonify([dict(row) for row in risks])
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route("/api/risks", methods=["POST"])
+def add_risk():
+    try:
+        data = request.json
+        session_id = data.get("session_id")
+        project_id = data.get("project_id")
+        item_type = data.get("type", "Risk")
+        
+        conn = get_db_connection()
+        
+        # Eger project_id yoksa session dan al
+        if not project_id and session_id:
+            session = conn.execute("SELECT project_id FROM analysis_sessions WHERE id = ?", (session_id,)).fetchone()
+            project_id = session["project_id"] if session else None
+        
+        # Otomatik ID uret (R = Risk, I = Issue)
+        id_prefix = "R" if item_type == "Risk" else "I"
+        auto_id = generate_auto_id(project_id, id_prefix) if project_id else None
+        
+        # Risk score hesapla
+        impact_map = {"High": 3, "Medium": 2, "Low": 1}
+        prob_map = {"High": 3, "Medium": 2, "Low": 1}
+        impact = data.get("impact", "Medium")
+        probability = data.get("probability", "Medium")
+        risk_score = impact_map.get(impact, 2) * prob_map.get(probability, 2)
+        
+        conn.execute("""
+            INSERT INTO risks_issues (session_id, project_id, item_id, type, title, description, category,
+            impact, probability, risk_score, mitigation_plan, contingency_plan, owner, owner_email, status,
+            target_resolution_date, notes)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (session_id, project_id, auto_id, item_type, data.get("title"), data.get("description"),
+              data.get("category"), impact, probability, risk_score, data.get("mitigation_plan"),
+              data.get("contingency_plan"), data.get("owner"), data.get("owner_email"),
+              data.get("status", "Open"), data.get("target_resolution_date"), data.get("notes")))
+        
+        conn.commit()
+        conn.close()
+        return jsonify({"status": "success", "item_id": auto_id}), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# ============== ANALYSIS STATS API ==============
+
+@app.route('/api/analysis/stats', methods=['GET'])
+def get_analysis_stats():
+    project_id = request.args.get('project_id')
+    try:
+        conn = get_db_connection()
+        if project_id:
+            total_sessions = conn.execute('SELECT COUNT(*) FROM analysis_sessions WHERE project_id = ?', (project_id,)).fetchone()[0]
+            fit_count = conn.execute('''SELECT COUNT(*) FROM fitgap f JOIN analysis_sessions s ON f.session_id = s.id WHERE s.project_id = ? AND f.status = 'Fit' ''', (project_id,)).fetchone()[0]
+            gap_count = conn.execute('''SELECT COUNT(*) FROM fitgap f JOIN analysis_sessions s ON f.session_id = s.id WHERE s.project_id = ? AND f.status != 'Fit' ''', (project_id,)).fetchone()[0]
+            open_questions = conn.execute('''SELECT COUNT(*) FROM questions q JOIN analysis_sessions s ON q.session_id = s.id WHERE s.project_id = ?''', (project_id,)).fetchone()[0]
+            open_actions = conn.execute('''SELECT COUNT(*) FROM action_items a JOIN analysis_sessions s ON a.session_id = s.id WHERE s.project_id = ? AND a.status = 'Open' ''', (project_id,)).fetchone()[0]
+            high_risks = conn.execute("SELECT COUNT(*) FROM risks_issues WHERE project_id = ? AND risk_score >= 6", (project_id,)).fetchone()[0]
+        else:
+            total_sessions = fit_count = gap_count = open_questions = open_actions = high_risks = 0
+        conn.close()
+        return jsonify({
+            "total_sessions": total_sessions,
+            "fit_count": fit_count,
+            "gap_count": gap_count,
+            "open_questions": open_questions,
+            "open_actions": open_actions,
+            "high_risks": high_risks
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# ============== SINGLE RECORD APIs ==============
+
+@app.route('/api/questions/<int:id>', methods=['GET'])
+def get_question_by_id(id):
+    try:
+        conn = get_db_connection()
+        question = conn.execute('SELECT * FROM questions WHERE id = ?', (id,)).fetchone()
+        conn.close()
+        if question:
+            return jsonify(dict(question))
+        return jsonify({"error": "Not found"}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/questions/<int:id>', methods=['PUT'])
+def update_question(id):
+    try:
+        data = request.json
+        conn = get_db_connection()
+        conn.execute('''UPDATE questions SET 
+            question_text = ?, answer_text = ?, status = ?, assigned_to = ?, due_date = ?
+            WHERE id = ?''',
+            (data.get('question_text'), data.get('answer_text'), data.get('status'),
+             data.get('assigned_to'), data.get('due_date'), id))
+        conn.commit()
+        conn.close()
+        return jsonify({"status": "success"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/fitgap/<int:id>', methods=['GET'])
+def get_fitgap_by_id(id):
+    try:
+        conn = get_db_connection()
+        gap = conn.execute('SELECT * FROM fitgap WHERE id = ?', (id,)).fetchone()
+        conn.close()
+        if gap:
+            return jsonify(dict(gap))
+        return jsonify({"error": "Not found"}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/fitgap/<int:id>', methods=['PUT'])
+def update_fitgap(id):
+    try:
+        data = request.json
+        conn = get_db_connection()
+        conn.execute("""UPDATE fitgap SET 
+            status = ?, priority = ?, module = ?, requirement_description = ?, 
+            sap_standard_solution = ?, decision_rationale = ?,
+            related_decision_id = ?, related_wricef_id = ?
+            WHERE id = ?""",
+            (data.get("status"), data.get("priority"), data.get("module"), data.get("requirement_description"),
+             data.get("sap_standard_solution"), data.get("decision_rationale"),
+             data.get("related_decision_id"), data.get("related_wricef_id"), id))
+        conn.commit()
+        conn.close()
+        return jsonify({"status": "success"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/actions/<int:id>', methods=['GET'])
+def get_action_by_id(id):
+    try:
+        conn = get_db_connection()
+        action = conn.execute('SELECT * FROM action_items WHERE id = ?', (id,)).fetchone()
+        conn.close()
+        if action:
+            return jsonify(dict(action))
+        return jsonify({"error": "Not found"}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/actions/<int:id>/full', methods=['PUT'])
+def update_action_full(id):
+    try:
+        data = request.json
+        conn = get_db_connection()
+        conn.execute('''UPDATE action_items SET 
+            title = ?, description = ?, assigned_to = ?, due_date = ?, priority = ?, status = ?
+            WHERE id = ?''',
+            (data.get('title'), data.get('description'), data.get('assigned_to'),
+             data.get('due_date'), data.get('priority'), data.get('status'), id))
+        conn.commit()
+        conn.close()
+        return jsonify({"status": "success"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+    app.run(host="0.0.0.0", port=8080, debug=True)
+
+# ============== DECISION SINGLE RECORD APIs ==============
+
+@app.route('/api/decisions/<int:id>', methods=['GET'])
+def get_decision_by_id(id):
+    try:
+        conn = get_db_connection()
+        decision = conn.execute('SELECT * FROM decisions WHERE id = ?', (id,)).fetchone()
+        conn.close()
+        if decision:
+            return jsonify(dict(decision))
+        return jsonify({"error": "Not found"}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/decisions/<int:id>', methods=['PUT'])
+def update_decision(id):
+    try:
+        data = request.json
+        conn = get_db_connection()
+        conn.execute('''UPDATE decisions SET 
+            status = ?, decision_maker = ?, topic = ?, options_considered = ?,
+            decision_made = ?, rationale = ?, impact_areas = ?
+            WHERE id = ?''',
+            (data.get('status'), data.get('decision_maker'), data.get('topic'),
+             data.get('options_considered'), data.get('decision_made'),
+             data.get('rationale'), data.get('impact_areas'), id))
+        conn.commit()
+        conn.close()
+        return jsonify({"status": "success"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# ============== RISK SINGLE RECORD APIs ==============
+
+@app.route('/api/risks/<int:id>', methods=['GET'])
+def get_risk_by_id(id):
+    try:
+        conn = get_db_connection()
+        risk = conn.execute('SELECT * FROM risks_issues WHERE id = ?', (id,)).fetchone()
+        conn.close()
+        if risk:
+            return jsonify(dict(risk))
+        return jsonify({"error": "Not found"}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/risks/<int:id>', methods=['PUT'])
+def update_risk(id):
+    try:
+        data = request.json
+        conn = get_db_connection()
+        conn.execute("""UPDATE risks_issues SET
+            title = ?, description = ?, category = ?, impact = ?, probability = ?,
+            mitigation_plan = ?, contingency_plan = ?, owner = ?, status = ?,
+            scenario_id = ?, related_gap_id = ?, related_wricef_id = ?
+            WHERE id = ?""",
+            (data.get('title'), data.get('description'), data.get('category'),
+             data.get('impact'), data.get('probability'), data.get('mitigation_plan'),
+             data.get('contingency_plan'), data.get('owner'), data.get('status'),
+             data.get('scenario_id'), data.get('related_gap_id'), data.get('related_wricef_id'), id))
+        conn.commit()
+        conn.close()
+        return jsonify({"status": "success"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# ============== SCENARIOS API ==============
+
+@app.route('/api/scenarios', methods=['GET'])
+def get_scenarios():
+    project_id = request.args.get('project_id')
+    try:
+        conn = get_db_connection()
+        if project_id:
+            scenarios = conn.execute('SELECT * FROM scenarios WHERE project_id = ? ORDER BY created_at DESC', (project_id,)).fetchall()
+        else:
+            scenarios = conn.execute('SELECT * FROM scenarios ORDER BY created_at DESC').fetchall()
+        conn.close()
+        return jsonify([dict(s) for s in scenarios])
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/scenarios', methods=['POST'])
+def add_scenario():
+    try:
+        data = request.json
+        project_id = data.get('project_id')
+        conn = get_db_connection()
+        
+        # Otomatik ID üret
+        auto_id = generate_auto_id(project_id, "S") if project_id else None
+        
+        conn.execute('''
+            INSERT INTO scenarios (scenario_id, project_id, name, description, process_area, priority, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        ''', (auto_id, project_id, data.get('name'), data.get('description'),
+              data.get('process_area'), data.get('priority', 'Medium'), data.get('status', 'Draft')))
+        conn.commit()
+        conn.close()
+        return jsonify({"status": "success", "scenario_id": auto_id}), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/scenarios/<int:id>', methods=['GET'])
+def get_scenario_by_id(id):
+    try:
+        conn = get_db_connection()
+        scenario = conn.execute('SELECT * FROM scenarios WHERE id = ?', (id,)).fetchone()
+        conn.close()
+        if scenario:
+            return jsonify(dict(scenario))
+        return jsonify({"error": "Not found"}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/scenarios/<int:id>', methods=['PUT'])
+def update_scenario(id):
+    try:
+        data = request.json
+        conn = get_db_connection()
+        conn.execute('''
+            UPDATE scenarios SET name = ?, description = ?, process_area = ?, priority = ?, status = ?
+            WHERE id = ?
+        ''', (data.get('name'), data.get('description'), data.get('process_area'),
+              data.get('priority'), data.get('status'), id))
+        conn.commit()
+        conn.close()
+        return jsonify({"status": "success"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/scenarios/<int:id>', methods=['DELETE'])
+def delete_scenario(id):
+    try:
+        conn = get_db_connection()
+        conn.execute('DELETE FROM scenarios WHERE id = ?', (id,))
+        conn.commit()
+        conn.close()
+        return jsonify({"status": "success"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+
+# ============== WRICEF CRUD APIs ==============
+
+@app.route('/api/wricef', methods=['GET'])
+def get_wricefs():
+    try:
+        project_id = request.args.get('project_id')
+        conn = get_db_connection()
+        if project_id:
+            rows = conn.execute('SELECT * FROM wricef WHERE project_id = ? ORDER BY id DESC', (project_id,)).fetchall()
+        else:
+            rows = conn.execute('SELECT * FROM wricef ORDER BY id DESC').fetchall()
+        conn.close()
+        return jsonify([dict(row) for row in rows])
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/wricef', methods=['POST'])
+def create_wricef():
+    try:
+        data = request.json
+        conn = get_db_connection()
+        cursor = conn.execute("""INSERT INTO wricef 
+            (wricef_id, project_id, type, name, description, complexity, estimated_effort, priority, status, assigned_to, related_gap_id, related_decision_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)""",
+            (data.get('wricef_id'), data.get('project_id'), data.get('type'), data.get('name'),
+             data.get('description'), data.get('complexity', 'Medium'), data.get('estimated_effort'),
+             data.get('priority', 'Medium'), data.get('status', 'Identified'), data.get('assigned_to'),
+             data.get('related_gap_id'), data.get('related_decision_id')))
+        conn.commit()
+        new_id = cursor.lastrowid
+        conn.close()
+        return jsonify({"status": "success", "id": new_id})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/wricef/<int:id>', methods=['GET'])
+def get_wricef_by_id(id):
+    try:
+        conn = get_db_connection()
+        row = conn.execute('SELECT * FROM wricef WHERE id = ?', (id,)).fetchone()
+        conn.close()
+        if row:
+            return jsonify(dict(row))
+        return jsonify({"error": "Not found"}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/wricef/<int:id>', methods=['PUT'])
+def update_wricef(id):
+    try:
+        data = request.json
+        conn = get_db_connection()
+        conn.execute("""UPDATE wricef SET
+            wricef_id = ?, type = ?, name = ?, description = ?, complexity = ?,
+            estimated_effort = ?, priority = ?, status = ?, assigned_to = ?,
+            related_gap_id = ?, related_decision_id = ?
+            WHERE id = ?""",
+            (data.get('wricef_id'), data.get('type'), data.get('name'), data.get('description'),
+             data.get('complexity'), data.get('estimated_effort'), data.get('priority'),
+             data.get('status'), data.get('assigned_to'), data.get('related_gap_id'),
+             data.get('related_decision_id'), id))
+        conn.commit()
+        conn.close()
+        return jsonify({"status": "success"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/wricef/<int:id>', methods=['DELETE'])
+def delete_wricef(id):
+    try:
+        conn = get_db_connection()
+        conn.execute('DELETE FROM wricef WHERE id = ?', (id,))
+        conn.commit()
+        conn.close()
+        return jsonify({"status": "success"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+
+# ============== DECISION UPDATE API (with links) ==============
+
+@app.route('/api/decisions/<int:id>/full', methods=['PUT'])
+def update_decision_full(id):
+    try:
+        data = request.json
+        conn = get_db_connection()
+        conn.execute("""UPDATE decisions SET
+            topic = ?, description = ?, options_considered = ?, decision_made = ?,
+            rationale = ?, decision_maker = ?, status = ?,
+            related_gap_id = ?, related_wricef_id = ?, scenario_id = ?
+            WHERE id = ?""",
+            (data.get('topic'), data.get('description'), data.get('options_considered'),
+             data.get('decision_made'), data.get('rationale'), data.get('decision_maker'),
+             data.get('status'), data.get('related_gap_id'), data.get('related_wricef_id'),
+             data.get('scenario_id'), id))
+        conn.commit()
+        conn.close()
+        return jsonify({"status": "success"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=8080, debug=True)
