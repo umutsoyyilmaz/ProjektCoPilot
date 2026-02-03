@@ -1,224 +1,324 @@
-# 📊 SAP AI Project Co-Pilot - İlerleme Raporu
+# 🚀 ProjektCoPilot - Master Development Plan
 
-**Son Güncelleme:** 31 Ocak 2026
-**Proje:** SAP AI Project Co-Pilot MVP
-**Ortam:** GitHub Codespaces (bookish-space-cod)
+## 📋 Project Overview
 
----
-
-## ✅ TAMAMLANAN GÖREVLER
-
-| Task ID | Açıklama | Detaylar |
-|---------|----------|----------|
-| 1.1 | Proje Kurulumu | Flask app, SQLite, temel yapı |
-| 1.2 | Dashboard Butonları | UI düzeltmeleri |
-| 1.3 | Veritabanı Şeması | 9 tablo oluşturuldu |
-| 1.4 | Backend API'ler | CRUD endpoints |
-| 2.1 | Dashboard Gerçek Veriler | API entegrasyonu |
-| 2.2 | Projects Sayfası | Liste + Yeni proje modal |
+**Proje Adı:** SAP AI Project Co-Pilot (ProjektCoPilot)  
+**Amaç:** SAP S/4HANA transformation projelerini uçtan uca yönetmek için kapsamlı bir platform  
+**Metodoloji:** SAP Activate  
+**Versiyon:** 2.0  
+**Last Updated:** 2026-02-03
 
 ---
 
-## 🗄️ VERİTABANI ŞEMASI (9 Tablo)
+## 🎯 Vision & Scope
+
+### Ana Modüller
+1. **Project Management** - Proje ve faz yönetimi
+2. **Scenario Management** - İş senaryoları yönetimi  
+3. **Analysis Workspace** - Workshop, Fit-Gap, Q&A, Decisions, Risks
+4. **WRICEF Management** - Geliştirme nesneleri takibi
+5. **Test Management** - Unit, SIT, UAT, Regression testleri
+6. **Defect Management** - Hata takibi ve çözümü
+7. **Document Management** - FS/TS ve proje dokümanları
+8. **Dashboard & Reporting** - Metrikler ve raporlar
+
+---
+
+## 📊 Data Model - Entity Relationship
+
 ```
-1. requirements      - WRICEF gereksinimleri
-2. projects          - Proje bilgileri
-3. analysis_sessions - Analiz oturumları
-4. questions         - Sorular
-5. answers           - Cevaplar
-6. fitgap            - Fit-GAP kayıtları
-7. fs_ts_documents   - FS/TS dokümanları
-8. test_cases        - Test senaryoları
-9. audit_log         - Değişiklik takibi
-```
-
----
-
-## 🔌 MEVCUT API'LER
-
-| Endpoint | Method | Açıklama |
-|----------|--------|----------|
-| `/api/requirements` | GET | Tüm requirements |
-| `/api/requirements` | POST | Yeni requirement |
-| `/api/requirements/<id>` | GET | Requirement detay |
-| `/api/projects` | GET | Tüm projeler |
-| `/api/projects` | POST | Yeni proje |
-| `/api/projects/<id>` | GET | Proje detay |
-| `/api/sessions` | GET | Tüm sessions |
-| `/api/sessions` | POST | Yeni session |
-| `/api/fitgap` | GET | Tüm fit-gap |
-| `/api/fitgap` | POST | Yeni fit-gap |
-| `/api/dashboard/stats` | GET | Dashboard istatistikleri |
-
----
-
-## 📁 DOSYA YAPISI
-```
-/workspaces/ProjektCoPilot/
-├── app.py              # Flask backend (~214 satır)
-├── database.py         # DB şeması (~185 satır)
-├── project_copilot.db  # SQLite veritabanı
-├── templates/
-│   └── index.html      # Frontend (~1050+ satır)
-├── requirements.txt
-└── README.md
+PROJECT
+    │
+    ├── SCENARIO (Order to Cash, Procure to Pay, etc.)
+    │       │
+    │       ├── WORKSHOP (Analysis Session)
+    │       │       ├── FIT ────────► CONFIG ────► UNIT TEST
+    │       │       ├── GAP ────────► WRICEF ────► FS/TS DOC ──► UNIT TEST
+    │       │       │                     └──────► ACTION (Dev Task)
+    │       │       ├── DECISION ───► GAP/WRICEF (optional)
+    │       │       └── RISK (Workshop Level)
+    │       │
+    │       ├── RISK (Scenario Level)
+    │       ├── INTEGRATION TEST (SIT)
+    │       └── UAT TEST
+    │
+    ├── RISK (Project Level - Standalone)
+    ├── DEFECT ──► TEST CASE
+    └── PROJECT PHASE (Discover/Prepare/Explore/Realize/Deploy/Run)
 ```
 
 ---
 
-## 🎯 MEVCUT DURUMDA ÇALIŞAN ÖZELLİKLER
-
-1. **Dashboard (Cockpit)**
-   - Gerçek proje sayısı gösterimi
-   - Gerçek gap sayısı gösterimi
-   - Recent Activities listesi
-
-2. **Projects Sayfası**
-   - Proje listesi (veritabanından)
-   - Yeni proje oluşturma (modal + form)
-   - Status badge'leri (Active/Planning)
-
-3. **Navigasyon**
-   - Sol menü çalışıyor
-   - Sayfa geçişleri çalışıyor
+## ✅ Status Legend: ✅ Done | 🔄 In Progress | 📋 Backlog | ⏸️ On Hold
 
 ---
 
-## 📋 BACKLOG - SIRADAKI GÖREVLER
+## PHASE 1: Foundation ✅ COMPLETED
 
-### 🔴 Öncelik 1: Analysis Workspace
-
-| Alt Görev | Açıklama | Durum |
-|-----------|----------|-------|
-| 2.3.1 | Proje dropdown'u ekle | ⏳ Bekliyor |
-| 2.3.2 | Seçilen projenin session listesi | ⏳ Bekliyor |
-| 2.3.3 | Start New Session modal | ⏳ Bekliyor |
-| 2.3.4 | Session detay görünümü | ⏳ Bekliyor |
-| 2.3.5 | Questions & Answers CRUD | ⏳ Bekliyor |
-| 2.3.6 | Fit-Gap CRUD | ⏳ Bekliyor |
-
-### 🟡 Öncelik 2: Requirements Sayfası Geliştirme
-
-| Alt Görev | Açıklama | Durum |
-|-----------|----------|-------|
-| 2.4.1 | Requirements listesi güncelleme | ⏳ Bekliyor |
-| 2.4.2 | Yeni requirement modal | ⏳ Bekliyor |
-| 2.4.3 | Requirement detay sayfası | ⏳ Bekliyor |
-| 2.4.4 | AI Summary özelliği | ⏳ Bekliyor |
-
-### 🟢 Öncelik 3: Design (FS/TS) Sayfası
-
-| Alt Görev | Açıklama | Durum |
-|-----------|----------|-------|
-| 2.5.1 | FS/TS doküman listesi | ⏳ Bekliyor |
-| 2.5.2 | Doküman oluşturma | ⏳ Bekliyor |
-| 2.5.3 | Template seçimi | ⏳ Bekliyor |
-
-### 🔵 Öncelik 4: AI Entegrasyonu
-
-| Alt Görev | Açıklama | Durum |
-|-----------|----------|-------|
-| 3.1 | OpenAI/Azure API bağlantısı | ⏳ Bekliyor |
-| 3.2 | Joule Insights entegrasyonu | ⏳ Bekliyor |
-| 3.3 | AI-powered gap önerileri | ⏳ Bekliyor |
-| 3.4 | Otomatik FS/TS oluşturma | ⏳ Bekliyor |
+| ID | Task | Status |
+|----|------|--------|
+| 1.1 | Flask backend (app.py) | ✅ |
+| 1.2 | SQLite database | ✅ |
+| 1.3 | HTML/CSS frontend | ✅ |
+| 1.4 | Sidebar navigation (8 menus) | ✅ |
+| 1.5 | Projects CRUD + 5-tab detail | ✅ |
+| 1.6 | Project cards grid | ✅ |
+| 1.7 | Global project selector | ✅ |
 
 ---
 
-## 🚀 YENİ SESSION BAŞLATMA TALİMATLARI
+## PHASE 2: Analysis Workspace ✅ COMPLETED
 
-### 1. Ortamı Başlat
-```bash
-# GitHub Codespaces'e git
-# "bookish-space-cod" ortamını aç
+| ID | Task | Status |
+|----|------|--------|
+| 2.1 | Sessions/Workshops CRUD | ✅ |
+| 2.2 | Session detail (9 tabs) | ✅ |
+| 2.3 | Q&A with status & auto-ID | ✅ |
+| 2.4 | Fit-Gap analysis | ✅ |
+| 2.5 | Decisions with auto-ID | ✅ |
+| 2.6 | Risks/Issues + risk score | ✅ |
+| 2.7 | Actions with auto-ID | ✅ |
+| 2.8 | Attendees, Agenda, Minutes | ✅ |
+| 2.9 | Dashboard with Chart.js | ✅ |
 
-# Terminal'de Flask'ı başlat
-cd /workspaces/ProjektCoPilot
-python app.py
+---
+
+## PHASE 3: Scenario & Linking 🔄 IN PROGRESS
+
+| ID | Task | Status |
+|----|------|--------|
+| 3.1 | Scenarios table (DB) | ✅ |
+| 3.2 | Scenarios CRUD API | ✅ |
+| 3.3 | Scenarios UI page | ✅ |
+| 3.4 | Workshop → Scenario link | ✅ |
+| 3.5 | Auto-ID (S-001) | ✅ |
+| 3.6 | Workshop list: Scenario column | ✅ |
+| 3.7 | Workshop detail: Scenario info | 📋 |
+| 3.8 | Gap ↔ Decision linking UI | 📋 |
+| 3.9 | Gap → WRICEF linking UI | 📋 |
+| 3.10 | Risk → Scenario/Gap/WRICEF links | 📋 |
+
+---
+
+## PHASE 4: WRICEF Management 📋 BACKLOG
+
+| ID | Task | Status |
+|----|------|--------|
+| 4.1 | WRICEF table (DB) | ✅ |
+| 4.2 | WRICEF CRUD API | 📋 |
+| 4.3 | WRICEF sidebar menu + page | 📋 |
+| 4.4 | WRICEF detail modal (4 tabs) | 📋 |
+| 4.5 | Auto-ID (WR-001) | ✅ |
+| 4.6 | Types: W/R/I/C/E/F | 📋 |
+| 4.7 | "Create WRICEF" from Gap | 📋 |
+| 4.8 | WRICEF → FS/TS documents | 📋 |
+| 4.9 | WRICEF → Unit Tests | 📋 |
+| 4.10 | WRICEF → Actions | 📋 |
+| 4.11 | Complexity & effort tracking | 📋 |
+| 4.12 | WRICEF dashboard | 📋 |
+
+---
+
+## PHASE 5: Config Management 📋 BACKLOG
+
+| ID | Task | Status |
+|----|------|--------|
+| 5.1 | Configs table (DB) | ✅ |
+| 5.2 | Configs CRUD API | 📋 |
+| 5.3 | Auto-ID (C-001) | ✅ |
+| 5.4 | "Create Config" from Fit | 📋 |
+| 5.5 | Config detail modal | 📋 |
+| 5.6 | Config → Unit Test link | 📋 |
+
+---
+
+## PHASE 6: Test Management 📋 BACKLOG
+
+### 6.1 Test Structure
+| ID | Task | Status |
+|----|------|--------|
+| 6.1.1 | test_type field (DB) | ✅ |
+| 6.1.2 | wricef_id field (DB) | ✅ |
+| 6.1.3 | scenario_id field (DB) | ✅ |
+
+### 6.2 Unit Testing (WRICEF Level)
+| ID | Task | Status |
+|----|------|--------|
+| 6.2.1 | Unit Test CRUD | 📋 |
+| 6.2.2 | Unit Test → WRICEF link | 📋 |
+| 6.2.3 | Test in WRICEF detail tab | 📋 |
+| 6.2.4 | Pass/Fail/Blocked tracking | 📋 |
+
+### 6.3 Integration Testing (SIT)
+| ID | Task | Status |
+|----|------|--------|
+| 6.3.1 | SIT Test CRUD | 📋 |
+| 6.3.2 | SIT → Scenario link | 📋 |
+| 6.3.3 | Cross-module scenarios | 📋 |
+
+### 6.4 User Acceptance Testing (UAT)
+| ID | Task | Status |
+|----|------|--------|
+| 6.4.1 | UAT Test CRUD | 📋 |
+| 6.4.2 | UAT → Scenario link | 📋 |
+| 6.4.3 | UAT sign-off workflow | 📋 |
+| 6.4.4 | Key User assignment | 📋 |
+
+### 6.5 Testing Page
+| ID | Task | Status |
+|----|------|--------|
+| 6.5.1 | 3-tab structure (Unit/SIT/UAT) | 📋 |
+| 6.5.2 | Filter by Scenario | 📋 |
+| 6.5.3 | Filter by WRICEF | 📋 |
+| 6.5.4 | Test execution dashboard | 📋 |
+
+### 6.6 Regression & Performance
+| ID | Task | Status |
+|----|------|--------|
+| 6.6.1 | Regression test sets | 📋 |
+| 6.6.2 | Performance test tracking | 📋 |
+
+---
+
+## PHASE 7: Defect Management 📋 BACKLOG
+
+### 7.1 Core
+| ID | Task | Status |
+|----|------|--------|
+| 7.1.1 | Defects table | 📋 |
+| 7.1.2 | Defects CRUD API | 📋 |
+| 7.1.3 | Defects page/modal | 📋 |
+| 7.1.4 | Auto-ID (DEF-001) | 📋 |
+
+### 7.2 Classification
+| ID | Task | Status |
+|----|------|--------|
+| 7.2.1 | Severity: Critical/Major/Minor | 📋 |
+| 7.2.2 | Priority: High/Medium/Low | 📋 |
+| 7.2.3 | Category: Functional/Performance/UI/Data | 📋 |
+
+### 7.3 Workflow
+| ID | Task | Status |
+|----|------|--------|
+| 7.3.1 | Status: New→Open→Assigned→Fixed→Retest→Closed | 📋 |
+| 7.3.2 | Rejection: Not a Bug/Duplicate/Cannot Reproduce | 📋 |
+| 7.3.3 | Reopen on failed retest | 📋 |
+
+### 7.4 Linking & Metrics
+| ID | Task | Status |
+|----|------|--------|
+| 7.4.1 | Defect → Test Case link | 📋 |
+| 7.4.2 | "Log Defect" from Test | 📋 |
+| 7.4.3 | Defect density by module | 📋 |
+| 7.4.4 | DRE metric | 📋 |
+| 7.4.5 | Aging report | 📋 |
+| 7.4.6 | Trend chart | 📋 |
+
+---
+
+## PHASE 8: Document Management 📋 BACKLOG
+
+| ID | Task | Status |
+|----|------|--------|
+| 8.1 | Documents table (DB) | ✅ |
+| 8.2 | Documents CRUD API | 📋 |
+| 8.3 | FS/TS from WRICEF | 📋 |
+| 8.4 | Status: Draft/Review/Approved | 📋 |
+| 8.5 | Version control | 📋 |
+| 8.6 | File upload (Future) | 📋 |
+| 8.7 | AI document parsing (Future) | 📋 |
+
+---
+
+## PHASE 9: SAP Activate Phase Tracking 📋 BACKLOG
+
+### 9.1 Phase Management
+| ID | Task | Status |
+|----|------|--------|
+| 9.1.1 | project_phases table | 📋 |
+| 9.1.2 | 6 phases: Discover/Prepare/Explore/Realize/Deploy/Run | 📋 |
+| 9.1.3 | Phase status & dates | 📋 |
+| 9.1.4 | Phase completion % | 📋 |
+
+### 9.2 Roadmap Tasks
+| ID | Task | Status |
+|----|------|--------|
+| 9.2.1 | Predefined task templates | 📋 |
+| 9.2.2 | Task assignment | 📋 |
+| 9.2.3 | Task dependencies | 📋 |
+| 9.2.4 | Milestone tracking | 📋 |
+
+### 9.3 Cutover & Hypercare
+| ID | Task | Status |
+|----|------|--------|
+| 9.3.1 | Cutover checklist | 📋 |
+| 9.3.2 | Go/No-Go decision | 📋 |
+| 9.3.3 | Cutover rehearsal tracking | 📋 |
+| 9.3.4 | Hypercare period definition | 📋 |
+| 9.3.5 | Support ticket tracking | 📋 |
+
+---
+
+## PHASE 10: Dashboard & Reporting 📋 BACKLOG
+
+| ID | Task | Status |
+|----|------|--------|
+| 10.1 | Phase progress visual (6-phase timeline) | 📋 |
+| 10.2 | Risk heatmap | ✅ |
+| 10.3 | Test progress S-Curve | 📋 |
+| 10.4 | Traceability matrix view | 📋 |
+| 10.5 | Gap coverage report | 📋 |
+| 10.6 | UAT sign-off report | 📋 |
+| 10.7 | PDF/Excel export | 📋 |
+
+---
+
+## PHASE 11: AI Features (Future) 📋 BACKLOG
+
+| ID | Task | Status |
+|----|------|--------|
+| 11.1 | Upload meeting transcript | 📋 |
+| 11.2 | Auto-extract Q&A | 📋 |
+| 11.3 | Auto-extract Actions | 📋 |
+| 11.4 | Gap → WRICEF type suggestion | 📋 |
+| 11.5 | Risk impact prediction | 📋 |
+| 11.6 | Natural language chat | 📋 |
+
+---
+
+## 📅 Timeline
+
+| Period | Focus |
+|--------|-------|
+| This Week | Phase 3 complete (linking) |
+| Week 2-3 | Phase 4-5 (WRICEF, Config) |
+| Week 4-5 | Phase 6 (Test Management) |
+| Month 2 | Phase 7-8 (Defects, Docs) |
+| Month 3+ | Phase 9-11 (Activate, AI) |
+
+---
+
+## 🗄️ Database Tables
+
+### Existing (17)
+```
+projects, scenarios, analysis_sessions, session_attendees, 
+session_agenda, questions, answers, fitgap, decisions, 
+risks_issues, action_items, meeting_minutes, wricef, 
+configs, documents, test_cases, requirements
 ```
 
-### 2. Mevcut Durumu Kontrol Et
-```bash
-# Veritabanı tablolarını kontrol et
-sqlite3 project_copilot.db ".tables"
-
-# API'nin çalıştığını doğrula
-curl http://localhost:8080/api/dashboard/stats
+### Planned (5)
+```
+defects, project_phases, phase_tasks, cutover_items, test_plans
 ```
 
-### 3. Uygulama URL'leri
-- **VS Code:** Codespaces web IDE'si
-- **Uygulama:** Port 8080 üzerinden erişim
-- **Veritabanı:** `/workspaces/ProjektCoPilot/project_copilot.db`
+---
 
-### 4. Önemli Dosyalar
-- `app.py` - Backend API'ler
-- `database.py` - DB şeması
-- `templates/index.html` - Frontend
+## 👥 Contributors
+- **Umut Soyyılmaz** - Product Owner, SAP Expert
+- **Claude AI** - Development Partner
 
 ---
 
-## 📝 GELİŞTİRME NOTLARI
-
-1. **Modal'lar** `</body>` etiketinden hemen önce olmalı
-2. **Nav menü** öğeleri `<div class="nav-item">` formatında
-3. **API yanıtları** JSON formatında
-4. **Frontend** Jinja2 template + vanilla JavaScript
-5. **Flask sunucusu** port 8080'de çalışıyor
-
----
-
-## 🔗 FAYDALI KOMUTLAR
-```bash
-# Flask sunucusunu durdur
-pkill -f "python app.py"
-
-# Flask sunucusunu başlat
-python app.py
-
-# Veritabanını sorgula
-sqlite3 project_copilot.db "SELECT * FROM projects;"
-
-# API test et
-curl http://localhost:8080/api/projects
-```
-# 📊 SAP AI Project Co-Pilot - İlerleme Raporu
-
-**Son Güncelleme:** 01 Şubat 2026
-**Proje:** SAP AI Project Co-Pilot MVP
-**Ortam:** GitHub Codespaces (bookish-space-cod)
-
----
-
-## ✅ TAMAMLANAN GÖREVLER
-
-| Task ID | Açıklama | Durum |
-|---------|----------|-------|
-| 1.1 | Proje Kurulumu | ✅ |
-| 1.2 | Dashboard Butonları | ✅ |
-| 1.3 | Veritabanı Şeması (9 tablo) | ✅ |
-| 1.4 | Backend API'ler | ✅ |
-| 2.1 | Dashboard Gerçek Veriler | ✅ |
-| 2.2 | Projects Sayfası | ✅ |
-| 2.3 | Analysis Workspace | ✅ |
-| 2.4 | Global Project Context | ✅ |
-| 2.5 | Requirements Sayfası (Proje bazlı) | ✅ |
-
----
-
-## 🎯 YENİ ÖZELLİKLER (Bu Oturum)
-
-1. **Global Project Selector** - Header'da proje seçimi
-2. **Dashboard** - Proje bazlı istatistikler
-3. **Analysis** - Proje bazlı session listesi
-4. **Requirements** - Proje bazlı filtreleme
-5. **LocalStorage** - Seçili proje hafızada kalıyor
-
----
-
-## 📋 SIRADAKI GÖREVLER
-
-- [ ] Design (FS/TS) sayfası
-- [ ] Test Cases sayfası
-- [ ] AI entegrasyonu (OpenAI/Azure)
-- [ ] Export/Import özellikleri
+*Generated: 2026-02-03*

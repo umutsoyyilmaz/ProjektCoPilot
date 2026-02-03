@@ -1,0 +1,2188 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SAP AI Project Co-Pilot – Ultimate Prototype</title>
+    <style>
+        /* --- SMART DESIGN TOKENS (Fiori Horizon Inspired) --- */
+        :root {
+            /* Core Palette */
+            --bg-app: #F5F6F7;
+            --bg-surface: #FFFFFF;
+            --bg-sidebar: #1d2330; /* Deep Midnight */
+            
+            /* Typography */
+            --text-primary: #1D2330;    
+            --text-secondary: #495057; /* darker for better contrast */
+            --text-on-dark: #FFFFFF;
+            
+            /* Brand & AI Colors */
+            --primary: #0070F2; /* SAP Blue */
+            --primary-hover: #0050c0;
+            --success: #107e3e;
+            --warn: #e9730c;
+            --error: #bb0000;
+            --ai-gradient: linear-gradient(135deg, #8900B4 0%, #2565AE 100%); /* Magic Purple-Blue */
+            
+            /* Shapes & Shadows */
+            --radius-s: 6px;
+            --radius-m: 12px;
+            --radius-l: 16px;
+            --shadow-card: 0 2px 12px rgba(0,0,0,0.04);
+            --shadow-hover: 0 8px 24px rgba(0,0,0,0.08);
+            --border-light: #EAECEF;
+            
+            /* Dimensions */
+            --header-height: 60px;
+            --sidenav-width-collapsed: 68px;
+            --sidenav-width-expanded: 260px;
+        }
+
+        * { box-sizing: border-box; }
+
+        body {
+            margin: 0;
+            font-family: '72', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-app);
+            color: var(--text-primary);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* --- 1. SMART HEADER --- */
+        .shell-bar {
+            height: var(--header-height);
+            background: var(--bg-surface);
+            border-bottom: 1px solid var(--border-light);
+            display: flex;
+            align-items: center;
+            padding: 0 24px;
+            justify-content: space-between;
+            z-index: 100;
+            position: relative;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+        }
+
+        .brand-area {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 700;
+            font-size: 18px;
+            letter-spacing: -0.5px;
+            color: var(--text-primary);
+        }
+        
+        .ai-badge {
+            background: var(--ai-gradient);
+            color: white;
+            font-size: 10px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-weight: 800;
+        }
+
+        .user-actions { display: flex; gap: 16px; }
+        .icon-btn {
+            width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; transition: all 0.2s ease; color: var(--text-secondary);
+        }
+        .icon-btn:hover { background: #F0F2F5; color: var(--primary); }
+        .avatar { background: #2C3E50; color: white; font-size: 14px; font-weight: 600; }
+
+        /* --- 2. LAYOUT --- */
+        .main-layout { display: flex; flex: 1; height: calc(100vh - var(--header-height)); }
+
+        /* --- 3. SMART SIDEBAR --- */
+        .sidebar {
+            width: var(--sidenav-width-collapsed);
+            background: var(--bg-sidebar);
+            display: flex;
+            flex-direction: column;
+            padding: 16px 8px;
+            transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow-x: hidden;
+            z-index: 90;
+        }
+        .sidebar:hover { width: var(--sidenav-width-expanded); }
+
+        .nav-item {
+            display: flex; align-items: center; height: 44px; padding: 0 14px; margin-bottom: 4px;
+            color: #A1AAB7; border-radius: var(--radius-m); cursor: pointer; transition: all 0.2s; white-space: nowrap;
+        }
+        .nav-item:hover { background: rgba(255,255,255,0.1); color: white; padding-left: 18px; }
+        .nav-item.active { background: var(--primary); color: white; font-weight: 500; box-shadow: 0 4px 12px rgba(0, 112, 242, 0.4); }
+        .nav-icon { font-size: 20px; min-width: 36px; display: flex; justify-content: center; }
+        .nav-text { margin-left: 12px; font-size: 14px; opacity: 0; transition: opacity 0.2s; }
+        .sidebar:hover .nav-text { opacity: 1; }
+
+        /* --- 4. CONTENT AREA --- */
+        .content { flex: 1; padding: 32px; overflow-y: auto; background: var(--bg-app); }
+
+        /* --- 5. COMPONENTS --- */
+        .page-header { margin-bottom: 32px; }
+        .page-title { font-size: 28px; font-weight: 700; margin: 0 0 8px 0; color: var(--text-primary); }
+        .page-subtitle { color: var(--text-secondary); font-size: 14px; }
+
+        /* Cards */
+        .grid-dashboard { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; margin-bottom: 32px; }
+        .smart-card {
+            background: var(--bg-surface); border-radius: var(--radius-l); padding: 24px;
+            box-shadow: var(--shadow-card); border: 1px solid rgba(0,0,0,0.03);
+            transition: transform 0.25s, box-shadow 0.25s; position: relative; overflow: hidden;
+        }
+        .smart-card:hover { transform: translateY(-4px); box-shadow: var(--shadow-hover); }
+        .card-ai { background: white; border: 1px solid rgba(137, 0, 180, 0.1); }
+        .card-ai::before { content: ''; position: absolute; top: 0; left: 0; width: 4px; height: 100%; background: var(--ai-gradient); }
+        .card-icon { font-size: 24px; margin-bottom: 16px; display: block; }
+        .card-title { font-size: 14px; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+        .card-value { font-size: 36px; font-weight: 700; color: var(--text-primary); letter-spacing: -1px; }
+        .card-meta { font-size: 13px; color: var(--text-secondary); margin-top: 12px; display: flex; align-items: center; gap: 6px; }
+        
+        /* Tables */
+        .smart-table-container { background: var(--bg-surface); border-radius: var(--radius-l); box-shadow: var(--shadow-card); overflow: hidden; }
+        .smart-table { width: 100%; border-collapse: collapse; }
+        .smart-table th { text-align: left; padding: 18px 24px; font-size: 12px; color: var(--text-secondary); font-weight: 600; text-transform: uppercase; border-bottom: 1px solid var(--border-light); background: #FAFBFC; }
+        .smart-table td { padding: 20px 24px; border-bottom: 1px solid var(--border-light); color: var(--text-primary); font-size: 14px; }
+        .smart-table tr:hover td { background: #F8F9FA; cursor: pointer; color: var(--primary); }
+
+        /* Pills */
+        .pill { display: inline-flex; align-items: center; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+        .pill.green { background: #E6F6EB; color: #0E8A40; }
+        .pill.orange { background: #FFF3E0; color: #B76E00; }
+        .pill.blue { background: #E8F2FF; color: #0070F2; }
+        .pill.red { background: #ffe5e5; color: #bb0000; }
+
+        /* --- NEW: FORM & ADVANCED COMPONENTS --- */
+        .form-group { margin-bottom: 20px; }
+        .form-label { display: block; margin-bottom: 8px; font-size: 13px; font-weight: 600; color: var(--text-secondary); }
+        .form-control {
+            width: 100%; padding: 12px; border: 1px solid var(--border-light);
+            border-radius: var(--radius-s); font-family: inherit; font-size: 14px;
+            transition: border 0.2s, box-shadow 0.2s;
+        }
+        .form-control:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 3px rgba(0, 112, 242, 0.1); }
+
+        /* Toggle Switch */
+        .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider {
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+            background-color: #ccc; transition: .4s; border-radius: 24px;
+        }
+        .slider:before {
+            position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px;
+            background-color: white; transition: .4s; border-radius: 50%; box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        input:checked + .slider { background-color: var(--primary); }
+        input:checked + .slider:before { transform: translateX(20px); }
+
+        /* Progress Bar */
+        .progress-wrapper { width: 100%; background: #eee; height: 6px; border-radius: 3px; overflow: hidden; margin-top: 8px; }
+        .progress-fill { height: 100%; background: var(--success); width: 0%; transition: width 1s ease; }
+        .progress-fill.warn { background: #E69A17; }
+
+        /* Process Step */
+        .process-step { display: flex; align-items: center; padding: 16px; border-bottom: 1px solid var(--border-light); transition: background 0.2s; }
+        .process-step:last-child { border-bottom: none; }
+        .process-step:hover { background: #FAFBFC; }
+        .step-icon { 
+            width: 40px; height: 40px; border-radius: 8px; background: #E8F2FF; color: var(--primary);
+            display: flex; align-items: center; justify-content: center; font-size: 18px; margin-right: 16px;
+        }
+
+        /* --- 6. OBJECT PAGE (FS DESIGNER) --- */
+        .obj-header { background: var(--bg-surface); padding: 32px 32px 0 32px; border-radius: var(--radius-l); box-shadow: var(--shadow-card); margin-bottom: 24px; }
+        .obj-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px; }
+        .tab-bar { display: flex; gap: 32px; }
+        .tab-item {
+            padding-bottom: 16px; font-size: 14px; font-weight: 500; color: var(--text-secondary);
+            cursor: pointer; position: relative; transition: color 0.2s;
+        }
+        .tab-item:hover { color: var(--text-primary); }
+        .tab-item.active { color: var(--primary); font-weight: 600; }
+        .tab-item.active::after {
+            content: ''; position: absolute; bottom: 0; left: 0; width: 100%; height: 3px;
+            background: var(--primary); border-radius: 3px 3px 0 0;
+        }
+
+        /* Buttons */
+        .btn {
+            padding: 10px 20px; border-radius: var(--radius-s); font-size: 14px; font-weight: 600;
+            cursor: pointer; border: none; transition: all 0.2s; display: inline-flex; align-items: center; gap: 8px;
+        }
+        .btn-secondary { background: #F0F2F5; color: var(--text-primary); }
+        .btn-secondary:hover { background: #E1E4E8; }
+        .btn-ai { background: var(--ai-gradient); color: white; box-shadow: 0 4px 12px rgba(137, 0, 180, 0.3); }
+        .btn-ai:hover { box-shadow: 0 6px 16px rgba(137, 0, 180, 0.4); transform: translateY(-1px); }
+
+        /* Chat */
+        .chat-interface { background: white; border-radius: var(--radius-m); border: 1px solid var(--border-light); display: flex; flex-direction: column; height: 400px; overflow: hidden; }
+        .chat-area { flex: 1; padding: 24px; overflow-y: auto; background: #FAFBFC; }
+        .message { display: flex; gap: 12px; margin-bottom: 20px; max-width: 80%; }
+        .message.ai .bubble { background: white; border: 1px solid var(--border-light); border-top-left-radius: 0; }
+        .message.me { margin-left: auto; flex-direction: row-reverse; }
+        .message.me .bubble { background: var(--primary); color: white; border-top-right-radius: 0; }
+        .bubble { padding: 12px 16px; border-radius: 12px; font-size: 14px; line-height: 1.5; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
+        .chat-input-area { padding: 16px; background: white; border-top: 1px solid var(--border-light); display: flex; gap: 12px; }
+        .chat-input { flex: 1; padding: 12px; border: 1px solid var(--border-light); border-radius: var(--radius-s); outline: none; transition: border 0.2s; }
+        .chat-input:focus { border-color: var(--primary); }
+
+        /* Utils */
+        .view { display: none; animation: fadeScale 0.3s ease-out; }
+        .view.active { display: block; }
+        @keyframes fadeScale { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
+        
+        .toast {
+            position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(100px);
+            background: #323232; color: white; padding: 12px 24px; border-radius: 50px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2); font-size: 14px; opacity: 0; transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            display: flex; align-items: center; gap: 10px; z-index: 200;
+        }
+        .toast.show { transform: translateX(-50%) translateY(0); opacity: 1; }
+
+    </style>
+</head>
+<body>
+
+<header class="shell-bar">
+    <!-- Global Project Selector - EN SOLDA -->
+    <div class="global-project-selector" style="display: flex; align-items: center; gap: 12px;">
+        <label for="globalProjectSelect" style="font-size: 13px; color: var(--text-secondary); font-weight: 600; cursor: pointer;">📁 Project:</label>
+        <select id="globalProjectSelect" onchange="onGlobalProjectChange()" aria-label="Global project" style="padding: 8px 16px; border: 2px solid var(--border-light); border-radius: var(--radius-s); font-size: 14px; font-weight: 600; min-width: 300px; cursor: pointer; background: white;">
+            <option value="">-- Select Project --</option>
+        </select>
+        <span id="globalProjectStatus" class="pill blue" style="display: none;">Active</span>
+    </div>
+
+    <!-- Brand Area - ORTADA -->
+    <div class="brand-area" style="position: absolute; left: 50%; transform: translateX(-50%);">
+        <div style="color:var(--primary); font-size: 24px;">◆</div>
+        <span>AI Project Co-Pilot</span>
+        <span class="ai-badge">BETA</span>
+    </div>
+
+    <!-- User Actions - EN SAĞDA -->
+    <div class="user-actions">
+        <div class="icon-btn" onclick="showToast('Global Search')">🔍</div>
+        <div class="icon-btn" onclick="showToast('No new notifications')">🔔</div>
+        <div class="icon-btn avatar">JD</div>
+    </div>
+</header>
+
+    <div class="main-layout">
+  <nav class="sidebar">
+    <div class="nav-item active" onclick="navTo('dashboard', this)">
+        <div class="nav-icon">🏠</div> <span class="nav-text">Cockpit</span>
+    </div>
+    <div class="nav-item" onclick="navTo('analysis', this)">
+        <div class="nav-icon">⚡</div> <span class="nav-text">Analysis</span>
+    </div>
+    <div class="nav-item" onclick="navTo('requirements', this)">
+        <div class="nav-icon">📑</div> <span class="nav-text">Requirements</span>
+    </div>
+    <div class="nav-item" onclick="navTo('testing', this)">
+        <div class="nav-icon">🧪</div> <span class="nav-text">Testing</span>
+    </div>
+    <div class="nav-item" onclick="navTo('design', this)">
+        <div class="nav-icon">🎨</div> <span class="nav-text">Design (FS/TS)</span>
+    </div>
+    <div class="nav-item" onclick="navTo('projects', this)">
+                    <div class="nav-icon">📁</div> <span class="nav-text">Projects</span>
+                </div>
+    <div class="nav-item" onclick="navTo('config', this)">
+   
+        <div class="nav-icon">⚙️</div> <span class="nav-text">Settings</span>
+    </div>
+</nav>
+
+        <main class="content" role="main" tabindex="0" aria-label="Main Content">
+            
+            <div id="view-dashboard" class="view active">
+                <div class="page-header">
+                    <h1 class="page-title">Good Morning, John</h1>
+                    <div class="page-subtitle">Project: S/4HANA Migration - Realize Phase</div>
+                </div>
+
+                <div class="grid-dashboard">
+    <div class="smart-card">
+        <span class="card-icon">📊</span>
+        <div class="card-title">Total Projects</div>
+        <div class="card-value stat-projects">0</div>
+        <div class="card-meta">All projects</div>
+    </div>
+    <div class="smart-card">
+        <span class="card-icon">📋</span>
+        <div class="card-title">Sessions</div>
+        <div class="card-value stat-sessions">0</div>
+        <div class="card-meta">Analysis sessions</div>
+    </div>
+    <div class="smart-card">
+        <span class="card-icon">🚧</span>
+        <div class="card-title">Open Gaps</div>
+        <div class="card-value stat-gaps">0</div>
+        <div class="card-meta">Identified gaps</div>
+    </div>
+    <div class="smart-card card-ai">
+        <span class="card-icon">❓</span>
+        <div class="card-title">Questions</div>
+        <div class="card-value stat-questions">0</div>
+        <div class="card-meta">Workshop questions</div>
+    </div>
+</div>
+<div class="smart-card card-ai">
+    <span class="card-icon">✨</span>
+    <div class="card-title">AI Co-Pilot</div>
+    <div style="font-size: 14px; margin-top: 10px; color: var(--text-secondary);" id="ai-insight-text">
+        Select a project to get AI insights...
+    </div>
+    <div class="card-meta" style="color: #8900B4; font-weight: 600; cursor: pointer; margin-top: 15px;" onclick="getAIInsights()">
+        Get Insights →
+    </div>
+</div>
+
+                <h2 style="margin-bottom: 16px;">Recent Activities</h2>
+                <div class="smart-table-container">
+                    <table class="smart-table">
+                        <thead>
+                            <tr>
+                                <th>Object</th>
+                                <th>Type</th>
+                                <th>Status</th>
+                                <th>Last Modified</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+    {% if recent_activities %}
+        {% for activity in recent_activities %}
+        <tr onclick="loadRequirementDetails({{ activity['id'] }})">
+            <td><b>{{ activity['code'] }}</b> - {{ activity['title'] }}</td>
+            <td>
+                {% if activity['module'] == 'MM' %}
+                    <span class="pill blue">MM</span>
+                {% elif activity['module'] == 'SD' %}
+                    <span class="pill blue">SD</span>
+                {% elif activity['module'] == 'FI' %}
+                    <span class="pill blue">FI</span>
+                {% else %}
+                    <span class="pill blue">{{ activity['module'] }}</span>
+                {% endif %}
+            </td>
+            <td>
+                {% if activity['status'] == 'Draft' %}
+                    <span class="pill orange">Draft</span>
+                {% elif activity['status'] == 'In Progress' %}
+                    <span class="pill orange">In Progress</span>
+                {% elif activity['status'] == 'Ready' or activity['status'] == 'Approved' %}
+                    <span class="pill green">{{ activity['status'] }}</span>
+                {% else %}
+                    <span class="pill blue">{{ activity['status'] }}</span>
+                {% endif %}
+            </td>
+            <td>Recently Updated</td>
+        </tr>
+        {% endfor %}
+    {% else %}
+        <tr>
+            <td colspan="4" style="text-align: center; color: #999;">No recent activities</td>
+        </tr>
+    {% endif %}
+</tbody>
+                    </table>
+                </div>
+            </div>
+
+   <div id="view-analysis" class="view">
+    <div class="page-header">
+        <div class="obj-top">
+            <div>
+                <h1 class="page-title">Analysis Workspace</h1>
+                <div class="page-subtitle">Fit-GAP Workshops & Process Discovery</div>
+            </div>
+            <button class="btn btn-ai" onclick="openNewSessionModal()">
+                <span>✨</span> Start New Session
+            </button>
+        </div>
+    </div>
+
+    <!-- Sessions List -->
+    <div class="smart-card" style="padding: 20px;">
+        <h3 style="margin-top: 0; margin-bottom: 15px;">📋 Analysis Sessions</h3>
+        <div class="smart-table-container">
+            <table class="smart-table">
+                <thead>
+                    <tr>
+                        <th>Session Name</th>
+                        <th>Module</th>
+                        <th>Process Area</th>
+                        <th>Status</th>
+                        <th>Progress</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="sessions-table-body">
+                    <tr>
+                        <td colspan="6" style="text-align: center; color: #999;">Select a project from header to see sessions.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+
+<!-- Session Detail View -->
+            <div id="view-session-detail" class="view">
+                <div class="page-header">
+                    <div class="obj-top">
+                        <div>
+                            <button class="btn btn-secondary" onclick="backToAnalysis()" style="margin-bottom: 10px;">
+                                ← Back to Sessions
+                            </button>
+                            <h1 class="page-title" id="sessionDetailTitle">Session Name</h1>
+                            <div class="page-subtitle" id="sessionDetailSubtitle">Project | Module | Status</div>
+                        </div>
+                        <div style="display: flex; gap: 10px;">
+                            <span id="sessionDetailProgress" class="pill blue">0%</span>
+                            <span id="sessionDetailStatus" class="pill green">Status</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Questions & Answers Section -->
+                <div class="smart-card" style="margin-bottom: 20px; padding: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h3 style="margin: 0;">📋 Questions & Answers</h3>
+                        <button class="btn btn-primary" onclick="openAddQuestionModal()">+ Add Question</button>
+                    </div>
+                    <div id="questionsContainer">
+                        <div style="text-align: center; color: #999; padding: 40px;">
+                            No questions yet. Add your first question!
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Fit-Gap Section -->
+                <div class="smart-card" style="padding: 20px;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+                        <h3 style="margin: 0;">🔍 Fit-Gap Analysis</h3>
+                        <button class="btn btn-primary" onclick="openAddGapModal()">+ Add Gap</button>
+                    </div>
+                    <div class="smart-table-container">
+                        <table class="smart-table">
+                            <thead>
+                                <tr>
+                                    <th>Gap ID</th>
+                                    <th>Description</th>
+                                    <th>Priority</th>
+                                    <th>Resolution</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="fitgap-table-body">
+                                <tr>
+                                    <td colspan="5" style="text-align: center; color: #999;">No gaps identified yet.</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            <div id="view-requirements" class="view">
+                <div class="page-header">
+                    <div class="obj-top">
+                        <div>
+                            <h1 class="page-title">Requirement Explorer</h1>
+                            <div class="page-subtitle">WRICEF Objects & Backlog Management</div>
+                        </div>
+                        <div style="display: flex; gap: 12px;">
+                            <button class="btn btn-secondary">Import from Excel</button>
+                            <!-- New Project Modal -->
+        
+                            <button class="btn btn-ai" onclick="document.getElementById('addModal').style.display='block'">+ New WRICEF</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="tab-bar" style="margin-bottom: 24px; border-bottom: 1px solid var(--border-light);">
+                    <div class="tab-item active" onclick="showToast('Filtering: All')">All Objects (14)</div>
+                    <div class="tab-item" onclick="showToast('Filtering: Reports')">Reports (5)</div>
+                    <div class="tab-item" onclick="showToast('Filtering: Interfaces')">Interfaces (3)</div>
+                    <div class="tab-item" onclick="showToast('Filtering: Enhancements')">Enhancements (6)</div>
+                </div>
+
+                <div class="smart-table-container">
+                    <table class="smart-table">
+                        <thead>
+                            <tr>
+                                <th>ID</th>
+                                <th>Title</th>
+                                <th>Type</th>
+                                <th>Complexity</th>
+                                <th>Status</th>
+                                <th>AI Enrichment</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="requirements-table-body">
+    {% for req in requirements %}
+    <tr onclick="loadRequirementDetails({{ req.id }})">
+        <td><b>{{ req.code }}</b></td>
+        <td>{{ req.title }}</td>
+        <td><span class="pill blue">{{ req.module }}</span></td>
+        <td>{{ req.complexity }}</td>
+        <td>
+            <span class="pill {% if req.status == 'Ready' or req.status == 'Approved' %}green{% elif req.status == 'In Progress' or req.status == 'FS Draft' %}orange{% elif req.status == 'Blocked' %}red{% else %}blue{% endif %}">
+                {{ req.status }}
+            </span>
+        </td>
+        <td>
+            <span style="color: #8900B4; font-size: 12px;">
+                {% if req.ai_status == 'Full' %}✦ Full{% elif req.ai_status == 'Draft' or req.ai_status == 'Partial' %}✦ Partial{% else %}○ None{% endif %}
+            </span>
+        <td style="color: var(--primary);" onclick="event.stopPropagation(); document.getElementById('addModal').style.display='block'">Edit</td>
+    </tr>
+    {% endfor %}
+</tbody>
+                    </table>
+                </div>
+            </div>
+
+            <div id="view-design" class="view">
+    <div class="page-header">
+        <div class="obj-top">
+            <div>
+                <h1 class="page-title">Design Documents</h1>
+                <div class="page-subtitle" id="design-subtitle">Functional & Technical Specifications</div>
+            </div>
+            <button class="btn btn-ai" onclick="openNewDocumentModal()">
+                <span>📄</span> New Document
+            </button>
+        </div>
+    </div>
+
+    <!-- Documents List -->
+    <div class="smart-card" style="padding: 20px;">
+        <div class="tab-bar" style="margin-bottom: 20px; border-bottom: 1px solid var(--border-light);">
+            <div class="tab-item active" onclick="filterDocuments('all', this)">All Documents</div>
+            <div class="tab-item" onclick="filterDocuments('FS', this)">Functional Spec</div>
+            <div class="tab-item" onclick="filterDocuments('TS', this)">Technical Spec</div>
+        </div>
+        <div class="smart-table-container">
+            <table class="smart-table">
+                <thead>
+                    <tr>
+                        <th>Document</th>
+                        <th>Requirement</th>
+                        <th>Type</th>
+                        <th>Version</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="documents-table-body">
+                    <tr>
+                        <td colspan="6" style="text-align: center; color: #999;">Select a project to see documents.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<!-- Document Detail View -->
+<div id="view-document-detail" class="view">
+    <div style="margin-bottom: 16px; color: var(--text-secondary); cursor: pointer; font-size: 13px;" onclick="backToDesign()">
+        ← Back to Documents
+    </div>
+
+    <div class="obj-header">
+        <div class="obj-top">
+            <div>
+                <h1 class="page-title" id="docDetailTitle">Document Title</h1>
+                <div class="page-subtitle" id="docDetailSubtitle">Requirement Code • Type</div>
+            </div>
+            <div style="display: flex; gap: 12px;">
+                <span id="docDetailStatus" class="pill blue">Draft</span>
+                <button class="btn btn-secondary" onclick="backToDesign()">Close</button>
+                <button class="btn btn-ai" onclick="generateAIContent()"><span>✦</span> AI Generate</button>
+            </div>
+        </div>
+        <div class="tab-bar">
+            <div class="tab-item active" onclick="switchDocTab('doc-overview', this)">Overview</div>
+            <div class="tab-item" onclick="switchDocTab('doc-content', this)">Content</div>
+            <div class="tab-item" onclick="switchDocTab('doc-copilot', this)" style="color: #8900B4;">Co-Pilot</div>
+        </div>
+    </div>
+
+    <div id="doc-overview" class="tab-content">
+        <div class="smart-card">
+            <h3 style="margin-top: 0;">Document Info</h3>
+            <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-top: 20px;">
+                <div>
+                    <div class="card-title">Type</div>
+                    <div id="docInfoType">-</div>
+                </div>
+                <div>
+                    <div class="card-title">Version</div>
+                    <div id="docInfoVersion">-</div>
+                </div>
+                <div>
+                    <div class="card-title">Template</div>
+                    <div id="docInfoTemplate">-</div>
+                </div>
+                <div>
+                    <div class="card-title">Status</div>
+                    <div id="docInfoStatus">-</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="doc-content" class="tab-content" style="display: none;">
+        <div class="smart-card">
+            <h3 style="margin-top: 0;">Document Content</h3>
+            <textarea id="docContentArea" class="form-control" rows="20" style="font-family: monospace; font-size: 13px;" placeholder="Document content will appear here..."></textarea>
+            <div style="margin-top: 15px; text-align: right;">
+                <button class="btn btn-primary" onclick="saveDocumentContent()">Save Content</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="doc-copilot" class="tab-content" style="display: none;">
+        <div class="smart-card">
+            <div class="chat-area" id="docChatArea" style="height: 300px; overflow-y: auto; padding: 15px; background: #f8f9fa; border-radius: 8px; margin-bottom: 15px;">
+                <div style="text-align: center; color: #999; padding: 40px;">
+                    Ask AI to help generate or improve document content...
+                </div>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <input type="text" id="docChatInput" class="form-control" placeholder="Ask AI to generate sections, improve content..." style="flex: 1;">
+                <button class="btn btn-ai" onclick="sendDocChat()">Send</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+            <div id="view-config" class="view">
+                <div class="page-header">
+                    <h1 class="page-title">Configuration</h1>
+                    <div class="page-subtitle">Manage AI Models, Integrations and System Preferences</div>
+                </div>
+
+                <div class="grid-dashboard" style="grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));">
+                    
+                    <div class="smart-card">
+                        <div class="card-title" style="margin-bottom: 20px; font-size: 16px; color: var(--primary);">🤖 AI Model Settings</div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Default LLM Provider</label>
+                            <select class="form-control">
+                                <option>OpenAI GPT-4 Turbo (via Azure)</option>
+                                <option>SAP Joule (Native)</option>
+                                <option>Mistral Large</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                                <label class="form-label" style="margin:0;">Creativity Level (Temperature)</label>
+                                <span style="font-size: 12px; color: #666;">0.7</span>
+                            </div>
+                            <input type="range" style="width: 100%;" min="0" max="1" step="0.1" value="0.7">
+                        </div>
+
+                        <div class="form-group" style="display: flex; justify-content: space-between; align-items: center;">
+                            <div>
+                                <label class="form-label" style="margin:0;">Auto-Enrich WRICEFs</label>
+                                <div style="font-size: 12px; color: var(--text-secondary);">Automatically use AI to fill tech specs</div>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox" checked>
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="smart-card">
+                        <div class="card-title" style="margin-bottom: 20px; font-size: 16px; color: var(--primary);">🔗 Integrations</div>
+                        
+                        <div class="process-step">
+                            <div class="step-icon" style="background: #0052CC; color: white;">J</div>
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; font-size: 14px;">Jira Software</div>
+                                <div style="font-size: 12px; color: var(--success);">Connected • Sync Active</div>
+                            </div>
+                            <button class="btn btn-secondary" style="padding: 4px 10px; font-size: 12px;">Config</button>
+                        </div>
+
+                        <div class="process-step">
+                            <div class="step-icon" style="background: #036C70; color: white;">S</div>
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; font-size: 14px;">SharePoint Online</div>
+                                <div style="font-size: 12px; color: var(--success);">Connected • Docs Stored</div>
+                            </div>
+                            <button class="btn btn-secondary" style="padding: 4px 10px; font-size: 12px;">Config</button>
+                        </div>
+
+                        <div class="process-step">
+                            <div class="step-icon" style="background: #F0AB00; color: black;">SolMan</div>
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; font-size: 14px;">SAP Solution Manager</div>
+                                <div style="font-size: 12px; color: var(--text-secondary);">Disconnected</div>
+                            </div>
+                            <label class="switch">
+                                <input type="checkbox">
+                                <span class="slider"></span>
+                            </label>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top: 32px; text-align: right; padding-top: 20px; border-top: 1px solid var(--border-light);">
+                    <button class="btn btn-secondary" style="margin-right: 12px;">Reset to Default</button>
+                    <button class="btn btn-ai" onclick="showToast('Configuration Saved Successfully! ✅')">Save Configuration</button>
+                </div>
+            </div>
+            <!-- Testing View -->
+<div id="view-testing" class="view">
+    <div class="page-header">
+        <div class="obj-top">
+            <div>
+                <h1 class="page-title">Test Management</h1>
+                <div class="page-subtitle">Test Cases & Execution Tracking</div>
+            </div>
+            <button class="btn btn-ai" onclick="openNewTestCaseModal()">
+                <span>🧪</span> New Test Case
+            </button>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="grid-dashboard" style="margin-bottom: 24px;">
+        <div class="smart-card">
+            <span class="card-icon">📋</span>
+            <div class="card-title">Total Test Cases</div>
+            <div class="card-value stat-total-tests">0</div>
+        </div>
+        <div class="smart-card">
+            <span class="card-icon">✅</span>
+            <div class="card-title">Passed</div>
+            <div class="card-value stat-passed-tests" style="color: var(--success);">0</div>
+        </div>
+        <div class="smart-card">
+            <span class="card-icon">❌</span>
+            <div class="card-title">Failed</div>
+            <div class="card-value stat-failed-tests" style="color: var(--error);">0</div>
+        </div>
+        <div class="smart-card">
+            <span class="card-icon">⏳</span>
+            <div class="card-title">Not Started</div>
+            <div class="card-value stat-pending-tests">0</div>
+        </div>
+    </div>
+
+    <!-- Test Cases Table -->
+    <div class="smart-card" style="padding: 20px;">
+        <div class="tab-bar" style="margin-bottom: 20px; border-bottom: 1px solid var(--border-light);">
+            <div class="tab-item active" onclick="filterTestCases('all', this)">All Tests</div>
+            <div class="tab-item" onclick="filterTestCases('Not Started', this)">Not Started</div>
+            <div class="tab-item" onclick="filterTestCases('Passed', this)">Passed</div>
+            <div class="tab-item" onclick="filterTestCases('Failed', this)">Failed</div>
+        </div>
+        <div class="smart-table-container">
+            <table class="smart-table">
+                <thead>
+                    <tr>
+                        <th>Test ID</th>
+                        <th>Scenario</th>
+                        <th>Requirement</th>
+                        <th>Type</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="testcases-table-body">
+                    <tr>
+                        <td colspan="6" style="text-align: center; color: #999;">Select a project to see test cases.</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<!-- Projects View -->
+            <div id="view-projects" class="view">
+                <div class="page-header">
+                    <h1 class="page-title">Projects</h1>
+                    <div class="page-subtitle">Manage your SAP implementation projects</div>
+                </div>
+                
+                <div style="margin-bottom: 20px;">
+                    <button class="btn btn-primary" onclick="openNewProjectModal()">+ New Project</button>
+                </div>
+                
+                <div class="smart-table-container">
+                    <table class="smart-table">
+                        <thead>
+                            <tr>
+                                <th>Project Code</th>
+                                <th>Project Name</th>
+                                <th>Customer</th>
+                                <th>Status</th>
+                                <th>Modules</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="projects-table-body">
+                            <tr>
+                                <td colspan="6" style="text-align: center; color: #999;">Loading projects...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <div class="toast" id="toast" role="status" aria-live="polite" aria-atomic="true">
+        <span>✅</span> <span id="toast-msg">Action Completed</span>
+    </div>
+
+    <script>
+// ============== GLOBAL DEĞİŞKENLER ==============
+let globalProjectId = localStorage.getItem('selectedProjectId') || null;
+let currentSessionId = null;
+let currentFilter = { module: '', status: '', search: '' };
+
+// ============== UYGULAMA BAŞLATICI ==============
+async function initializeApp() {
+    await loadGlobalProjectDropdown();
+    
+    if(globalProjectId) {
+        const select = document.getElementById('globalProjectSelect');
+        if(select) select.value = globalProjectId;
+        await updateProjectStatus();
+    }
+    
+    navTo('dashboard');
+}
+
+async function loadGlobalProjectDropdown() {
+    try {
+        const response = await fetch('/api/projects');
+        const projects = await response.json();
+        
+        const select = document.getElementById('globalProjectSelect');
+        if(!select) return;
+        
+        select.innerHTML = '<option value="">-- Select Project --</option>';
+        projects.forEach(p => {
+            select.innerHTML += `<option value="${p.id}">${p.project_code} - ${p.project_name}</option>`;
+        });
+    } catch(error) {
+        console.error('Error loading projects:', error);
+    }
+}
+
+async function onGlobalProjectChange() {
+    const select = document.getElementById('globalProjectSelect');
+    globalProjectId = select.value;
+    
+    if(!globalProjectId) {
+        localStorage.removeItem('selectedProjectId');
+        document.getElementById('globalProjectStatus').style.display = 'none';
+    } else {
+        localStorage.setItem('selectedProjectId', globalProjectId);
+        await updateProjectStatus();
+        showToast('Project selected!');
+    }
+    
+    refreshCurrentView();
+}
+
+async function updateProjectStatus() {
+    const statusBadge = document.getElementById('globalProjectStatus');
+    if(!statusBadge || !globalProjectId) return;
+    
+    try {
+        const response = await fetch(`/api/projects/${globalProjectId}`);
+        const project = await response.json();
+        statusBadge.textContent = project.status;
+        statusBadge.className = `pill ${project.status === 'Active' ? 'green' : 'blue'}`;
+        statusBadge.style.display = 'inline-flex';
+    } catch(error) {
+        console.error('Error:', error);
+    }
+}
+
+function refreshCurrentView() {
+    const activeView = document.querySelector('.view.active');
+    if(!activeView) return;
+    const viewId = activeView.id.replace('view-', '');
+    navTo(viewId);
+}
+
+// ============== NAVİGASYON ==============
+function navTo(viewId, navEl) {
+    // 1. Sidebar güncelle
+    document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+    
+    if(navEl) {
+        navEl.classList.add('active');
+    } else {
+        const items = document.querySelectorAll('.nav-item');
+        const mapping = { 'dashboard': 0, 'analysis': 1, 'requirements': 2, 'design': 3, 'testing': 4, 'projects': 5, 'config': 6 };
+        if(mapping[viewId] !== undefined && items[mapping[viewId]]) {
+            items[mapping[viewId]].classList.add('active');
+        }
+    }
+
+    // 2. View değiştir
+    document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+    const target = document.getElementById('view-' + viewId);
+    if(target) target.classList.add('active');
+
+    // 3. Veri yükle
+    if(viewId === 'dashboard') loadDashboardStats();
+    if(viewId === 'requirements') loadRequirements();
+    if(viewId === 'analysis') loadSessionsForGlobalProject();
+    if(viewId === 'projects') loadProjects();
+    if(viewId === 'design') loadDocuments();
+    if(viewId === 'testing') loadTestCases();
+}
+
+// ============== DASHBOARD ==============
+// ============== DASHBOARD ==============
+async function loadDashboardStats() {
+    try {
+        let url = '/api/dashboard/stats';
+        if(globalProjectId) {
+            url += `?project_id=${globalProjectId}`;
+        }
+        
+        const response = await fetch(url);
+        const data = await response.json();
+        
+        // Proje bilgisi güncelle
+        const subtitleEl = document.querySelector('#view-dashboard .page-subtitle');
+        if(subtitleEl) {
+            if(globalProjectId && data.project_name) {
+                subtitleEl.textContent = `Project: ${data.project_name} - ${data.project_status}`;
+            } else {
+                subtitleEl.textContent = 'Select a project from header to see project-specific data';
+            }
+        }
+        
+        // İstatistik kartları
+        const projectsEl = document.querySelector('.stat-projects');
+        if(projectsEl) projectsEl.textContent = data.total_projects || 0;
+        
+        const gapsEl = document.querySelector('.stat-gaps');
+        if(gapsEl) gapsEl.textContent = data.total_gaps || 0;
+        
+        const sessionsEl = document.querySelector('.stat-sessions');
+        if(sessionsEl) sessionsEl.textContent = data.total_sessions || 0;
+        
+        const questionsEl = document.querySelector('.stat-questions');
+        if(questionsEl) questionsEl.textContent = data.total_questions || 0;
+        
+        // Recent Activities tablosu
+        const tbody = document.querySelector('#view-dashboard .smart-table tbody');
+        if(tbody && data.recent_activities && data.recent_activities.length > 0) {
+            tbody.innerHTML = data.recent_activities.map(activity => `
+                <tr onclick="openSession(${activity.id})">
+                    <td><b>${activity.session_name}</b></td>
+                    <td><span class="pill blue">${activity.module || '-'}</span></td>
+                    <td><span class="pill ${activity.status === 'Completed' ? 'green' : 'orange'}">${activity.status}</span></td>
+                    <td>${activity.created_at ? 'Recently' : '-'}</td>
+                </tr>
+            `).join('');
+        } else if(tbody) {
+            tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;color:#999;">No recent activities</td></tr>';
+        }
+        
+        console.log('Dashboard loaded:', data);
+    } catch(error) {
+        console.error('Dashboard error:', error);
+    }
+}
+
+// ============== PROJECTS ==============
+async function loadProjects() {
+    try {
+        const response = await fetch('/api/projects');
+        const projects = await response.json();
+        
+        const tbody = document.getElementById('projects-table-body');
+        if(!tbody) return;
+        
+        if(projects.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#999;">No projects found.</td></tr>';
+            return;
+        }
+        
+        tbody.innerHTML = projects.map(p => `
+            <tr>
+                <td><strong>${p.project_code}</strong></td>
+                <td>${p.project_name}</td>
+                <td>${p.customer_name || '-'}</td>
+                <td><span class="pill ${p.status === 'Active' ? 'green' : 'blue'}">${p.status}</span></td>
+                <td>${p.modules || '-'}</td>
+                <td><button class="btn btn-small" onclick="selectProject(${p.id})">Select</button></td>
+            </tr>
+        `).join('');
+    } catch(error) {
+        console.error('Error:', error);
+    }
+}
+
+function selectProject(id) {
+    document.getElementById('globalProjectSelect').value = id;
+    onGlobalProjectChange();
+}
+
+function openNewProjectModal() {
+    const modal = document.getElementById('newProjectModal');
+    const overlay = document.getElementById('projectModalOverlay');
+    if(modal) {
+        modal.style.display = 'block';
+        modal.focus();
+    }
+    if(overlay) overlay.style.display = 'block';
+}
+
+function closeNewProjectModal() {
+    const modal = document.getElementById('newProjectModal');
+    const overlay = document.getElementById('projectModalOverlay');
+    if(modal) modal.style.display = 'none';
+    if(overlay) overlay.style.display = 'none';
+}
+
+async function saveNewProject() {
+    const data = {
+        project_code: document.getElementById('projectCode').value,
+        project_name: document.getElementById('projectName').value,
+        customer_name: document.getElementById('customerName').value,
+        modules: document.getElementById('projectModules').value,
+        status: 'Planning'
+    };
+    
+    if(!data.project_code || !data.project_name) {
+        alert('Project Code and Name required!');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/projects', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        
+        if(response.ok) {
+            closeNewProjectModal();
+            loadProjects();
+            loadGlobalProjectDropdown();
+            showToast('Project created!');
+        }
+    } catch(error) {
+        console.error('Error:', error);
+    }
+}
+
+// ============== ANALYSIS ==============
+async function loadSessionsForGlobalProject() {
+    const tbody = document.getElementById('sessions-table-body');
+    if(!tbody) return;
+    
+    if(!globalProjectId) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#999;">Please select a project from the header first.</td></tr>';
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/sessions?project_id=${globalProjectId}`);
+        const sessions = await response.json();
+        
+        if(sessions.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#999;">No sessions yet. Start a new session!</td></tr>';
+            return;
+        }
+        
+        tbody.innerHTML = sessions.map(s => `
+            <tr>
+                <td><strong>${s.session_name}</strong></td>
+                <td><span class="pill blue">${s.module || '-'}</span></td>
+                <td>${s.process_name || '-'}</td>
+                <td><span class="pill ${s.status === 'Completed' ? 'green' : 'orange'}">${s.status}</span></td>
+                <td>-</td>
+                <td><button class="btn btn-small" onclick="openSession(${s.id})">Open</button></td>
+            </tr>
+        `).join('');
+    } catch(error) {
+        console.error('Error:', error);
+    }
+}
+
+function openNewSessionModal() {
+    if(!globalProjectId) {
+        alert('Please select a project from the header first!');
+        return;
+    }
+    document.getElementById('newSessionModal').style.display = 'block';
+}
+
+function closeNewSessionModal() {
+    document.getElementById('newSessionModal').style.display = 'none';
+}
+
+async function saveNewSession() {
+    const data = {
+        project_id: globalProjectId,
+        session_name: document.getElementById('sessionName').value,
+        module: document.getElementById('sessionModule').value,
+        process_name: document.getElementById('sessionProcessArea').value,
+        status: 'Planned'
+    };
+    
+    if(!data.session_name || !data.module) {
+        alert('Session Name and Module required!');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/sessions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        
+        if(response.ok) {
+            closeNewSessionModal();
+            loadSessionsForGlobalProject();
+            showToast('Session created!');
+        }
+    } catch(error) {
+        console.error('Error:', error);
+    }
+}
+
+function openSession(sessionId) {
+    currentSessionId = sessionId;
+    loadSessionDetail(sessionId);
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById('view-session-detail').classList.add('active');
+}
+
+function backToAnalysis() {
+    currentSessionId = null;
+    navTo('analysis');
+}
+
+async function loadSessionDetail(sessionId) {
+    try {
+        const response = await fetch(`/api/sessions/${sessionId}`);
+        const session = await response.json();
+        
+        document.getElementById('sessionDetailTitle').textContent = session.session_name;
+        document.getElementById('sessionDetailSubtitle').textContent = `${session.module || 'Module'} | ${session.process_name || 'Process'}`;
+        document.getElementById('sessionDetailStatus').textContent = session.status;
+        
+        loadQuestionsForSession(sessionId);
+        loadGapsForSession(sessionId);
+    } catch(error) {
+        console.error('Error:', error);
+    }
+}
+
+async function loadQuestionsForSession(sessionId) {
+    try {
+        const response = await fetch(`/api/questions?session_id=${sessionId}`);
+        const questions = await response.json();
+        
+        const container = document.getElementById('questionsContainer');
+        if(questions.length === 0) {
+            container.innerHTML = '<div style="text-align:center;color:#999;padding:40px;">No questions yet.</div>';
+            return;
+        }
+        
+        container.innerHTML = questions.map((q, i) => `
+            <div class="smart-card" style="margin-bottom:10px;padding:15px;background:#f8f9fa;">
+                <strong style="color:var(--primary);">Q${i+1}: ${q.question_text}</strong>
+                <div style="margin-top:10px;padding:10px;background:white;border-radius:8px;border-left:3px solid ${q.answer_text ? 'var(--primary)' : '#ccc'};">
+                    ${q.answer_text || '<em style="color:#999;">Not answered yet</em>'}
+                </div>
+            </div>
+        `).join('');
+    } catch(error) {
+        console.error('Error:', error);
+    }
+}
+
+async function loadGapsForSession(sessionId) {
+    try {
+        const response = await fetch(`/api/fitgap?session_id=${sessionId}`);
+        const gaps = await response.json();
+        
+        const tbody = document.getElementById('fitgap-table-body');
+        if(gaps.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#999;">No gaps yet.</td></tr>';
+            return;
+        }
+        
+        tbody.innerHTML = gaps.map(g => `
+            <tr>
+                <td><strong>${g.gap_id || 'GAP-' + g.id}</strong></td>
+                <td>${g.gap_description || '-'}</td>
+                <td><span class="pill ${g.priority === 'High' ? 'red' : 'blue'}">${g.priority || 'Medium'}</span></td>
+                <td>${g.solution_type || '-'}</td>
+                <td>-</td>
+            </tr>
+        `).join('');
+    } catch(error) {
+        console.error('Error:', error);
+    }
+}
+
+function openAddQuestionModal() { document.getElementById('addQuestionModal').style.display = 'block'; }
+function closeAddQuestionModal() { document.getElementById('addQuestionModal').style.display = 'none'; }
+function openAddGapModal() { document.getElementById('addGapModal').style.display = 'block'; }
+function closeAddGapModal() { document.getElementById('addGapModal').style.display = 'none'; }
+
+async function saveNewQuestion() {
+    const data = {
+        session_id: currentSessionId,
+        question_text: document.getElementById('newQuestionText').value,
+        answer_text: document.getElementById('newAnswerText').value
+    };
+    
+    if(!data.question_text) { alert('Question required!'); return; }
+    
+    try {
+        const response = await fetch('/api/questions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        if(response.ok) {
+            closeAddQuestionModal();
+            loadQuestionsForSession(currentSessionId);
+            document.getElementById('newQuestionText').value = '';
+            document.getElementById('newAnswerText').value = '';
+        }
+    } catch(error) { console.error('Error:', error); }
+}
+
+async function saveNewGap() {
+    const data = {
+        session_id: currentSessionId,
+        gap_id: document.getElementById('newGapId').value,
+        description: document.getElementById('newGapDescription').value,
+        priority: document.getElementById('newGapPriority').value,
+        resolution_type: document.getElementById('newGapResolution').value
+    };
+    
+    if(!data.description) { alert('Description required!'); return; }
+    
+    try {
+        const response = await fetch('/api/fitgap', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        if(response.ok) {
+            closeAddGapModal();
+            loadGapsForSession(currentSessionId);
+        }
+    } catch(error) { console.error('Error:', error); }
+}
+// ============== DESIGN (FS/TS) ==============
+let currentDocumentId = null;
+let currentDocFilter = 'all';
+
+async function loadDocuments() {
+    const tbody = document.getElementById('documents-table-body');
+    if(!tbody) return;
+    
+    if(!globalProjectId) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#999;">Please select a project from the header first.</td></tr>';
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/documents?project_id=${globalProjectId}`);
+        const documents = await response.json();
+        
+        // Filter if needed
+        let filtered = documents;
+        if(currentDocFilter !== 'all') {
+            filtered = documents.filter(d => d.document_type === currentDocFilter);
+        }
+        
+        if(filtered.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#999;">No documents found. Create your first document!</td></tr>';
+            return;
+        }
+        
+        tbody.innerHTML = filtered.map(doc => `
+            <tr onclick="openDocument(${doc.id})">
+                <td><strong>${doc.document_type}-${doc.requirement_code}</strong></td>
+                <td>${doc.requirement_code} - ${doc.requirement_title || ''}</td>
+                <td><span class="pill ${doc.document_type === 'FS' ? 'blue' : 'purple'}">${doc.document_type === 'FS' ? 'Functional' : 'Technical'}</span></td>
+                <td>v${doc.version || '1.0'}</td>
+                <td><span class="pill ${doc.status === 'Approved' ? 'green' : doc.status === 'In Review' ? 'orange' : 'blue'}">${doc.status || 'Draft'}</span></td>
+                <td><button class="btn btn-small" onclick="event.stopPropagation(); openDocument(${doc.id})">Open</button></td>
+            </tr>
+        `).join('');
+    } catch(error) {
+        console.error('Error loading documents:', error);
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#999;">Error loading documents.</td></tr>';
+    }
+}
+
+function filterDocuments(type, tabEl) {
+    document.querySelectorAll('#view-design .tab-item').forEach(t => t.classList.remove('active'));
+    tabEl.classList.add('active');
+    currentDocFilter = type;
+    loadDocuments();
+}
+
+async function openDocument(docId) {
+    currentDocumentId = docId;
+    
+    try {
+        const response = await fetch(`/api/documents/${docId}`);
+        const doc = await response.json();
+        
+        // Update header
+        document.getElementById('docDetailTitle').textContent = `${doc.document_type}-${doc.requirement_code}`;
+        document.getElementById('docDetailSubtitle').textContent = `${doc.requirement_title || 'Requirement'} • ${doc.document_type === 'FS' ? 'Functional Spec' : 'Technical Spec'}`;
+        document.getElementById('docDetailStatus').textContent = doc.status || 'Draft';
+        document.getElementById('docDetailStatus').className = `pill ${doc.status === 'Approved' ? 'green' : 'blue'}`;
+        
+        // Update overview
+        document.getElementById('docInfoType').textContent = doc.document_type === 'FS' ? 'Functional Spec' : 'Technical Spec';
+        document.getElementById('docInfoVersion').textContent = 'v' + (doc.version || '1.0');
+        document.getElementById('docInfoTemplate').textContent = doc.template_used || 'Standard';
+        document.getElementById('docInfoStatus').textContent = doc.status || 'Draft';
+        
+        // Update content
+        document.getElementById('docContentArea').value = doc.content || '';
+        
+        // Switch view
+        document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+        document.getElementById('view-document-detail').classList.add('active');
+        
+        // Reset tabs
+        document.querySelectorAll('#view-document-detail .tab-item').forEach(t => t.classList.remove('active'));
+        document.querySelector('#view-document-detail .tab-item').classList.add('active');
+        document.querySelectorAll('#view-document-detail .tab-content').forEach(c => c.style.display = 'none');
+        document.getElementById('doc-overview').style.display = 'block';
+        
+    } catch(error) {
+        console.error('Error:', error);
+        showToast('Error loading document');
+    }
+}
+
+function backToDesign() {
+    currentDocumentId = null;
+    document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+    document.getElementById('view-design').classList.add('active');
+    loadDocuments();
+}
+
+function switchDocTab(tabId, tabEl) {
+    document.querySelectorAll('#view-document-detail .tab-item').forEach(t => t.classList.remove('active'));
+    tabEl.classList.add('active');
+    document.querySelectorAll('#view-document-detail .tab-content').forEach(c => c.style.display = 'none');
+    document.getElementById(tabId).style.display = 'block';
+}
+
+function openNewDocumentModal() {
+    if(!globalProjectId) {
+        alert('Please select a project first!');
+        return;
+    }
+    document.getElementById('newDocumentModal').style.display = 'block';
+    loadRequirementsForDocModal();
+}
+
+function closeNewDocumentModal() {
+    document.getElementById('newDocumentModal').style.display = 'none';
+}
+
+async function loadRequirementsForDocModal() {
+    try {
+        const response = await fetch(`/api/requirements?project_id=${globalProjectId}`);
+        const requirements = await response.json();
+        
+        const select = document.getElementById('docRequirementSelect');
+        select.innerHTML = '<option value="">-- Select Requirement --</option>';
+        requirements.forEach(r => {
+            select.innerHTML += `<option value="${r.id}">${r.code} - ${r.title}</option>`;
+        });
+    } catch(error) {
+        console.error('Error:', error);
+    }
+}
+
+async function saveNewDocument() {
+    const data = {
+        requirement_id: document.getElementById('docRequirementSelect').value,
+        document_type: document.getElementById('docTypeSelect').value,
+        template_used: document.getElementById('docTemplateSelect').value,
+        status: 'Draft'
+    };
+    
+    if(!data.requirement_id || !data.document_type) {
+        alert('Please select requirement and document type!');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/documents', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        
+        if(response.ok) {
+            closeNewDocumentModal();
+            loadDocuments();
+            showToast('Document created!');
+        }
+    } catch(error) {
+        console.error('Error:', error);
+    }
+}
+
+async function saveDocumentContent() {
+    if(!currentDocumentId) return;
+    
+    const content = document.getElementById('docContentArea').value;
+    
+    try {
+        const response = await fetch(`/api/documents/${currentDocumentId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ content: content })
+        });
+        
+        if(response.ok) {
+            showToast('Content saved!');
+        }
+    } catch(error) {
+        console.error('Error:', error);
+        showToast('Error saving content');
+    }
+}
+
+function generateAIContent() {
+    showToast('AI generating content... (Coming soon)');
+}
+
+function sendDocChat() {
+    const input = document.getElementById('docChatInput');
+    const text = input.value;
+    if(!text) return;
+    
+    const area = document.getElementById('docChatArea');
+    area.innerHTML += `<div style="text-align:right;margin-bottom:10px;"><span style="background:var(--primary);color:white;padding:8px 12px;border-radius:12px;">${text}</span></div>`;
+    input.value = '';
+    
+    setTimeout(() => {
+        area.innerHTML += `<div style="margin-bottom:10px;"><span style="background:white;padding:8px 12px;border-radius:12px;border:1px solid #ddd;">AI: I'll help you with "${text}". This feature is coming soon!</span></div>`;
+        area.scrollTop = area.scrollHeight;
+    }, 500);
+}// ============== TESTING ==============
+let currentTestFilter = 'all';
+
+async function loadTestCases() {
+    const tbody = document.getElementById('testcases-table-body');
+    if(!tbody) return;
+    
+    if(!globalProjectId) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#999;">Please select a project from the header first.</td></tr>';
+        updateTestStats([]);
+        return;
+    }
+    
+    try {
+        const response = await fetch(`/api/testcases?project_id=${globalProjectId}`);
+        const testcases = await response.json();
+        
+        updateTestStats(testcases);
+        
+        // Filter if needed
+        let filtered = testcases;
+        if(currentTestFilter !== 'all') {
+            filtered = testcases.filter(tc => tc.status === currentTestFilter);
+        }
+        
+        if(filtered.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#999;">No test cases found.</td></tr>';
+            return;
+        }
+        
+        tbody.innerHTML = filtered.map(tc => `
+            <tr>
+                <td><strong>${tc.test_case_id || 'TC-' + tc.id}</strong></td>
+                <td>${tc.test_scenario || '-'}</td>
+                <td><span class="pill blue">${tc.requirement_code || '-'}</span></td>
+                <td>${tc.test_type || 'Unit'}</td>
+                <td>
+                    <select class="form-control" style="width:120px;padding:4px 8px;font-size:12px;" onchange="updateTestStatus(${tc.id}, this.value)">
+                        <option value="Not Started" ${tc.status === 'Not Started' ? 'selected' : ''}>Not Started</option>
+                        <option value="In Progress" ${tc.status === 'In Progress' ? 'selected' : ''}>In Progress</option>
+                        <option value="Passed" ${tc.status === 'Passed' ? 'selected' : ''}>✅ Passed</option>
+                        <option value="Failed" ${tc.status === 'Failed' ? 'selected' : ''}>❌ Failed</option>
+                        <option value="Blocked" ${tc.status === 'Blocked' ? 'selected' : ''}>🚫 Blocked</option>
+                    </select>
+                </td>
+                <td><button class="btn btn-small" onclick="viewTestDetails(${tc.id})">Details</button></td>
+            </tr>
+        `).join('');
+    } catch(error) {
+        console.error('Error loading test cases:', error);
+    }
+}
+
+function updateTestStats(testcases) {
+    const total = testcases.length;
+    const passed = testcases.filter(tc => tc.status === 'Passed').length;
+    const failed = testcases.filter(tc => tc.status === 'Failed').length;
+    const pending = testcases.filter(tc => tc.status === 'Not Started').length;
+    
+    const totalEl = document.querySelector('.stat-total-tests');
+    const passedEl = document.querySelector('.stat-passed-tests');
+    const failedEl = document.querySelector('.stat-failed-tests');
+    const pendingEl = document.querySelector('.stat-pending-tests');
+    
+    if(totalEl) totalEl.textContent = total;
+    if(passedEl) passedEl.textContent = passed;
+    if(failedEl) failedEl.textContent = failed;
+    if(pendingEl) pendingEl.textContent = pending;
+}
+
+function filterTestCases(status, tabEl) {
+    document.querySelectorAll('#view-testing .tab-item').forEach(t => t.classList.remove('active'));
+    tabEl.classList.add('active');
+    currentTestFilter = status;
+    loadTestCases();
+}
+
+async function updateTestStatus(tcId, status) {
+    try {
+        const response = await fetch(`/api/testcases/${tcId}`, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ status: status, executed_by: 'Current User' })
+        });
+        
+        if(response.ok) {
+            showToast(`Test status updated to ${status}`);
+            loadTestCases();
+        }
+    } catch(error) {
+        console.error('Error:', error);
+    }
+}
+
+function viewTestDetails(tcId) {
+    showToast('Test details view coming soon!');
+}
+
+function openNewTestCaseModal() {
+    if(!globalProjectId) {
+        alert('Please select a project first!');
+        return;
+    }
+    document.getElementById('newTestCaseModal').style.display = 'block';
+    loadDocumentsForTestModal();
+}
+
+function closeNewTestCaseModal() {
+    document.getElementById('newTestCaseModal').style.display = 'none';
+}
+
+async function loadDocumentsForTestModal() {
+    try {
+        const response = await fetch(`/api/documents?project_id=${globalProjectId}`);
+        const documents = await response.json();
+        
+        const select = document.getElementById('testDocumentSelect');
+        select.innerHTML = '<option value="">-- Select FS/TS Document --</option>';
+        documents.forEach(d => {
+            select.innerHTML += `<option value="${d.id}">${d.document_type}-${d.requirement_code}</option>`;
+        });
+    } catch(error) {
+        console.error('Error:', error);
+    }
+}
+
+async function saveNewTestCase() {
+    const data = {
+        fs_ts_id: document.getElementById('testDocumentSelect').value,
+        test_case_id: document.getElementById('testCaseId').value,
+        test_scenario: document.getElementById('testScenario').value,
+        test_type: document.getElementById('testType').value,
+        preconditions: document.getElementById('testPreconditions').value,
+        test_steps: document.getElementById('testSteps').value,
+        expected_result: document.getElementById('testExpectedResult').value,
+        status: 'Not Started'
+    };
+    
+    if(!data.fs_ts_id || !data.test_scenario) {
+        alert('Please select document and enter test scenario!');
+        return;
+    }
+    
+    try {
+        const response = await fetch('/api/testcases', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(data)
+        });
+        
+        if(response.ok) {
+            closeNewTestCaseModal();
+            loadTestCases();
+            showToast('Test case created!');
+            // Clear form
+            document.getElementById('testCaseId').value = '';
+            document.getElementById('testScenario').value = '';
+            document.getElementById('testPreconditions').value = '';
+            document.getElementById('testSteps').value = '';
+            document.getElementById('testExpectedResult').value = '';
+        }
+    } catch(error) {
+        console.error('Error:', error);
+    }
+}
+// ============== REQUIREMENTS ==============
+async function loadRequirements() {
+    try {
+        let url = '/api/requirements';
+        if(globalProjectId) url += `?project_id=${globalProjectId}`;
+        
+        const response = await fetch(url);
+        const requirements = await response.json();
+        
+        renderRequirementsTable(requirements);
+        updateRequirementsTabs(requirements);
+    } catch(error) {
+        console.error('Error:', error);
+    }
+}
+
+function renderRequirementsTable(requirements) {
+    const tbody = document.getElementById('requirements-table-body');
+    if(!tbody) return;
+    
+    if(requirements.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#999;">No requirements found.</td></tr>';
+        return;
+    }
+    
+    tbody.innerHTML = requirements.map(req => `
+        <tr onclick="loadRequirementDetails(${req.id})">
+            <td><b>${req.code || '-'}</b></td>
+            <td>${req.title || '-'}</td>
+            <td><span class="pill blue">${req.module || '-'}</span></td>
+            <td>${req.complexity || '-'}</td>
+            <td><span class="pill ${req.status === 'Ready' ? 'green' : 'orange'}">${req.status || '-'}</span></td>
+            <td><span style="color:#8900B4;font-size:12px;">${req.ai_status === 'Full' ? '✦ Full' : '○ None'}</span></td>
+            <td style="color:var(--primary);">Edit</td>
+        </tr>
+    `).join('');
+}
+
+function updateRequirementsTabs(requirements) {
+    const tabs = document.querySelectorAll('#view-requirements .tab-item');
+    if(tabs.length >= 4) {
+        tabs[0].textContent = `All Objects (${requirements.length})`;
+    }
+}
+
+function loadRequirementDetails(id) {
+    fetch(`/api/requirements/${id}`)
+        .then(res => res.json())
+        .then(data => {
+            document.querySelector('#view-design .page-title').innerText = data.code;
+            document.querySelector('#view-design .page-subtitle').innerText = data.title;
+            navTo('design');
+        })
+        .catch(err => console.error('Error:', err));
+}
+
+function saveRequirement() {
+    if(!globalProjectId) {
+        alert('Please select a project first!');
+        return;
+    }
+    
+    const data = {
+        project_id: globalProjectId,
+        code: document.getElementById('newCode').value,
+        title: document.getElementById('newTitle').value,
+        module: document.getElementById('newModule').value,
+        complexity: document.getElementById('newComplexity').value
+    };
+    
+    if(!data.code || !data.title) { alert('Fill all fields!'); return; }
+    
+    fetch('/api/requirements', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    }).then(response => {
+        if(response.ok) {
+            document.getElementById('addModal').style.display = 'none';
+            loadRequirements();
+            showToast('Requirement saved!');
+        }
+    });
+}
+// ============== AI SERVICES ==============
+
+async function generateAIContent() {
+    if(!currentDocumentId) {
+        showToast('Please open a document first');
+        return;
+    }
+    
+    const btn = document.querySelector('#view-document-detail .btn-ai');
+    const originalText = btn.innerHTML;
+    btn.innerHTML = '<span>⏳</span> Generating...';
+    btn.disabled = true;
+    
+    try {
+        // Get document info
+        const docResponse = await fetch(`/api/documents/${currentDocumentId}`);
+        const doc = await docResponse.json();
+        
+        // Determine endpoint based on document type
+        const endpoint = doc.document_type === 'FS' ? '/api/ai/generate-fs' : '/api/ai/generate-ts';
+        
+        const response = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                requirement_code: doc.requirement_code,
+                requirement_title: doc.requirement_title,
+                module: doc.requirement_code ? doc.requirement_code.split('_')[1] : 'MM'
+            })
+        });
+        
+        const result = await response.json();
+        
+        if(result.status === 'success') {
+            // Update content area
+            document.getElementById('docContentArea').value = result.content;
+            
+            // Switch to content tab
+            const contentTab = document.querySelectorAll('#view-document-detail .tab-item')[1];
+            switchDocTab('doc-content', contentTab);
+            
+            showToast(`✨ AI generated ${doc.document_type} content! (${result.tokens_used} tokens)`);
+        }
+    } catch(error) {
+        console.error('AI generation error:', error);
+        showToast('Error generating content');
+    } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+    }
+}
+async function getAIInsights() {
+    if(!globalProjectId) {
+        showToast('Please select a project first');
+        return;
+    }
+    
+    const insightEl = document.getElementById('ai-insight-text');
+    insightEl.innerHTML = '🤖 Analyzing project data...';
+    
+    try {
+        // Get project stats
+        const response = await fetch(`/api/dashboard/stats?project_id=${globalProjectId}`);
+        const stats = await response.json();
+        
+        // Generate mock insight based on real data
+        const insights = [
+            `📊 I found ${stats.total_gaps} gaps in this project. ${stats.total_gaps > 5 ? 'Consider prioritizing critical gaps first.' : 'Gap count is manageable.'}`,
+            `📝 ${stats.total_sessions} analysis sessions recorded. ${stats.total_questions} questions documented so far.`,
+            `💡 Based on the current progress, I recommend focusing on completing gap resolutions before moving to testing phase.`,
+            `🎯 Project "${stats.project_name}" is ${stats.project_status}. ${stats.total_gaps > 0 ? 'There are gaps that need attention.' : 'Looking good!'}`
+        ];
+        
+        // Simulate delay
+        setTimeout(() => {
+            insightEl.innerHTML = insights[Math.floor(Math.random() * insights.length)];
+        }, 1000);
+        
+    } catch(error) {
+        insightEl.innerHTML = 'Error getting insights';
+    }
+}
+async function analyzeGapWithAI(gapId, description) {
+    showToast('🤖 AI analyzing gap...');
+    
+    try {
+        const response = await fetch('/api/ai/analyze-gap', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ description: description })
+        });
+        
+        const result = await response.json();
+        
+        if(result.status === 'success') {
+            const analysis = result.analysis;
+            alert(`🤖 AI Analysis (${result.confidence}% confidence)\n\n` +
+                  `Recommended Solution: ${analysis.type}\n\n` +
+                  `${analysis.description}\n\n` +
+                  `Effort Estimate: ${analysis.effort}\n\n` +
+                  `💡 ${analysis.recommendation}`);
+        }
+    } catch(error) {
+        console.error('AI analysis error:', error);
+        showToast('Error analyzing gap');
+    }
+}
+
+async function sendDocChat() {
+    const input = document.getElementById('docChatInput');
+    const text = input.value.trim();
+    if(!text) return;
+    
+    const area = document.getElementById('docChatArea');
+    
+    // Add user message
+    area.innerHTML += `
+        <div style="text-align:right;margin-bottom:10px;">
+            <span style="background:var(--primary);color:white;padding:8px 12px;border-radius:12px;display:inline-block;max-width:80%;">${text}</span>
+        </div>`;
+    input.value = '';
+    area.scrollTop = area.scrollHeight;
+    
+    // Show typing indicator
+    area.innerHTML += `<div id="typing-indicator" style="margin-bottom:10px;"><span style="color:#999;">🤖 AI is typing...</span></div>`;
+    area.scrollTop = area.scrollHeight;
+    
+    try {
+        const response = await fetch('/api/ai/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                message: text,
+                context: document.getElementById('docContentArea')?.value || ''
+            })
+        });
+        
+        const result = await response.json();
+        
+        // Remove typing indicator
+        document.getElementById('typing-indicator')?.remove();
+        
+        if(result.status === 'success') {
+            // Add AI response
+            area.innerHTML += `
+                <div style="margin-bottom:10px;">
+                    <div style="background:#f0f0f0;padding:12px;border-radius:12px;display:inline-block;max-width:80%;border-left:3px solid #8900B4;">
+                        <div style="font-size:11px;color:#8900B4;margin-bottom:5px;">✨ AI Co-Pilot</div>
+                        ${result.response}
+                    </div>
+                </div>`;
+            
+            // Add suggestion buttons
+            if(result.suggestions && result.suggestions.length > 0) {
+                area.innerHTML += `
+                    <div style="margin-bottom:15px;margin-left:10px;">
+                        ${result.suggestions.map(s => `<button class="btn btn-small" style="margin-right:5px;margin-bottom:5px;font-size:11px;" onclick="document.getElementById('docChatInput').value='${s}';sendDocChat();">${s}</button>`).join('')}
+                    </div>`;
+            }
+        }
+    } catch(error) {
+        document.getElementById('typing-indicator')?.remove();
+        area.innerHTML += `<div style="margin-bottom:10px;"><span style="color:var(--error);">Error getting AI response</span></div>`;
+    }
+    
+    area.scrollTop = area.scrollHeight;
+}
+
+async function askAIAboutGap() {
+    const gapDesc = document.getElementById('newGapDescription')?.value;
+    if(!gapDesc) {
+        showToast('Please enter a gap description first');
+        return;
+    }
+    
+    await analyzeGapWithAI(null, gapDesc);
+}
+// ============== UTILITIES ==============
+function showToast(msg) {
+    const t = document.getElementById('toast');
+    document.getElementById('toast-msg').innerText = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+function switchTab(tabId, tabEl) {
+    document.querySelectorAll('.tab-item').forEach(el => el.classList.remove('active'));
+    tabEl.classList.add('active');
+    const parent = tabEl.closest('#view-design');
+    parent.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+    document.getElementById('tab-' + tabId).style.display = 'block';
+}
+
+function sendMessage() {
+    const input = document.getElementById('chatInput');
+    const text = input.value;
+    if(!text) return;
+    
+    const area = document.getElementById('chatArea');
+    area.innerHTML += `<div class="message me"><div class="bubble">${text}</div></div>`;
+    input.value = '';
+    
+    setTimeout(() => {
+        area.innerHTML += `<div class="message ai"><div class="bubble">AI response here...</div></div>`;
+        area.scrollTop = area.scrollHeight;
+    }, 1000);
+}
+
+function handleEnter(e) { if(e.key === 'Enter') sendMessage(); }
+
+function startAIGeneration() {
+    showToast('AI generating...');
+    setTimeout(() => {
+        switchTab('technical', document.querySelectorAll('.tab-item')[2]);
+        showToast('Generated!');
+    }, 2000);
+}
+
+// ============== BAŞLAT ==============
+document.addEventListener('DOMContentLoaded', initializeApp);
+    </script>
+
+<!-- Yeni Gereksinim Ekleme Formu (Modal) -->
+<div id="addModal" class="smart-card" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); z-index:1000; width:400px; border: 2px solid var(--primary); background: white; box-shadow: 0 0 20px rgba(0,0,0,0.5);">
+    <h3 style="margin-top:0;">Add New SAP Requirement</h3>
+    <div class="form-group">
+        <label class="form-label">Requirement Code</label>
+        <input type="text" id="newCode" class="form-control" placeholder="Örn: WRICEF_SD_001">
+    </div>
+    <div class="form-group">
+        <label class="form-label">Title / Description</label>
+        <input type="text" id="newTitle" class="form-control" placeholder="Örn: Sales Order Upload">
+    </div>
+    <div class="form-group">
+        <label class="form-label">SAP Module</label>
+        <select id="newModule" class="form-control">
+            <option>SD</option><option>MM</option><option>FI</option><option>PP</option><option>ABAP</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label class="form-label">Complexity</label>
+        <select id="newComplexity" class="form-control">
+            <option>Low</option><option>Medium</option><option>High</option>
+        </select>
+    </div>
+    <div style="display:flex; gap:10px; margin-top:20px; justify-content: flex-end;">
+        <button class="btn btn-secondary" onclick="document.getElementById('addModal').style.display='none'">Cancel</button>
+        <button class="btn btn-ai" onclick="saveRequirement()">Save to Database</button>
+    </div>
+</div>
+<div id="newProjectModal" class="smart-card" role="dialog" aria-modal="true" aria-labelledby="newProjectModalTitle" tabindex="-1" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); z-index:1000; width:500px; border: 2px solid var(--primary); background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
+            <h3 id="newProjectModalTitle" style="margin-top:0;">Create New Project</h3>
+            <div class="form-group">
+                <label class="form-label">Project Code</label>
+                <input type="text" id="projectCode" class="form-control" placeholder="e.g., PRJ-2026-002">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Project Name</label>
+                <input type="text" id="projectName" class="form-control" placeholder="e.g., ACME Corp S/4HANA Implementation">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Customer Name</label>
+                <input type="text" id="customerName" class="form-control" placeholder="e.g., ACME Corporation">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Modules (comma separated)</label>
+                <input type="text" id="projectModules" class="form-control" placeholder="e.g., MM,SD,FI,CO">
+            </div>
+            <div style="display:flex; gap:10px; margin-top:20px;">
+                <button class="btn btn-primary" onclick="saveNewProject()">Create Project</button>
+                <button class="btn btn-secondary" onclick="closeNewProjectModal()">Cancel</button>
+            </div>
+        </div>
+        <div id="projectModalOverlay" class="modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:999;" onclick="closeNewProjectModal()"></div>
+<!-- New Session Modal -->
+        <div id="newSessionModal" class="smart-card" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); z-index:1000; width:500px; border: 2px solid var(--primary); background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
+            <h3 style="margin-top:0;">Start New Analysis Session</h3>
+            <div class="form-group">
+                <label class="form-label">Session Name</label>
+                <input type="text" id="sessionName" class="form-control" placeholder="e.g., MM Workshop - Week 1">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Module</label>
+                <select id="sessionModule" class="form-control">
+                    <option value="">-- Select Module --</option>
+                    <option value="MM">MM - Materials Management</option>
+                    <option value="SD">SD - Sales & Distribution</option>
+                    <option value="FI">FI - Financial Accounting</option>
+                    <option value="CO">CO - Controlling</option>
+                    <option value="PP">PP - Production Planning</option>
+                    <option value="HR">HR - Human Resources</option>
+                    <option value="QM">QM - Quality Management</option>
+                    <option value="PM">PM - Plant Maintenance</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Process Area</label>
+                <input type="text" id="sessionProcessArea" class="form-control" placeholder="e.g., Procure to Pay (P2P)">
+            </div>
+            <div style="display:flex; gap:10px; margin-top:20px;">
+                <button class="btn btn-primary" onclick="saveNewSession()">Create Session</button>
+                <button class="btn btn-secondary" onclick="closeNewSessionModal()">Cancel</button>
+            </div>
+        </div>
+        <div id="sessionModalOverlay" class="modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:999;" onclick="closeNewSessionModal()"></div>
+    <!-- Add Question Modal -->
+        <div id="addQuestionModal" class="smart-card" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); z-index:1000; width:600px; border: 2px solid var(--primary); background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
+            <h3 style="margin-top:0;">Add Question & Answer</h3>
+            <div class="form-group">
+                <label class="form-label">Question</label>
+                <textarea id="newQuestionText" class="form-control" rows="3" placeholder="e.g., How do you currently handle purchase requisitions?"></textarea>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Answer (optional)</label>
+                <textarea id="newAnswerText" class="form-control" rows="4" placeholder="e.g., We use ME51N transaction with approval workflow..."></textarea>
+            </div>
+            <div style="display:flex; gap:10px; margin-top:20px;">
+                <button class="btn btn-primary" onclick="saveNewQuestion()">Save Question</button>
+                <button class="btn btn-secondary" onclick="closeAddQuestionModal()">Cancel</button>
+            </div>
+        </div>
+        <div id="questionModalOverlay" class="modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:999;" onclick="closeAddQuestionModal()"></div>
+
+        <!-- Add Gap Modal -->
+        <div id="addGapModal" class="smart-card" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); z-index:1000; width:600px; border: 2px solid var(--primary); background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
+            <h3 style="margin-top:0;">Add Fit-Gap Item</h3>
+            <div class="form-group">
+                <label class="form-label">Gap ID</label>
+                <input type="text" id="newGapId" class="form-control" placeholder="e.g., GAP-001">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Description</label>
+                <textarea id="newGapDescription" class="form-control" rows="3" placeholder="e.g., Custom approval workflow required for purchase orders above $10,000"></textarea>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Priority</label>
+                <select id="newGapPriority" class="form-control">
+                    <option value="High">High</option>
+                    <option value="Medium" selected>Medium</option>
+                    <option value="Low">Low</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label class="form-label">Resolution Type</label>
+                <select id="newGapResolution" class="form-control">
+                    <option value="">-- Select --</option>
+                    <option value="Configuration">Configuration</option>
+                    <option value="Development">Development (WRICEF)</option>
+                    <option value="Integration">Integration</option>
+                    <option value="Process Change">Process Change</option>
+                    <option value="Out of Scope">Out of Scope</option>
+                </select>
+            </div>
+            <div style="display:flex; gap:10px; margin-top:20px;">
+    <button class="btn btn-ai" onclick="askAIAboutGap()" style="margin-right:auto;">🤖 AI Analyze</button>
+    <button class="btn btn-primary" onclick="saveNewGap()">Save Gap</button>
+                <button class="btn btn-secondary" onclick="closeAddGapModal()">Cancel</button>
+            </div>
+        </div>
+        <div id="gapModalOverlay" class="modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:999;" onclick="closeAddGapModal()"></div>
+    <!-- New Document Modal -->
+<div id="newDocumentModal" class="smart-card" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); z-index:1000; width:500px; border: 2px solid var(--primary); background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
+    <h3 style="margin-top:0;">Create New Document</h3>
+    <div class="form-group">
+        <label class="form-label">Requirement</label>
+        <select id="docRequirementSelect" class="form-control">
+            <option value="">-- Select Requirement --</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label class="form-label">Document Type</label>
+        <select id="docTypeSelect" class="form-control">
+            <option value="FS">Functional Specification (FS)</option>
+            <option value="TS">Technical Specification (TS)</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label class="form-label">Template</label>
+        <select id="docTemplateSelect" class="form-control">
+            <option value="Standard">Standard Template</option>
+            <option value="SAP Activate">SAP Activate Template</option>
+            <option value="Custom">Custom Template</option>
+        </select>
+    </div>
+    <div style="display:flex; gap:10px; margin-top:20px;">
+        <button class="btn btn-primary" onclick="saveNewDocument()">Create Document</button>
+        <button class="btn btn-secondary" onclick="closeNewDocumentModal()">Cancel</button>
+    </div>
+</div>
+<div id="documentModalOverlay" class="modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:999;" onclick="closeNewDocumentModal()"></div>
+<!-- New Test Case Modal -->
+<div id="newTestCaseModal" class="smart-card" style="display:none; position:fixed; top:50%; left:50%; transform:translate(-50%, -50%); z-index:1000; width:600px; max-height:90vh; overflow-y:auto; border: 2px solid var(--primary); background: white; padding: 30px; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.2);">
+    <h3 style="margin-top:0;">Create New Test Case</h3>
+    <div class="form-group">
+        <label class="form-label">FS/TS Document</label>
+        <select id="testDocumentSelect" class="form-control">
+            <option value="">-- Select Document --</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label class="form-label">Test Case ID</label>
+        <input type="text" id="testCaseId" class="form-control" placeholder="e.g., TC-MM-001">
+    </div>
+    <div class="form-group">
+        <label class="form-label">Test Scenario</label>
+        <input type="text" id="testScenario" class="form-control" placeholder="e.g., Verify PO approval workflow for amounts > 10K">
+    </div>
+    <div class="form-group">
+        <label class="form-label">Test Type</label>
+        <select id="testType" class="form-control">
+            <option value="Unit">Unit Test</option>
+            <option value="Integration">Integration Test</option>
+            <option value="UAT">User Acceptance Test</option>
+            <option value="Regression">Regression Test</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label class="form-label">Preconditions</label>
+        <textarea id="testPreconditions" class="form-control" rows="2" placeholder="e.g., User must have MM01 authorization"></textarea>
+    </div>
+    <div class="form-group">
+        <label class="form-label">Test Steps</label>
+        <textarea id="testSteps" class="form-control" rows="3" placeholder="1. Create PO with ME21N&#10;2. Enter amount > 10,000&#10;3. Save and check workflow"></textarea>
+    </div>
+    <div class="form-group">
+        <label class="form-label">Expected Result</label>
+        <textarea id="testExpectedResult" class="form-control" rows="2" placeholder="e.g., Workflow triggered, approval task created for manager"></textarea>
+    </div>
+    <div style="display:flex; gap:10px; margin-top:20px;">
+        <button class="btn btn-primary" onclick="saveNewTestCase()">Create Test Case</button>
+        <button class="btn btn-secondary" onclick="closeNewTestCaseModal()">Cancel</button>
+    </div>
+</div>
+<div id="testCaseModalOverlay" class="modal-overlay" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:999;" onclick="closeNewTestCaseModal()"></div>    
+</body>
+</html>
