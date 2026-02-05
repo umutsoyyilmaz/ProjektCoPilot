@@ -1,1 +1,4 @@
 node_modules
+backups/*.tar.gz
+backups/*.zip
+*.db
