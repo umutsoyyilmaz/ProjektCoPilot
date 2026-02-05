@@ -618,6 +618,276 @@ def update_testcase(tc_id):
         return jsonify({"status": "success"}), 200
     except Exception as e:
         return jsonify({"error": str(e)}), 500
+
+# ============== NEW REQUIREMENTS API ==============
+@app.route('/api/new_requirements', methods=['GET'])
+def get_new_requirements():
+    project_id = request.args.get('project_id')
+    session_id = request.args.get('session_id')
+    try:
+        conn = get_db_connection()
+        if session_id:
+            rows = conn.execute('SELECT * FROM new_requirements WHERE session_id = ? ORDER BY created_at DESC', (session_id,)).fetchall()
+        elif project_id:
+            rows = conn.execute('SELECT * FROM new_requirements WHERE project_id = ? ORDER BY created_at DESC', (project_id,)).fetchall()
+        else:
+            rows = conn.execute('SELECT * FROM new_requirements ORDER BY created_at DESC').fetchall()
+        conn.close()
+        return jsonify([dict(r) for r in rows])
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/new_requirements', methods=['POST'])
+def add_new_requirement():
+    try:
+        data = request.json
+        conn = get_db_connection()
+        conn.execute('''
+            INSERT INTO new_requirements (session_id, project_id, gap_id, title, description, module, fit_type, classification, priority, status)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (data.get('session_id'), data.get('project_id'), data.get('gap_id'), data['title'], data.get('description'), data.get('module'), data.get('fit_type'), data.get('classification', 'Gap'), data.get('priority','Medium'), data.get('status','Draft')))
+        conn.commit()
+        conn.close()
+        return jsonify({"status": "success"}), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/new_requirements/<int:req_id>', methods=['GET'])
+def get_new_requirement_detail(req_id):
+    try:
+        conn = get_db_connection()
+        row = conn.execute('SELECT * FROM new_requirements WHERE id = ?', (req_id,)).fetchone()
+        conn.close()
+        if row:
+            return jsonify(dict(row))
+        return jsonify({"error": "Not found"}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/new_requirements/<int:req_id>', methods=['PUT'])
+def update_new_requirement(req_id):
+    try:
+        data = request.json
+        conn = get_db_connection()
+        conn.execute('''
+            UPDATE new_requirements SET title = ?, description = ?, classification = ?, priority = ?, status = ?
+            WHERE id = ?
+        ''', (data.get('title'), data.get('description'), data.get('classification'), data.get('priority'), data.get('status'), req_id))
+        conn.commit()
+        conn.close()
+        return jsonify({"status": "success"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# ============== WRICEF ITEMS API ==============
+@app.route('/api/wricef_items', methods=['GET'])
+def get_wricef_items():
+    project_id = request.args.get('project_id')
+    requirement_id = request.args.get('requirement_id')
+    try:
+        conn = get_db_connection()
+        if requirement_id:
+            rows = conn.execute('SELECT * FROM wricef_items WHERE requirement_id = ? ORDER BY created_at DESC', (requirement_id,)).fetchall()
+        elif project_id:
+            rows = conn.execute('SELECT * FROM wricef_items WHERE project_id = ? ORDER BY created_at DESC', (project_id,)).fetchall()
+        else:
+            rows = conn.execute('SELECT * FROM wricef_items ORDER BY created_at DESC').fetchall()
+        conn.close()
+        return jsonify([dict(r) for r in rows])
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/wricef_items', methods=['POST'])
+def add_wricef_item():
+    try:
+        data = request.json
+        conn = get_db_connection()
+        conn.execute('''
+            INSERT INTO wricef_items (project_id, requirement_id, code, title, description, wricef_type, module, complexity, effort_days, status, owner)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (data.get('project_id'), data.get('requirement_id'), data.get('code'), data['title'], data.get('description'), data.get('wricef_type'), data.get('module'), data.get('complexity'), data.get('effort_days'), data.get('status','Draft'), data.get('owner')))
+        conn.commit()
+        conn.close()
+        return jsonify({"status": "success"}), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/wricef_items/<int:item_id>', methods=['GET'])
+def get_wricef_item_detail(item_id):
+    try:
+        conn = get_db_connection()
+        row = conn.execute('SELECT * FROM wricef_items WHERE id = ?', (item_id,)).fetchone()
+        conn.close()
+        if row:
+            return jsonify(dict(row))
+        return jsonify({"error": "Not found"}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/wricef_items/<int:item_id>', methods=['PUT'])
+def update_wricef_item(item_id):
+    try:
+        data = request.json
+        conn = get_db_connection()
+        conn.execute('''
+            UPDATE wricef_items SET title = ?, description = ?, wricef_type = ?, module = ?, complexity = ?, effort_days = ?, status = ?, owner = ?
+            WHERE id = ?
+        ''', (data.get('title'), data.get('description'), data.get('wricef_type'), data.get('module'), data.get('complexity'), data.get('effort_days'), data.get('status'), data.get('owner'), item_id))
+        conn.commit()
+        conn.close()
+        return jsonify({"status": "success"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/wricef_items/<int:item_id>', methods=['DELETE'])
+def delete_wricef_item(item_id):
+    try:
+        conn = get_db_connection()
+        conn.execute('DELETE FROM wricef_items WHERE id = ?', (item_id,))
+        conn.commit()
+        conn.close()
+        return jsonify({"status": "success"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# ============== CONFIG ITEMS API ==============
+@app.route('/api/config_items', methods=['GET'])
+def get_config_items():
+    project_id = request.args.get('project_id')
+    requirement_id = request.args.get('requirement_id')
+    try:
+        conn = get_db_connection()
+        if requirement_id:
+            rows = conn.execute('SELECT * FROM config_items WHERE requirement_id = ? ORDER BY created_at DESC', (requirement_id,)).fetchall()
+        elif project_id:
+            rows = conn.execute('SELECT * FROM config_items WHERE project_id = ? ORDER BY created_at DESC', (project_id,)).fetchall()
+        else:
+            rows = conn.execute('SELECT * FROM config_items ORDER BY created_at DESC').fetchall()
+        conn.close()
+        return jsonify([dict(r) for r in rows])
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/config_items', methods=['POST'])
+def add_config_item():
+    try:
+        data = request.json
+        conn = get_db_connection()
+        conn.execute('''
+            INSERT INTO config_items (project_id, requirement_id, code, title, description, config_type, module, status, owner, config_details)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (data.get('project_id'), data.get('requirement_id'), data.get('code'), data['title'], data.get('description'), data.get('config_type'), data.get('module'), data.get('status','Draft'), data.get('owner'), data.get('config_details')))
+        conn.commit()
+        conn.close()
+        return jsonify({"status": "success"}), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/config_items/<int:item_id>', methods=['GET'])
+def get_config_item_detail(item_id):
+    try:
+        conn = get_db_connection()
+        row = conn.execute('SELECT * FROM config_items WHERE id = ?', (item_id,)).fetchone()
+        conn.close()
+        if row:
+            return jsonify(dict(row))
+        return jsonify({"error": "Not found"}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/config_items/<int:item_id>', methods=['PUT'])
+def update_config_item(item_id):
+    try:
+        data = request.json
+        conn = get_db_connection()
+        conn.execute('''
+            UPDATE config_items SET title = ?, description = ?, config_type = ?, module = ?, status = ?, owner = ?, config_details = ?
+            WHERE id = ?
+        ''', (data.get('title'), data.get('description'), data.get('config_type'), data.get('module'), data.get('status'), data.get('owner'), data.get('config_details'), item_id))
+        conn.commit()
+        conn.close()
+        return jsonify({"status": "success"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/config_items/<int:item_id>', methods=['DELETE'])
+def delete_config_item(item_id):
+    try:
+        conn = get_db_connection()
+        conn.execute('DELETE FROM config_items WHERE id = ?', (item_id,))
+        conn.commit()
+        conn.close()
+        return jsonify({"status": "success"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# ============== TEST MANAGEMENT API ==============
+@app.route('/api/test_management', methods=['GET'])
+def get_test_management():
+    project_id = request.args.get('project_id')
+    try:
+        conn = get_db_connection()
+        if project_id:
+            rows = conn.execute('SELECT * FROM test_management WHERE project_id = ? ORDER BY created_at DESC', (project_id,)).fetchall()
+        else:
+            rows = conn.execute('SELECT * FROM test_management ORDER BY created_at DESC').fetchall()
+        conn.close()
+        return jsonify([dict(r) for r in rows])
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/test_management', methods=['POST'])
+def add_test_management():
+    try:
+        data = request.json
+        conn = get_db_connection()
+        conn.execute('''
+            INSERT INTO test_management (project_id, code, test_type, title, description, status, owner, source_type, source_id, steps)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (data.get('project_id'), data.get('code'), data.get('test_type'), data['title'], data.get('description'), data.get('status','Draft'), data.get('owner'), data.get('source_type'), data.get('source_id'), data.get('steps','[]')))
+        conn.commit()
+        conn.close()
+        return jsonify({"status": "success"}), 201
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/test_management/<int:item_id>', methods=['GET'])
+def get_test_management_detail(item_id):
+    try:
+        conn = get_db_connection()
+        row = conn.execute('SELECT * FROM test_management WHERE id = ?', (item_id,)).fetchone()
+        conn.close()
+        if row:
+            return jsonify(dict(row))
+        return jsonify({"error": "Not found"}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/test_management/<int:item_id>', methods=['PUT'])
+def update_test_management(item_id):
+    try:
+        data = request.json
+        conn = get_db_connection()
+        conn.execute('''
+            UPDATE test_management SET title = ?, description = ?, status = ?, owner = ?, steps = ?
+            WHERE id = ?
+        ''', (data.get('title'), data.get('description'), data.get('status'), data.get('owner'), data.get('steps'), item_id))
+        conn.commit()
+        conn.close()
+        return jsonify({"status": "success"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/test_management/<int:item_id>', methods=['DELETE'])
+def delete_test_management(item_id):
+    try:
+        conn = get_db_connection()
+        conn.execute('DELETE FROM test_management WHERE id = ?', (item_id,))
+        conn.commit()
+        conn.close()
+        return jsonify({"status": "success"})
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
     # ============== AI SERVICES API (Mock) ==============
 import time
 import random
