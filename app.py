@@ -4,8 +4,28 @@ import os
 import re
 import logging
 from contextlib import contextmanager
+from datetime import datetime
+
+# Import SQLAlchemy models
+from models import (
+    db, Project, Scenario, Analysis, Requirement,
+    WricefItem, ConfigItem, TestCase, TestCycle, TestExecution, Defect,
+    AIInteractionLog, AIEmbedding,
+    generate_code,
+    PROJECT_STATUSES, PROJECT_PHASES, SCENARIO_LEVELS, CLASSIFICATIONS,
+    PRIORITIES, CONVERSION_STATUSES, WRICEF_TYPES, SAP_MODULES,
+    DEV_STATUSES, TEST_TYPES, TEST_CASE_STATUSES
+)
 
 app = Flask(__name__)
+
+# SQLAlchemy Configuration
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///project_copilot.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_ECHO'] = False  # Set True for debugging
+
+# Initialize SQLAlchemy
+db.init_app(app)
 
 # logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
@@ -216,98 +236,115 @@ def chat():
 
 @app.route('/api/projects', methods=['GET'])
 def get_projects():
-    """Tum projeleri listele"""
+    """Tum projeleri listele (ORM)"""
     try:
-        conn = get_db_connection()
-        projects = conn.execute('SELECT * FROM projects ORDER BY created_at DESC').fetchall()
-        conn.close()
-        return jsonify([dict(row) for row in projects])
+        projects = Project.query.order_by(Project.created_at.desc()).all()
+        return jsonify([p.to_dict() for p in projects])
     except Exception as e:
+        logger.exception('get_projects failed')
         return jsonify({"error": str(e)}), 500
 
 @app.route("/api/projects", methods=["POST"])
 def add_project():
+    """Create new project (ORM)"""
     try:
         data = request.json
         missing = require_fields(data, ['project_code', 'project_name'])
         if missing:
             return jsonify({'error': 'missing_fields', 'fields': missing}), 400
 
-        with db_conn() as conn:
-            conn.execute("""INSERT INTO projects (
-            project_code, project_name, description, status,
-            customer_name, customer_industry, customer_country,
-            customer_contact, customer_email, deployment_type,
-            implementation_approach, sap_modules, start_date,
-            golive_planned, golive_actual, project_manager,
-            solution_architect, functional_lead, technical_lead,
-            total_budget, current_phase, completion_percent
-        ) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
-            (data.get("project_code"), data.get("project_name"), data.get("description"),
-             data.get("status", "Planning"), data.get("customer_name"), data.get("customer_industry"),
-             data.get("customer_country"), data.get("customer_contact"), data.get("customer_email"),
-             data.get("deployment_type"), data.get("implementation_approach"), data.get("sap_modules"),
-             data.get("start_date"), data.get("golive_planned"), data.get("golive_actual"),
-             data.get("project_manager"), data.get("solution_architect"), data.get("functional_lead"),
-             data.get("technical_lead"), data.get("total_budget"), data.get("current_phase"),
-             data.get("completion_percent", 0)))
-            conn.commit()
-            new_id = conn.execute("SELECT last_insert_rowid()").fetchone()[0]
-        return jsonify({"status": "success", "id": new_id}), 201
+        project = Project(
+            code=data.get("project_code"),
+            name=data.get("project_name"),
+            description=data.get("description"),
+            status=data.get("status", "Planning"),
+            customer_name=data.get("customer_name"),
+            customer_industry=data.get("customer_industry"),
+            customer_country=data.get("customer_country"),
+            customer_contact=data.get("customer_contact"),
+            customer_email=data.get("customer_email"),
+            deployment_type=data.get("deployment_type"),
+            implementation_approach=data.get("implementation_approach"),
+            sap_modules=data.get("sap_modules"),
+            start_date=data.get("start_date"),
+            golive_planned=data.get("golive_planned"),
+            golive_actual=data.get("golive_actual"),
+            project_manager=data.get("project_manager"),
+            solution_architect=data.get("solution_architect"),
+            functional_lead=data.get("functional_lead"),
+            technical_lead=data.get("technical_lead"),
+            total_budget=data.get("total_budget"),
+            phase=data.get("current_phase"),
+            completion_percent=data.get("completion_percent", 0)
+        )
+        db.session.add(project)
+        db.session.commit()
+        return jsonify({"status": "success", "id": project.id}), 201
     except Exception as e:
+        db.session.rollback()
         logger.exception('add_project failed')
         return jsonify({"error": "Internal server error"}), 500
 
 @app.route('/api/projects/<int:project_id>', methods=['GET'])
 def get_project_detail(project_id):
-    """Tek bir projenin detayini getir"""
+    """Tek bir projenin detayini getir (ORM)"""
     try:
-        conn = get_db_connection()
-        project = conn.execute('SELECT * FROM projects WHERE id = ?', (project_id,)).fetchone()
-        conn.close()
-        if project:
-            return jsonify(dict(project))
-        return jsonify({"error": "Not found"}), 404
+        project = Project.query.get_or_404(project_id)
+        return jsonify(project.to_dict())
     except Exception as e:
-        return jsonify({"error": str(e)}), 500
+        logger.exception('get_project_detail failed')
+        return jsonify({"error": str(e)}), 404
 
 @app.route("/api/projects/<int:id>", methods=["PUT"])
 def update_project(id):
+    """Update project (ORM)"""
     try:
         data = request.json
-        conn = get_db_connection()
-        conn.execute("""UPDATE projects SET 
-            project_code = ?, project_name = ?, description = ?, status = ?,
-            customer_name = ?, customer_industry = ?, customer_country = ?,
-            customer_contact = ?, customer_email = ?, deployment_type = ?,
-            implementation_approach = ?, sap_modules = ?, start_date = ?,
-            golive_planned = ?, golive_actual = ?, project_manager = ?,
-            solution_architect = ?, functional_lead = ?, technical_lead = ?,
-            total_budget = ?, current_phase = ?, completion_percent = ?
-            WHERE id = ?""",
-            (data.get("project_code"), data.get("project_name"), data.get("description"),
-             data.get("status"), data.get("customer_name"), data.get("customer_industry"),
-             data.get("customer_country"), data.get("customer_contact"), data.get("customer_email"),
-             data.get("deployment_type"), data.get("implementation_approach"), data.get("sap_modules"),
-             data.get("start_date"), data.get("golive_planned"), data.get("golive_actual"),
-             data.get("project_manager"), data.get("solution_architect"), data.get("functional_lead"),
-             data.get("technical_lead"), data.get("total_budget"), data.get("current_phase"),
-             data.get("completion_percent"), id))
-        conn.commit()
-        conn.close()
+        project = Project.query.get_or_404(id)
+        
+        # Update fields
+        if 'project_code' in data: project.code = data['project_code']
+        if 'project_name' in data: project.name = data['project_name']
+        if 'description' in data: project.description = data['description']
+        if 'status' in data: project.status = data['status']
+        if 'customer_name' in data: project.customer_name = data['customer_name']
+        if 'customer_industry' in data: project.customer_industry = data['customer_industry']
+        if 'customer_country' in data: project.customer_country = data['customer_country']
+        if 'customer_contact' in data: project.customer_contact = data['customer_contact']
+        if 'customer_email' in data: project.customer_email = data['customer_email']
+        if 'deployment_type' in data: project.deployment_type = data['deployment_type']
+        if 'implementation_approach' in data: project.implementation_approach = data['implementation_approach']
+        if 'sap_modules' in data: project.sap_modules = data['sap_modules']
+        if 'start_date' in data: project.start_date = data['start_date']
+        if 'golive_planned' in data: project.golive_planned = data['golive_planned']
+        if 'golive_actual' in data: project.golive_actual = data['golive_actual']
+        if 'project_manager' in data: project.project_manager = data['project_manager']
+        if 'solution_architect' in data: project.solution_architect = data['solution_architect']
+        if 'functional_lead' in data: project.functional_lead = data['functional_lead']
+        if 'technical_lead' in data: project.technical_lead = data['technical_lead']
+        if 'total_budget' in data: project.total_budget = data['total_budget']
+        if 'current_phase' in data: project.phase = data['current_phase']
+        if 'completion_percent' in data: project.completion_percent = data['completion_percent']
+        
+        project.updated_at = datetime.utcnow()
+        db.session.commit()
         return jsonify({"status": "success"})
     except Exception as e:
+        db.session.rollback()
+        logger.exception('update_project failed')
         return jsonify({"error": str(e)}), 500
 
 @app.route("/api/projects/<int:id>", methods=["DELETE"])
 def delete_project(id):
+    """Delete project (ORM)"""
     try:
-        conn = get_db_connection()
-        conn.execute("DELETE FROM projects WHERE id = ?", (id,))
-        conn.commit()
-        conn.close()
+        project = Project.query.get_or_404(id)
+        db.session.delete(project)
+        db.session.commit()
         return jsonify({"status": "success"})
     except Exception as e:
+        db.session.rollback()
+        logger.exception('delete_project failed')
         return jsonify({"error": str(e)}), 500
 
 # ============== ANALYSIS SESSIONS API ==============

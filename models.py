@@ -54,15 +54,38 @@ AI_INTERACTION_TYPES = ['Chat', 'Generation', 'Analysis', 'Prediction', 'Anomaly
 # ===========================================================================
 
 class Project(db.Model):
-    __tablename__ = 'project'
+    __tablename__ = 'projects'  # Match existing database table
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    code = db.Column(db.String(20), unique=True, nullable=False)
-    name = db.Column(db.String(200), nullable=False)
+    
+    # Core fields (PRD)
+    code = db.Column('project_code', db.String(20), unique=True, nullable=False)
+    name = db.Column('project_name', db.String(200), nullable=False)
     description = db.Column(db.Text, nullable=True)
     status = db.Column(db.String(20), nullable=False, default='Active')
-    phase = db.Column(db.String(20), nullable=True)
+    phase = db.Column('current_phase', db.String(20), nullable=True)
     start_date = db.Column(db.Date, nullable=True)
     end_date = db.Column(db.Date, nullable=True)
+    
+    # Extended fields (from existing projects table)
+    customer_name = db.Column(db.String(200), nullable=True)
+    customer_industry = db.Column(db.String(100), nullable=True)
+    customer_country = db.Column(db.String(100), nullable=True)
+    customer_contact = db.Column(db.String(200), nullable=True)
+    customer_email = db.Column(db.String(200), nullable=True)
+    deployment_type = db.Column(db.String(50), nullable=True)
+    implementation_approach = db.Column(db.String(100), nullable=True)
+    sap_modules = db.Column(db.String(500), nullable=True)
+    modules = db.Column(db.String(500), nullable=True)  # Legacy field
+    environment = db.Column(db.String(50), nullable=True)
+    golive_planned = db.Column(db.Date, nullable=True)
+    golive_actual = db.Column(db.Date, nullable=True)
+    project_manager = db.Column(db.String(200), nullable=True)
+    solution_architect = db.Column(db.String(200), nullable=True)
+    functional_lead = db.Column(db.String(200), nullable=True)
+    technical_lead = db.Column(db.String(200), nullable=True)
+    total_budget = db.Column(db.Float, nullable=True)
+    completion_percent = db.Column(db.Integer, nullable=True, default=0)
+    
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
@@ -72,12 +95,44 @@ class Project(db.Model):
     test_cases = db.relationship('TestCase', backref='project', lazy='dynamic', cascade='all, delete-orphan')
     test_cycles = db.relationship('TestCycle', backref='project', lazy='dynamic', cascade='all, delete-orphan')
     defects = db.relationship('Defect', backref='project', lazy='dynamic', cascade='all, delete-orphan')
+    
+    def to_dict(self):
+        """Convert to dictionary for JSON serialization"""
+        return {
+            'id': self.id,
+            'project_code': self.code,
+            'project_name': self.name,
+            'description': self.description,
+            'status': self.status,
+            'current_phase': self.phase,
+            'start_date': self.start_date.isoformat() if self.start_date else None,
+            'end_date': self.end_date.isoformat() if self.end_date else None,
+            'customer_name': self.customer_name,
+            'customer_industry': self.customer_industry,
+            'customer_country': self.customer_country,
+            'customer_contact': self.customer_contact,
+            'customer_email': self.customer_email,
+            'deployment_type': self.deployment_type,
+            'implementation_approach': self.implementation_approach,
+            'sap_modules': self.sap_modules,
+            'modules': self.modules,
+            'environment': self.environment,
+            'golive_planned': self.golive_planned.isoformat() if self.golive_planned else None,
+            'golive_actual': self.golive_actual.isoformat() if self.golive_actual else None,
+            'project_manager': self.project_manager,
+            'solution_architect': self.solution_architect,
+            'functional_lead': self.functional_lead,
+            'technical_lead': self.technical_lead,
+            'total_budget': self.total_budget,
+            'completion_percent': self.completion_percent,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
 
 
 class Scenario(db.Model):
-    __tablename__ = 'scenario'
+    __tablename__ = 'scenarios'  # Match existing database table
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    project_id = db.Column(db.Integer, db.ForeignKey('project.id', ondelete='CASCADE'), nullable=False, index=True)
+    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False, index=True)
     code = db.Column(db.String(20), nullable=False)
     name = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text, nullable=True)
@@ -85,22 +140,22 @@ class Scenario(db.Model):
     tags = db.Column(db.Text, nullable=True)
     is_composite = db.Column(db.Boolean, nullable=False, default=False)
     included_scenario_ids = db.Column(db.JSON, nullable=True)
-    parent_scenario_id = db.Column(db.Integer, db.ForeignKey('scenario.id'), nullable=True)
+    parent_scenario_id = db.Column(db.Integer, db.ForeignKey('scenarios.id'), nullable=True)
     sort_order = db.Column(db.Integer, nullable=True, default=0)
     status = db.Column(db.String(20), nullable=True, default='Draft')
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     analyses = db.relationship('Analysis', backref='scenario', lazy='dynamic', cascade='all, delete-orphan')
-    children = db.relationship('Scenario', backref=db.backref('parent', remote_side='Scenario.id'), lazy='dynamic')
+    children = db.relationship('Scenario', backref=db.backref('parent', remote_side=[id]), lazy='dynamic')
 
     __table_args__ = (db.UniqueConstraint('project_id', 'code', name='uq_scenario_project_code'),)
 
 
 class Analysis(db.Model):
-    __tablename__ = 'analysis'
+    __tablename__ = 'analyses'  # Match existing database table (or create new)
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    scenario_id = db.Column(db.Integer, db.ForeignKey('scenario.id', ondelete='CASCADE'), nullable=False, index=True)
+    scenario_id = db.Column(db.Integer, db.ForeignKey('scenarios.id', ondelete='CASCADE'), nullable=False, index=True)
     code = db.Column(db.String(20), nullable=False)
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text, nullable=True)
@@ -139,11 +194,11 @@ class Requirement(db.Model):
 
 
 class WricefItem(db.Model):
-    __tablename__ = 'wricef_item'
+    __tablename__ = 'wricef_items'  # Match existing database table
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    project_id = db.Column(db.Integer, db.ForeignKey('project.id', ondelete='CASCADE'), nullable=False, index=True)
-    scenario_id = db.Column(db.Integer, db.ForeignKey('scenario.id', ondelete='SET NULL'), nullable=True)
-    requirement_id = db.Column(db.Integer, db.ForeignKey('requirement.id', ondelete='SET NULL'), nullable=True, index=True)
+    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False, index=True)
+    scenario_id = db.Column(db.Integer, db.ForeignKey('scenarios.id', ondelete='SET NULL'), nullable=True)
+    requirement_id = db.Column(db.Integer, db.ForeignKey('new_requirements.id', ondelete='SET NULL'), nullable=True, index=True)
     code = db.Column(db.String(20), nullable=False)
     wricef_type = db.Column(db.String(5), nullable=False)  # W/R/I/C/E/F
     title = db.Column(db.String(200), nullable=False)
@@ -164,11 +219,11 @@ class WricefItem(db.Model):
 
 
 class ConfigItem(db.Model):
-    __tablename__ = 'config_item'
+    __tablename__ = 'config_items'  # Match existing database table
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    project_id = db.Column(db.Integer, db.ForeignKey('project.id', ondelete='CASCADE'), nullable=False, index=True)
-    scenario_id = db.Column(db.Integer, db.ForeignKey('scenario.id', ondelete='SET NULL'), nullable=True)
-    requirement_id = db.Column(db.Integer, db.ForeignKey('requirement.id', ondelete='SET NULL'), nullable=True, index=True)
+    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False, index=True)
+    scenario_id = db.Column(db.Integer, db.ForeignKey('scenarios.id', ondelete='SET NULL'), nullable=True)
+    requirement_id = db.Column(db.Integer, db.ForeignKey('new_requirements.id', ondelete='SET NULL'), nullable=True, index=True)
     code = db.Column(db.String(20), nullable=False)
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text, nullable=True)
@@ -188,9 +243,9 @@ class ConfigItem(db.Model):
 # ===========================================================================
 
 class TestCase(db.Model):
-    __tablename__ = 'test_case'
+    __tablename__ = 'test_management'  # Match existing database table
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    project_id = db.Column(db.Integer, db.ForeignKey('project.id', ondelete='CASCADE'), nullable=False, index=True)
+    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False, index=True)
     code = db.Column(db.String(20), nullable=False)
     test_type = db.Column(db.String(20), nullable=False)
     title = db.Column(db.String(300), nullable=False)
@@ -220,9 +275,9 @@ class TestCase(db.Model):
 
 
 class TestCycle(db.Model):
-    __tablename__ = 'test_cycle'
+    __tablename__ = 'test_cycle'  # Will be created in future migration
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    project_id = db.Column(db.Integer, db.ForeignKey('project.id', ondelete='CASCADE'), nullable=False, index=True)
+    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False, index=True)
     code = db.Column(db.String(20), nullable=False)
     name = db.Column(db.String(200), nullable=False)
     test_type = db.Column(db.String(20), nullable=False)
@@ -244,9 +299,9 @@ class TestCycle(db.Model):
 
 
 class TestExecution(db.Model):
-    __tablename__ = 'test_execution'
+    __tablename__ = 'test_execution'  # Will be created in future migration
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    test_case_id = db.Column(db.Integer, db.ForeignKey('test_case.id', ondelete='CASCADE'), nullable=False, index=True)
+    test_case_id = db.Column(db.Integer, db.ForeignKey('test_management.id', ondelete='CASCADE'), nullable=False, index=True)
     test_cycle_id = db.Column(db.Integer, db.ForeignKey('test_cycle.id', ondelete='CASCADE'), nullable=False, index=True)
     code = db.Column(db.String(20), nullable=False)
     tester = db.Column(db.String(50), nullable=True)
@@ -267,7 +322,7 @@ class TestExecution(db.Model):
 class Defect(db.Model):
     __tablename__ = 'defect'
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    project_id = db.Column(db.Integer, db.ForeignKey('project.id', ondelete='CASCADE'), nullable=False, index=True)
+    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False, index=True)
     code = db.Column(db.String(20), nullable=False)
     title = db.Column(db.String(300), nullable=False)
     description = db.Column(db.Text, nullable=True)
@@ -276,7 +331,7 @@ class Defect(db.Model):
     priority = db.Column(db.String(20), nullable=True)
     status = db.Column(db.String(20), nullable=False, default='New')
     test_execution_id = db.Column(db.Integer, db.ForeignKey('test_execution.id', ondelete='SET NULL'), nullable=True, index=True)
-    wricef_id = db.Column(db.Integer, db.ForeignKey('wricef_item.id', ondelete='SET NULL'), nullable=True, index=True)
+    wricef_id = db.Column(db.Integer, db.ForeignKey('wricef_items.id', ondelete='SET NULL'), nullable=True, index=True)
     assigned_to = db.Column(db.String(50), nullable=True)
     assigned_at = db.Column(db.DateTime, nullable=True)
     root_cause = db.Column(db.String(20), nullable=True)
@@ -334,7 +389,7 @@ class AIEmbedding(db.Model):
     entity_id = db.Column(db.Integer, nullable=False)
     content_hash = db.Column(db.String(64), nullable=False)
     embedding_vector = db.Column(db.JSON, nullable=False)
-    metadata = db.Column(db.JSON, nullable=True)
+    embedding_metadata = db.Column('metadata', db.JSON, nullable=True)  # Renamed to avoid reserved word
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
 
     __table_args__ = (
@@ -348,8 +403,8 @@ class AIEmbedding(db.Model):
 
 scenario_test_case = db.Table(
     'scenario_test_case',
-    db.Column('scenario_id', db.Integer, db.ForeignKey('scenario.id', ondelete='CASCADE'), primary_key=True),
-    db.Column('test_case_id', db.Integer, db.ForeignKey('test_case.id', ondelete='CASCADE'), primary_key=True),
+    db.Column('scenario_id', db.Integer, db.ForeignKey('scenarios.id', ondelete='CASCADE'), primary_key=True),
+    db.Column('test_case_id', db.Integer, db.ForeignKey('test_management.id', ondelete='CASCADE'), primary_key=True),
     db.Column('created_at', db.DateTime, default=datetime.utcnow),
 )
 
