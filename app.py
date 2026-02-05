@@ -1,107 +1,36 @@
 from flask import Flask, render_template, jsonify, request
+from datetime import datetime, date
 import sqlite3
 import os
-import re
-import logging
-from contextlib import contextmanager
-from datetime import datetime
 
-# Import SQLAlchemy models
-from models import (
-    db, Project, Scenario, Analysis, Requirement,
-    WricefItem, ConfigItem, TestCase, TestCycle, TestExecution, Defect,
-    AIInteractionLog, AIEmbedding,
-    generate_code,
-    PROJECT_STATUSES, PROJECT_PHASES, SCENARIO_LEVELS, CLASSIFICATIONS,
-    PRIORITIES, CONVERSION_STATUSES, WRICEF_TYPES, SAP_MODULES,
-    DEV_STATUSES, TEST_TYPES, TEST_CASE_STATUSES
-)
+from models import db, Project, Scenario, Requirement, WricefItem, ConfigItem, TestCase
 
 app = Flask(__name__)
 
-# SQLAlchemy Configuration
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///project_copilot.db'
+DB_PATH = os.path.join(os.path.dirname(__file__), 'project_copilot.db')
+app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{DB_PATH}"
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SQLALCHEMY_ECHO'] = False  # Set True for debugging
-
-# Initialize SQLAlchemy
 db.init_app(app)
 
-# logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s %(levelname)s %(message)s')
-logger = logging.getLogger(__name__)
+@app.teardown_appcontext
+def shutdown_session(exception=None):
+    db.session.remove()
+
 def get_db_connection():
-    db_path = os.path.join(os.path.dirname(__file__), 'project_copilot.db')
-    conn = sqlite3.connect(db_path)
+    conn = sqlite3.connect(DB_PATH, timeout=10)
     conn.row_factory = sqlite3.Row
-    # wrap connection so we can rewrite "SELECT *" to explicit columns
-    class DBConnProxy:
-        def __init__(self, conn):
-            self._conn = conn
+    conn.execute("PRAGMA journal_mode=WAL")
+    return conn
 
-        def __getattr__(self, name):
-            return getattr(self._conn, name)
-
-        def _cols_for_table(self, table_name):
-            cols_map = {
-                'requirements': 'id, project_id, code, title, module, complexity, status, ai_status, effort_days, summary',
-                'projects': 'id, project_code, project_name, customer_name, start_date, end_date, status, modules, environment, description, customer_industry, customer_country, customer_contact, customer_email, deployment_type, implementation_approach, sap_modules, golive_planned, golive_actual, project_manager, solution_architect, functional_lead, technical_lead, total_budget, current_phase, completion_percent, created_at',
-                'analysis_sessions': 'id, project_id, scenario_id, session_name, session_code, module, process_name, session_date, facilitator, status, notes, created_at',
-                'questions': 'id, session_id, question_id, question_text, category, question_order, is_mandatory, answer_text, answered_by, status, created_at',
-                'answers': 'id, question_id, answer_text, answered_by, answered_at, confidence_score',
-                'fitgap': 'id, session_id, project_id, gap_id, process_name, gap_description, impact_area, solution_type, risk_level, effort_estimate, priority, status, notes, created_at',
-                'fs_ts_documents': 'id, requirement_id, document_type, version, content, template_used, status, approved_by, approved_at, file_path, sharepoint_url, created_at, updated_at',
-                'test_cases': 'id, fs_ts_id, test_case_id, test_scenario, test_type, preconditions, test_steps, expected_result, status, environment, executed_by, executed_at, alm_reference, created_at',
-                'audit_log': 'id, table_name, record_id, action, old_values, new_values, changed_by, changed_at',
-                'scenarios': 'id, project_id, scenario_id, name, description, process_area, priority, status, is_composite, included_scenario_ids, tags, created_at',
-                'session_attendees': 'id, session_id, name, role, department, email, status, created_at',
-                'session_agenda': 'id, session_id, item_order, topic, description, duration_minutes, presenter, status, notes, created_at',
-                'meeting_minutes': 'id, session_id, minute_order, topic, discussion, content, key_points, recorded_by, created_at',
-                'action_items': 'id, session_id, project_id, action_id, title, description, assigned_to, due_date, priority, status, source, related_gap_id, created_at',
-                'decisions': 'id, session_id, project_id, decision_id, topic, description, options_considered, decision_made, rationale, decision_maker, decision_date, impact_areas, status, related_gap_id, created_at',
-                'risks_issues': 'id, session_id, project_id, item_id, title, description, item_type, type, probability, impact_level, risk_score, status, owner, mitigation, contingency, created_at',
-                'analyses': 'id, session_id, analysis_type, title, content, status, created_at',
-                'scenario_analyses': 'id, scenario_id, code, title, description, owner, status, created_at, updated_at',
-                'new_requirements': 'id, session_id, project_id, gap_id, code, analysis_id, title, description, module, fit_type, classification, priority, status, conversion_status, converted_item_type, converted_item_id, converted_at, converted_by, acceptance_criteria, created_at',
-                'wricef_items': 'id, project_id, requirement_id, scenario_id, code, title, description, wricef_type, module, complexity, effort_days, status, owner, fs_content, fs_link, ts_content, ts_link, unit_test_steps, created_at, updated_at',
-                'config_items': 'id, project_id, requirement_id, scenario_id, code, title, description, config_type, module, status, owner, config_details, unit_test_steps, created_at, updated_at',
-                'wricef': 'id, code, wricef_id, title, wricef_type, module, status',
-                'test_management': 'id, project_id, code, test_type, title, description, status, owner, source_type, source_id, steps, created_at, updated_at'
-            }
-            return cols_map.get(table_name, None)
-
-        def execute(self, sql, params=()):
-            try:
-                # rewrite SELECT * FROM table_name to explicit cols when known
-                m = re.search(r"SELECT\s+\*\s+FROM\s+([A-Za-z0-9_]+)", sql, re.IGNORECASE)
-                if m:
-                    table = m.group(1)
-                    cols = self._cols_for_table(table)
-                    if cols:
-                        sql = re.sub(r"SELECT\s+\*\s+FROM\s+%s" % table, f"SELECT {cols} FROM {table}", sql, flags=re.IGNORECASE)
-                return self._conn.execute(sql, params)
-            except Exception:
-                # fallback to original execute for unexpected cases
-                return self._conn.execute(sql, params)
-
-    return DBConnProxy(conn)
-
-
-@contextmanager
-def db_conn():
-    conn = get_db_connection()
+def parse_date(value):
+    if value is None or value == "":
+        return None
+    if isinstance(value, date):
+        return value
     try:
-        yield conn
-    finally:
-        try:
-            conn.close()
-        except Exception:
-            pass
-
-
-def require_fields(data, fields):
-    missing = [f for f in fields if not data or f not in data]
-    return missing
+        return datetime.fromisoformat(value).date()
+    except ValueError:
+        return None
 
 def generate_auto_id(project_id, item_type):
     """
@@ -124,11 +53,8 @@ def generate_auto_id(project_id, item_type):
         "A": ("action_items", "action_id"),
         "W": ("analysis_sessions", "session_code"),
         "S": ("scenarios", "scenario_id"),
-        "ANL": ("scenario_analyses", "code"),
-        "REQ": ("new_requirements", "code"),
         "WR": ("wricef", "wricef_id"),
         "C": ("configs", "config_id"),
-        "TEST": ("test_management", "code"),
     }
     
     if item_type not in table_map:
@@ -136,12 +62,6 @@ def generate_auto_id(project_id, item_type):
         return None
     
     table, id_column = table_map[item_type]
-
-    # safety: ensure identifiers are simple (prevent injection via mapping tampering)
-    ident_re = re.compile(r'^[A-Za-z0-9_]+$')
-    if not ident_re.match(table) or not ident_re.match(id_column):
-        conn.close()
-        return None
     
     # Bu proje için bu tipteki son ID yi bul
     pattern = f"{project_code}-{item_type}%"
@@ -171,48 +91,53 @@ def generate_auto_id(project_id, item_type):
 @app.route('/')
 def index():
     try:
-        with db_conn() as conn:
-            # avoid SELECT * where possible; here keep simple columns for the view
-            requirements = conn.execute('SELECT id, project_id, code, title, status FROM requirements').fetchall()
-            recent_activities = conn.execute(
-                'SELECT id, project_id, code, title, status FROM requirements ORDER BY id DESC LIMIT 5'
-            ).fetchall()
-        return render_template('index.html', requirements=requirements, recent_activities=recent_activities)
+        conn = get_db_connection()
+        
+        # Tüm requirements (Requirements sayfası için)
+        requirements = conn.execute('SELECT * FROM requirements').fetchall()
+        
+        # Recent Activities (Son 5 değişiklik)
+        recent_activities = conn.execute('''
+            SELECT * FROM requirements 
+            ORDER BY id DESC 
+            LIMIT 5
+        ''').fetchall()
+        
+        conn.close()
+        return render_template('index.html', 
+                             requirements=requirements,
+                             recent_activities=recent_activities)
     except Exception as e:
-        logger.exception('Failed to render index')
-        return "Veritabanı hatası oluştu.", 500
+        return f"Veritabanı hatası: {e}"
 @app.route('/api/requirements', methods=['GET'])
 def get_requirements():
     """Tum requirementlari listele"""
     project_id = request.args.get('project_id')
     try:
-        with db_conn() as conn:
-            if project_id:
-                requirements = conn.execute('SELECT id, project_id, code, title, status FROM requirements WHERE project_id = ? ORDER BY id DESC', (project_id,)).fetchall()
-            else:
-                requirements = conn.execute('SELECT id, project_id, code, title, status FROM requirements ORDER BY id DESC').fetchall()
+        conn = get_db_connection()
+        if project_id:
+            requirements = conn.execute('SELECT * FROM requirements WHERE project_id = ? ORDER BY id DESC', (project_id,)).fetchall()
+        else:
+            requirements = conn.execute('SELECT * FROM requirements ORDER BY id DESC').fetchall()
+        conn.close()
         return jsonify([dict(row) for row in requirements])
     except Exception as e:
-        logger.exception('get_requirements failed')
-        return jsonify({"error": "Internal server error"}), 500
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/api/requirements', methods=['POST'])
 def add_requirement():
     try:
         data = request.json
-        missing = require_fields(data, ['code', 'title'])
-        if missing:
-            return jsonify({'error': 'missing_fields', 'fields': missing}), 400
-        with db_conn() as conn:
-            conn.execute('''
-                INSERT INTO requirements (project_id, code, title, module, complexity, status)
-                VALUES (?, ?, ?, ?, ?, ?)
-            ''', (data.get('project_id'), data['code'], data['title'], data.get('module'), data.get('complexity'), 'Draft'))
-            conn.commit()
+        conn = get_db_connection()
+        conn.execute('''
+            INSERT INTO requirements (project_id, code, title, module, complexity, status)
+            VALUES (?, ?, ?, ?, ?, ?)
+        ''', (data.get('project_id'), data['code'], data['title'], data['module'], data['complexity'], 'Draft'))
+        conn.commit()
+        conn.close()
         return jsonify({"status": "success"}), 200
     except Exception as e:
-        logger.exception('add_requirement failed')
-        return jsonify({"status": "error", "message": "Internal server error"}), 500
+        return jsonify({"status": "error", "message": str(e)}), 500
 
 # EKSİK OLAN VE SORUNA YOL AÇAN KISIM BURASIYDI:
 @app.route('/api/requirements/<int:req_id>')
@@ -236,23 +161,17 @@ def chat():
 
 @app.route('/api/projects', methods=['GET'])
 def get_projects():
-    """Tum projeleri listele (ORM)"""
+    """Tum projeleri listele"""
     try:
         projects = Project.query.order_by(Project.created_at.desc()).all()
-        return jsonify([p.to_dict() for p in projects])
+        return jsonify([project.to_dict() for project in projects])
     except Exception as e:
-        logger.exception('get_projects failed')
         return jsonify({"error": str(e)}), 500
 
 @app.route("/api/projects", methods=["POST"])
 def add_project():
-    """Create new project (ORM)"""
     try:
         data = request.json
-        missing = require_fields(data, ['project_code', 'project_name'])
-        if missing:
-            return jsonify({'error': 'missing_fields', 'fields': missing}), 400
-
         project = Project(
             code=data.get("project_code"),
             name=data.get("project_name"),
@@ -266,9 +185,9 @@ def add_project():
             deployment_type=data.get("deployment_type"),
             implementation_approach=data.get("implementation_approach"),
             sap_modules=data.get("sap_modules"),
-            start_date=data.get("start_date"),
-            golive_planned=data.get("golive_planned"),
-            golive_actual=data.get("golive_actual"),
+            start_date=parse_date(data.get("start_date")),
+            golive_planned=parse_date(data.get("golive_planned")),
+            golive_actual=parse_date(data.get("golive_actual")),
             project_manager=data.get("project_manager"),
             solution_architect=data.get("solution_architect"),
             functional_lead=data.get("functional_lead"),
@@ -279,72 +198,68 @@ def add_project():
         )
         db.session.add(project)
         db.session.commit()
-        return jsonify({"status": "success", "id": project.id}), 201
+        new_id = project.id
+        return jsonify({"status": "success", "id": new_id}), 201
     except Exception as e:
         db.session.rollback()
-        logger.exception('add_project failed')
-        return jsonify({"error": "Internal server error"}), 500
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/api/projects/<int:project_id>', methods=['GET'])
 def get_project_detail(project_id):
-    """Tek bir projenin detayini getir (ORM)"""
+    """Tek bir projenin detayini getir"""
     try:
-        project = Project.query.get_or_404(project_id)
-        return jsonify(project.to_dict())
+        project = Project.query.get(project_id)
+        if project:
+            return jsonify(project.to_dict())
+        return jsonify({"error": "Not found"}), 404
     except Exception as e:
-        logger.exception('get_project_detail failed')
-        return jsonify({"error": str(e)}), 404
+        return jsonify({"error": str(e)}), 500
 
 @app.route("/api/projects/<int:id>", methods=["PUT"])
 def update_project(id):
-    """Update project (ORM)"""
     try:
         data = request.json
-        project = Project.query.get_or_404(id)
-        
-        # Update fields
-        if 'project_code' in data: project.code = data['project_code']
-        if 'project_name' in data: project.name = data['project_name']
-        if 'description' in data: project.description = data['description']
-        if 'status' in data: project.status = data['status']
-        if 'customer_name' in data: project.customer_name = data['customer_name']
-        if 'customer_industry' in data: project.customer_industry = data['customer_industry']
-        if 'customer_country' in data: project.customer_country = data['customer_country']
-        if 'customer_contact' in data: project.customer_contact = data['customer_contact']
-        if 'customer_email' in data: project.customer_email = data['customer_email']
-        if 'deployment_type' in data: project.deployment_type = data['deployment_type']
-        if 'implementation_approach' in data: project.implementation_approach = data['implementation_approach']
-        if 'sap_modules' in data: project.sap_modules = data['sap_modules']
-        if 'start_date' in data: project.start_date = data['start_date']
-        if 'golive_planned' in data: project.golive_planned = data['golive_planned']
-        if 'golive_actual' in data: project.golive_actual = data['golive_actual']
-        if 'project_manager' in data: project.project_manager = data['project_manager']
-        if 'solution_architect' in data: project.solution_architect = data['solution_architect']
-        if 'functional_lead' in data: project.functional_lead = data['functional_lead']
-        if 'technical_lead' in data: project.technical_lead = data['technical_lead']
-        if 'total_budget' in data: project.total_budget = data['total_budget']
-        if 'current_phase' in data: project.phase = data['current_phase']
-        if 'completion_percent' in data: project.completion_percent = data['completion_percent']
-        
-        project.updated_at = datetime.utcnow()
+        project = Project.query.get(id)
+        if not project:
+            return jsonify({"error": "Not found"}), 404
+        project.code = data.get("project_code", project.code)
+        project.name = data.get("project_name", project.name)
+        project.description = data.get("description", project.description)
+        project.status = data.get("status", project.status)
+        project.customer_name = data.get("customer_name", project.customer_name)
+        project.customer_industry = data.get("customer_industry", project.customer_industry)
+        project.customer_country = data.get("customer_country", project.customer_country)
+        project.customer_contact = data.get("customer_contact", project.customer_contact)
+        project.customer_email = data.get("customer_email", project.customer_email)
+        project.deployment_type = data.get("deployment_type", project.deployment_type)
+        project.implementation_approach = data.get("implementation_approach", project.implementation_approach)
+        project.sap_modules = data.get("sap_modules", project.sap_modules)
+        project.start_date = parse_date(data.get("start_date")) or project.start_date
+        project.golive_planned = parse_date(data.get("golive_planned")) or project.golive_planned
+        project.golive_actual = parse_date(data.get("golive_actual")) or project.golive_actual
+        project.project_manager = data.get("project_manager", project.project_manager)
+        project.solution_architect = data.get("solution_architect", project.solution_architect)
+        project.functional_lead = data.get("functional_lead", project.functional_lead)
+        project.technical_lead = data.get("technical_lead", project.technical_lead)
+        project.total_budget = data.get("total_budget", project.total_budget)
+        project.phase = data.get("current_phase", project.phase)
+        project.completion_percent = data.get("completion_percent", project.completion_percent)
         db.session.commit()
         return jsonify({"status": "success"})
     except Exception as e:
         db.session.rollback()
-        logger.exception('update_project failed')
         return jsonify({"error": str(e)}), 500
 
 @app.route("/api/projects/<int:id>", methods=["DELETE"])
 def delete_project(id):
-    """Delete project (ORM)"""
     try:
-        project = Project.query.get_or_404(id)
-        db.session.delete(project)
+        deleted = Project.query.filter(Project.id == id).delete()
+        if deleted == 0:
+            return jsonify({"error": "Not found"}), 404
         db.session.commit()
         return jsonify({"status": "success"})
     except Exception as e:
         db.session.rollback()
-        logger.exception('delete_project failed')
         return jsonify({"error": str(e)}), 500
 
 # ============== ANALYSIS SESSIONS API ==============
@@ -403,20 +318,17 @@ def add_session():
     """Yeni analiz oturumu ekle"""
     try:
         data = request.json
-        missing = require_fields(data, ['project_id', 'session_name'])
-        if missing:
-            return jsonify({'error': 'missing_fields', 'fields': missing}), 400
-        with db_conn() as conn:
-            conn.execute('''
-                INSERT INTO analysis_sessions (project_id, scenario_id, session_name, module, process_name, facilitator, status, notes)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-            ''', (data['project_id'], data.get('scenario_id'), data['session_name'], data.get('module'), 
-                  data.get('process_name'), data.get('facilitator'), data.get('status', 'Planned'), data.get('notes')))
-            conn.commit()
+        conn = get_db_connection()
+        conn.execute('''
+            INSERT INTO analysis_sessions (project_id, scenario_id, session_name, module, process_name, facilitator, status, notes)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (data['project_id'], data.get('scenario_id'), data['session_name'], data.get('module'), 
+              data.get('process_name'), data.get('facilitator'), data.get('status', 'Planned'), data.get('notes')))
+        conn.commit()
+        conn.close()
         return jsonify({"status": "success"}), 200
     except Exception as e:
-        logger.exception('add_session failed')
-        return jsonify({"error": "Internal server error"}), 500
+        return jsonify({"error": str(e)}), 500
 
 # ============== QUESTIONS API ==============
 
@@ -451,24 +363,26 @@ def add_question():
     try:
         data = request.json
         session_id = data.get("session_id")
-        missing = require_fields(data, ['session_id', 'question_text'])
-        if missing:
-            return jsonify({'error': 'missing_fields', 'fields': missing}), 400
-        with db_conn() as conn:
-            # Session dan project_id al
-            session = conn.execute("SELECT project_id FROM analysis_sessions WHERE id = ?", (session_id,)).fetchone()
-            project_id = session["project_id"] if session else None
-            auto_id = generate_auto_id(project_id, "Q") if project_id else None
-            cursor = conn.execute("""
-                INSERT INTO questions (session_id, question_id, question_text, answer_text, status, assigned_to, due_date, created_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, datetime("now"))
-            """, (session_id, auto_id, data.get("question_text"), data.get("answer_text"),
-                  data.get("status", "Open"), data.get("assigned_to"), data.get("due_date")))
-            conn.commit()
+        conn = get_db_connection()
+        
+        # Session dan project_id al
+        session = conn.execute("SELECT project_id FROM analysis_sessions WHERE id = ?", (session_id,)).fetchone()
+        project_id = session["project_id"] if session else None
+        
+        # Otomatik ID uret
+        auto_id = generate_auto_id(project_id, "Q") if project_id else None
+        
+        cursor = conn.execute("""
+            INSERT INTO questions (session_id, question_id, question_text, answer_text, status, assigned_to, due_date, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, datetime("now"))
+        """, (session_id, auto_id, data.get("question_text"), data.get("answer_text"),
+              data.get("status", "Open"), data.get("assigned_to"), data.get("due_date")))
+        
+        conn.commit()
+        conn.close()
         return jsonify({"success": True, "id": cursor.lastrowid, "question_id": auto_id}), 201
     except Exception as e:
-        logger.exception('add_question failed')
-        return jsonify({"error": "Internal server error"}), 500
+        return jsonify({"error": str(e)}), 500
     
 # ============== FITGAP API ==============
 
@@ -735,767 +649,6 @@ def update_testcase(tc_id):
         conn.commit()
         conn.close()
         return jsonify({"status": "success"}), 200
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-# ============== NEW REQUIREMENTS API ==============
-@app.route('/api/new_requirements', methods=['GET'])
-def get_new_requirements():
-    """Get requirements with optional filtering by analysis_id, project_id, classification, or status"""
-    project_id = request.args.get('project_id')
-    session_id = request.args.get('session_id')
-    analysis_id = request.args.get('analysis_id')
-    classification = request.args.get('classification')
-    status = request.args.get('status')
-    
-    try:
-        with db_conn() as conn:
-            query = 'SELECT * FROM new_requirements WHERE 1=1'
-            params = []
-            
-            if analysis_id:
-                query += ' AND analysis_id = ?'
-                params.append(analysis_id)
-            elif session_id:
-                query += ' AND session_id = ?'
-                params.append(session_id)
-            elif project_id:
-                query += ' AND project_id = ?'
-                params.append(project_id)
-            
-            if classification:
-                query += ' AND classification = ?'
-                params.append(classification)
-            
-            if status:
-                query += ' AND status = ?'
-                params.append(status)
-            
-            query += ' ORDER BY created_at DESC'
-            
-            rows = conn.execute(query, params).fetchall()
-            result = [dict(r) for r in rows]
-            
-            # Add analysis info for each requirement if analysis_id exists
-            for req in result:
-                if req.get('analysis_id'):
-                    analysis = conn.execute(
-                        'SELECT id, code, title FROM scenario_analyses WHERE id = ?',
-                        (req['analysis_id'],)
-                    ).fetchone()
-                    if analysis:
-                        req['analysis'] = dict(analysis)
-            
-            return jsonify(result)
-    except Exception as e:
-        logger.exception("Error fetching requirements")
-        return jsonify({"error": "Failed to fetch requirements"}), 500
-
-@app.route('/api/new_requirements', methods=['POST'])
-def add_new_requirement():
-    """Create a new requirement with auto-generated code and classification validation"""
-    try:
-        data = request.json
-        
-        # Validate required fields
-        missing = require_fields(data, ['title', 'analysis_id'])
-        if missing:
-            return jsonify({"error": f"Missing required fields: {', '.join(missing)}"}), 400
-        
-        # Validate classification
-        classification = data.get('classification', 'Gap')
-        valid_classifications = ['Fit', 'PartialFit', 'Gap']
-        if classification not in valid_classifications:
-            return jsonify({"error": f"Invalid classification. Must be one of: {', '.join(valid_classifications)}"}), 400
-        
-        analysis_id = data.get('analysis_id')
-        
-        with db_conn() as conn:
-            # Validate analysis exists and get project_id
-            analysis = conn.execute(
-                'SELECT id, scenario_id FROM scenario_analyses WHERE id = ?',
-                (analysis_id,)
-            ).fetchone()
-            
-            if not analysis:
-                return jsonify({"error": "Analysis not found"}), 404
-            
-            # Get project_id from scenario
-            scenario = conn.execute(
-                'SELECT project_id FROM scenarios WHERE id = ?',
-                (analysis['scenario_id'],)
-            ).fetchone()
-            
-            project_id = scenario['project_id'] if scenario else None
-            
-            # Generate auto code (REQ-001 format)
-            auto_code = generate_auto_id(project_id, "REQ") if project_id else None
-            
-            cursor = conn.execute('''
-                INSERT INTO new_requirements (
-                    code, analysis_id, project_id, session_id, gap_id,
-                    title, description, module, fit_type, classification,
-                    priority, status, acceptance_criteria
-                )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ''', (
-                auto_code,
-                analysis_id,
-                project_id,
-                data.get('session_id'),
-                data.get('gap_id'),
-                data['title'],
-                data.get('description'),
-                data.get('module'),
-                data.get('fit_type'),
-                classification,
-                data.get('priority', 'Medium'),
-                data.get('status', 'Draft'),
-                data.get('acceptance_criteria')
-            ))
-            conn.commit()
-            new_id = cursor.lastrowid
-            
-            return jsonify({
-                "status": "success",
-                "id": new_id,
-                "code": auto_code
-            }), 201
-    except Exception as e:
-        logger.exception("Error creating requirement")
-        return jsonify({"error": "Failed to create requirement"}), 500
-
-@app.route('/api/new_requirements/<int:req_id>', methods=['GET'])
-def get_new_requirement_detail(req_id):
-    """Get requirement by ID with analysis and conversion details"""
-    try:
-        with db_conn() as conn:
-            row = conn.execute('SELECT * FROM new_requirements WHERE id = ?', (req_id,)).fetchone()
-            
-            if not row:
-                return jsonify({"error": "Requirement not found"}), 404
-            
-            result = dict(row)
-            
-            # Add analysis details
-            if result.get('analysis_id'):
-                analysis = conn.execute(
-                    'SELECT * FROM scenario_analyses WHERE id = ?',
-                    (result['analysis_id'],)
-                ).fetchone()
-                if analysis:
-                    result['analysis'] = dict(analysis)
-            
-            # Add converted item details if converted
-            if result.get('conversion_status') == 'converted' and result.get('converted_item_id'):
-                item_type = result.get('converted_item_type')
-                if item_type == 'WRICEF':
-                    item = conn.execute(
-                        'SELECT id, code, title, status FROM wricef_items WHERE id = ?',
-                        (result['converted_item_id'],)
-                    ).fetchone()
-                    if item:
-                        result['converted_item'] = dict(item)
-                elif item_type == 'CONFIG':
-                    item = conn.execute(
-                        'SELECT id, code, title, status FROM config_items WHERE id = ?',
-                        (result['converted_item_id'],)
-                    ).fetchone()
-                    if item:
-                        result['converted_item'] = dict(item)
-            
-            return jsonify(result)
-    except Exception as e:
-        logger.exception(f"Error fetching requirement {req_id}")
-        return jsonify({"error": "Failed to fetch requirement"}), 500
-
-@app.route('/api/new_requirements/<int:req_id>', methods=['PUT'])
-def update_new_requirement(req_id):
-    """Update requirement with classification validation"""
-    try:
-        data = request.json
-        
-        # Validate classification if provided
-        if 'classification' in data:
-            valid_classifications = ['Fit', 'PartialFit', 'Gap']
-            if data['classification'] not in valid_classifications:
-                return jsonify({"error": f"Invalid classification. Must be one of: {', '.join(valid_classifications)}"}), 400
-        
-        with db_conn() as conn:
-            # Check if requirement exists
-            existing = conn.execute(
-                'SELECT * FROM new_requirements WHERE id = ?',
-                (req_id,)
-            ).fetchone()
-            
-            if not existing:
-                return jsonify({"error": "Requirement not found"}), 404
-            
-            # Check if already converted - prevent modification of certain fields
-            if existing['conversion_status'] == 'converted':
-                if 'classification' in data and data['classification'] != existing['classification']:
-                    return jsonify({"error": "Cannot change classification of converted requirement"}), 400
-            
-            # Update fields
-            conn.execute('''
-                UPDATE new_requirements 
-                SET title = ?, description = ?, module = ?, classification = ?, 
-                    priority = ?, status = ?, acceptance_criteria = ?
-                WHERE id = ?
-            ''', (
-                data.get('title', existing['title']),
-                data.get('description', existing['description']),
-                data.get('module', existing['module']),
-                data.get('classification', existing['classification']),
-                data.get('priority', existing['priority']),
-                data.get('status', existing['status']),
-                data.get('acceptance_criteria', existing['acceptance_criteria']),
-                req_id
-            ))
-            conn.commit()
-            
-            return jsonify({"status": "success"})
-    except Exception as e:
-        logger.exception(f"Error updating requirement {req_id}")
-        return jsonify({"error": "Failed to update requirement"}), 500
-
-@app.route('/api/new_requirements/<int:req_id>', methods=['DELETE'])
-def delete_new_requirement(req_id):
-    """Delete requirement with conversion check"""
-    try:
-        with db_conn() as conn:
-            # Check if requirement exists
-            requirement = conn.execute(
-                'SELECT * FROM new_requirements WHERE id = ?',
-                (req_id,)
-            ).fetchone()
-            
-            if not requirement:
-                return jsonify({"error": "Requirement not found"}), 404
-            
-            # Check if already converted - prevent deletion
-            if requirement['conversion_status'] == 'converted':
-                return jsonify({
-                    "error": f"Cannot delete converted requirement. It has been converted to {requirement['converted_item_type']} (ID: {requirement['converted_item_id']})"
-                }), 400
-            
-            # Safe to delete
-            conn.execute('DELETE FROM new_requirements WHERE id = ?', (req_id,))
-            conn.commit()
-            
-            return jsonify({"status": "success"})
-    except Exception as e:
-        logger.exception(f"Error deleting requirement {req_id}")
-        return jsonify({"error": "Failed to delete requirement"}), 500
-
-
-# ============== REQUIREMENT CONVERSION API (Epic B) ==============
-
-@app.route('/api/new_requirements/<int:req_id>/convert', methods=['POST'])
-def convert_requirement(req_id):
-    """Convert requirement to WRICEF or CONFIG item based on classification"""
-    try:
-        data = request.json or {}
-        converted_by = data.get('converted_by', 'system')
-        
-        with db_conn() as conn:
-            # Get requirement with analysis and scenario info
-            requirement = conn.execute(
-                'SELECT * FROM new_requirements WHERE id = ?',
-                (req_id,)
-            ).fetchone()
-            
-            if not requirement:
-                return jsonify({"error": "Requirement not found"}), 404
-            
-            # Check if already converted
-            if requirement['conversion_status'] == 'converted':
-                return jsonify({
-                    "error": f"Requirement already converted to {requirement['converted_item_type']} (ID: {requirement['converted_item_id']})"
-                }), 400
-            
-            # Validate classification exists
-            classification = requirement['classification']
-            if not classification:
-                return jsonify({"error": "Requirement must have a classification before conversion"}), 400
-            
-            # Get scenario_id from analysis
-            scenario_id = None
-            if requirement['analysis_id']:
-                analysis = conn.execute(
-                    'SELECT scenario_id FROM scenario_analyses WHERE id = ?',
-                    (requirement['analysis_id'],)
-                ).fetchone()
-                if analysis:
-                    scenario_id = analysis['scenario_id']
-            
-            project_id = requirement['project_id']
-            
-            # Determine conversion target based on classification
-            if classification == 'Fit':
-                # Convert to CONFIG
-                auto_code = generate_auto_id(project_id, "C") if project_id else None
-                
-                cursor = conn.execute('''
-                    INSERT INTO config_items (
-                        project_id, requirement_id, scenario_id, code, title, description,
-                        config_type, module, status, owner, config_details, unit_test_steps
-                    )
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ''', (
-                    project_id,
-                    req_id,
-                    scenario_id,
-                    auto_code,
-                    requirement['title'],
-                    requirement['description'],
-                    data.get('config_type', 'Standard'),
-                    requirement['module'],
-                    'Draft',
-                    data.get('owner'),  # Owner from payload only
-                    data.get('config_details', ''),
-                    '[]'  # Empty unit test steps initially
-                ))
-                new_item_id = cursor.lastrowid
-                item_type = 'CONFIG'
-                
-            elif classification in ['Gap', 'PartialFit']:
-                # Convert to WRICEF
-                auto_code = generate_auto_id(project_id, "WR") if project_id else None
-                
-                cursor = conn.execute('''
-                    INSERT INTO wricef_items (
-                        project_id, requirement_id, scenario_id, code, title, description,
-                        wricef_type, module, complexity, effort_days, status, owner,
-                        fs_content, ts_content, unit_test_steps
-                    )
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ''', (
-                    project_id,
-                    req_id,
-                    scenario_id,
-                    auto_code,
-                    requirement['title'],
-                    requirement['description'],
-                    data.get('wricef_type', 'Enhancement'),
-                    requirement['module'],
-                    data.get('complexity', 'Medium'),
-                    data.get('effort_days', 0),
-                    'Draft',
-                    data.get('owner'),  # Owner from payload only
-                    '',  # Empty FS content initially
-                    '',  # Empty TS content initially
-                    '[]'  # Empty unit test steps initially
-                ))
-                new_item_id = cursor.lastrowid
-                item_type = 'WRICEF'
-                
-            else:
-                return jsonify({
-                    "error": f"Invalid classification '{classification}' for conversion. Must be Fit, Gap, or PartialFit."
-                }), 400
-            
-            # Update requirement with conversion info
-            conn.execute('''
-                UPDATE new_requirements
-                SET conversion_status = 'converted',
-                    converted_item_type = ?,
-                    converted_item_id = ?,
-                    converted_at = CURRENT_TIMESTAMP,
-                    converted_by = ?
-                WHERE id = ?
-            ''', (item_type, new_item_id, converted_by, req_id))
-            
-            conn.commit()
-            
-            return jsonify({
-                "status": "success",
-                "converted_to": item_type,
-                "item_id": new_item_id,
-                "item_code": auto_code,
-                "message": f"Requirement successfully converted to {item_type}"
-            }), 201
-            
-    except Exception as e:
-        logger.exception(f"Error converting requirement {req_id}")
-        return jsonify({"error": "Failed to convert requirement"}), 500
-
-
-# ============== WRICEF ITEMS API ==============
-@app.route('/api/wricef_items', methods=['GET'])
-def get_wricef_items():
-    project_id = request.args.get('project_id')
-    requirement_id = request.args.get('requirement_id')
-    try:
-        conn = get_db_connection()
-        if requirement_id:
-            rows = conn.execute('SELECT * FROM wricef_items WHERE requirement_id = ? ORDER BY created_at DESC', (requirement_id,)).fetchall()
-        elif project_id:
-            rows = conn.execute('SELECT * FROM wricef_items WHERE project_id = ? ORDER BY created_at DESC', (project_id,)).fetchall()
-        else:
-            rows = conn.execute('SELECT * FROM wricef_items ORDER BY created_at DESC').fetchall()
-        conn.close()
-        return jsonify([dict(r) for r in rows])
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-@app.route('/api/wricef_items', methods=['POST'])
-def add_wricef_item():
-    try:
-        data = request.json
-        conn = get_db_connection()
-        conn.execute('''
-            INSERT INTO wricef_items (project_id, requirement_id, code, title, description, wricef_type, module, complexity, effort_days, status, owner)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (data.get('project_id'), data.get('requirement_id'), data.get('code'), data['title'], data.get('description'), data.get('wricef_type'), data.get('module'), data.get('complexity'), data.get('effort_days'), data.get('status','Draft'), data.get('owner')))
-        conn.commit()
-        conn.close()
-        return jsonify({"status": "success"}), 201
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-@app.route('/api/wricef_items/<int:item_id>', methods=['GET'])
-def get_wricef_item_detail(item_id):
-    try:
-        conn = get_db_connection()
-        row = conn.execute('SELECT * FROM wricef_items WHERE id = ?', (item_id,)).fetchone()
-        conn.close()
-        if row:
-            return jsonify(dict(row))
-        return jsonify({"error": "Not found"}), 404
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-@app.route('/api/wricef_items/<int:item_id>', methods=['PUT'])
-def update_wricef_item(item_id):
-    try:
-        data = request.json
-        conn = get_db_connection()
-        
-        # Build dynamic UPDATE query based on provided fields
-        update_fields = []
-        values = []
-        
-        for field in ['title', 'description', 'wricef_type', 'module', 'complexity', 'effort_days', 'status', 'owner', 'unit_test_steps']:
-            if field in data:
-                update_fields.append(f"{field} = ?")
-                values.append(data[field])
-        
-        if not update_fields:
-            conn.close()
-            return jsonify({"status": "success"})
-        
-        values.append(item_id)
-        query = f"UPDATE wricef_items SET {', '.join(update_fields)} WHERE id = ?"
-        
-        conn.execute(query, values)
-        conn.commit()
-        conn.close()
-        return jsonify({"status": "success"})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-@app.route('/api/wricef_items/<int:item_id>', methods=['DELETE'])
-def delete_wricef_item(item_id):
-    try:
-        conn = get_db_connection()
-        conn.execute('DELETE FROM wricef_items WHERE id = ?', (item_id,))
-        conn.commit()
-        conn.close()
-        return jsonify({"status": "success"})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-@app.route('/api/wricef_items/<int:item_id>/convert-to-unit-test', methods=['POST'])
-def convert_wricef_to_unit_test(item_id):
-    """Convert WRICEF item to Unit Test in test_management"""
-    try:
-        data = request.json or {}
-        
-        with db_conn() as conn:
-            # Get WRICEF item
-            wricef = conn.execute(
-                'SELECT * FROM wricef_items WHERE id = ?',
-                (item_id,)
-            ).fetchone()
-            
-            if not wricef:
-                return jsonify({"error": "WRICEF item not found"}), 404
-            
-            project_id = wricef['project_id']
-            
-            # Generate auto-code for test
-            auto_code = generate_auto_id(project_id, "TEST") if project_id else None
-            
-            # Parse unit_test_steps (JSON string) to copy to test steps
-            import json
-            try:
-                unit_test_steps = json.loads(wricef['unit_test_steps']) if wricef['unit_test_steps'] else []
-                steps_json = json.dumps(unit_test_steps)
-            except:
-                steps_json = '[]'
-            
-            # Create unit test in test_management
-            cursor = conn.execute('''
-                INSERT INTO test_management (
-                    project_id, code, test_type, title, description,
-                    status, owner, source_type, source_id, steps
-                )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ''', (
-                project_id,
-                auto_code,
-                'Unit',
-                f"Unit Test: {wricef['title']}",
-                wricef['description'],
-                data.get('status', 'Draft'),
-                data.get('owner', wricef['owner']),
-                'WRICEF',
-                item_id,
-                steps_json
-            ))
-            test_id = cursor.lastrowid
-            
-            conn.commit()
-            
-            return jsonify({
-                "status": "success",
-                "test_id": test_id,
-                "test_code": auto_code,
-                "message": "WRICEF item successfully converted to Unit Test"
-            }), 201
-            
-    except Exception as e:
-        logger.exception(f"Error converting WRICEF {item_id} to unit test")
-        return jsonify({"error": "Failed to convert to unit test"}), 500
-
-# ============== CONFIG ITEMS API ==============
-@app.route('/api/config_items', methods=['GET'])
-def get_config_items():
-    project_id = request.args.get('project_id')
-    requirement_id = request.args.get('requirement_id')
-    try:
-        conn = get_db_connection()
-        if requirement_id:
-            rows = conn.execute('SELECT * FROM config_items WHERE requirement_id = ? ORDER BY created_at DESC', (requirement_id,)).fetchall()
-        elif project_id:
-            rows = conn.execute('SELECT * FROM config_items WHERE project_id = ? ORDER BY created_at DESC', (project_id,)).fetchall()
-        else:
-            rows = conn.execute('SELECT * FROM config_items ORDER BY created_at DESC').fetchall()
-        conn.close()
-        return jsonify([dict(r) for r in rows])
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-@app.route('/api/config_items', methods=['POST'])
-def add_config_item():
-    try:
-        data = request.json
-        conn = get_db_connection()
-        conn.execute('''
-            INSERT INTO config_items (project_id, requirement_id, code, title, description, config_type, module, status, owner, config_details)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (data.get('project_id'), data.get('requirement_id'), data.get('code'), data['title'], data.get('description'), data.get('config_type'), data.get('module'), data.get('status','Draft'), data.get('owner'), data.get('config_details')))
-        conn.commit()
-        conn.close()
-        return jsonify({"status": "success"}), 201
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-@app.route('/api/config_items/<int:item_id>', methods=['GET'])
-def get_config_item_detail(item_id):
-    try:
-        conn = get_db_connection()
-        row = conn.execute('SELECT * FROM config_items WHERE id = ?', (item_id,)).fetchone()
-        conn.close()
-        if row:
-            return jsonify(dict(row))
-        return jsonify({"error": "Not found"}), 404
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-@app.route('/api/config_items/<int:item_id>', methods=['PUT'])
-def update_config_item(item_id):
-    try:
-        data = request.json
-        conn = get_db_connection()
-        
-        # Build dynamic UPDATE query based on provided fields
-        update_fields = []
-        values = []
-        
-        for field in ['title', 'description', 'config_type', 'module', 'status', 'owner', 'config_details', 'unit_test_steps']:
-            if field in data:
-                update_fields.append(f"{field} = ?")
-                values.append(data[field])
-        
-        if not update_fields:
-            conn.close()
-            return jsonify({"status": "success"})
-        
-        values.append(item_id)
-        query = f"UPDATE config_items SET {', '.join(update_fields)} WHERE id = ?"
-        
-        conn.execute(query, values)
-        conn.commit()
-        conn.close()
-        return jsonify({"status": "success"})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-@app.route('/api/config_items/<int:item_id>', methods=['DELETE'])
-def delete_config_item(item_id):
-    try:
-        conn = get_db_connection()
-        conn.execute('DELETE FROM config_items WHERE id = ?', (item_id,))
-        conn.commit()
-        conn.close()
-        return jsonify({"status": "success"})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-@app.route('/api/config_items/<int:item_id>/convert-to-unit-test', methods=['POST'])
-def convert_config_to_unit_test(item_id):
-    """Convert CONFIG item to Unit Test in test_management"""
-    try:
-        data = request.json or {}
-        
-        with db_conn() as conn:
-            # Get CONFIG item
-            config = conn.execute(
-                'SELECT * FROM config_items WHERE id = ?',
-                (item_id,)
-            ).fetchone()
-            
-            if not config:
-                return jsonify({"error": "CONFIG item not found"}), 404
-            
-            project_id = config['project_id']
-            
-            # Generate auto-code for test
-            auto_code = generate_auto_id(project_id, "TEST") if project_id else None
-            
-            # Parse unit_test_steps (JSON string) to copy to test steps
-            import json
-            try:
-                unit_test_steps = json.loads(config['unit_test_steps']) if config['unit_test_steps'] else []
-                steps_json = json.dumps(unit_test_steps)
-            except:
-                steps_json = '[]'
-            
-            # Create unit test in test_management
-            cursor = conn.execute('''
-                INSERT INTO test_management (
-                    project_id, code, test_type, title, description,
-                    status, owner, source_type, source_id, steps
-                )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ''', (
-                project_id,
-                auto_code,
-                'Unit',
-                f"Unit Test: {config['title']}",
-                config['description'],
-                data.get('status', 'Draft'),
-                data.get('owner', config['owner']),
-                'CONFIG',
-                item_id,
-                steps_json
-            ))
-            test_id = cursor.lastrowid
-            
-            conn.commit()
-            
-            return jsonify({
-                "status": "success",
-                "test_id": test_id,
-                "test_code": auto_code,
-                "message": "CONFIG item successfully converted to Unit Test"
-            }), 201
-            
-    except Exception as e:
-        logger.exception(f"Error converting CONFIG {item_id} to unit test")
-        return jsonify({"error": "Failed to convert to unit test"}), 500
-
-# ============== TEST MANAGEMENT API ==============
-@app.route('/api/test_management', methods=['GET'])
-def get_test_management():
-    """Get test cases with optional filtering by project_id and test_type"""
-    project_id = request.args.get('project_id')
-    test_type = request.args.get('test_type')  # Unit, SIT, UAT, String, Sprint, PerformanceLoad, Regression
-    
-    try:
-        with db_conn() as conn:
-            # Build query with filters
-            query = 'SELECT * FROM test_management WHERE 1=1'
-            params = []
-            
-            if project_id:
-                query += ' AND project_id = ?'
-                params.append(project_id)
-            
-            if test_type:
-                query += ' AND test_type = ?'
-                params.append(test_type)
-            
-            query += ' ORDER BY created_at DESC'
-            
-            rows = conn.execute(query, params).fetchall()
-            return jsonify([dict(r) for r in rows])
-    except Exception as e:
-        logger.exception("Error getting test management items")
-        return jsonify({"error": str(e)}), 500
-
-@app.route('/api/test_management', methods=['POST'])
-def add_test_management():
-    try:
-        data = request.json
-        conn = get_db_connection()
-        conn.execute('''
-            INSERT INTO test_management (project_id, code, test_type, title, description, status, owner, source_type, source_id, steps)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (data.get('project_id'), data.get('code'), data.get('test_type'), data['title'], data.get('description'), data.get('status','Draft'), data.get('owner'), data.get('source_type'), data.get('source_id'), data.get('steps','[]')))
-        conn.commit()
-        conn.close()
-        return jsonify({"status": "success"}), 201
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-@app.route('/api/test_management/<int:item_id>', methods=['GET'])
-def get_test_management_detail(item_id):
-    try:
-        conn = get_db_connection()
-        row = conn.execute('SELECT * FROM test_management WHERE id = ?', (item_id,)).fetchone()
-        conn.close()
-        if row:
-            return jsonify(dict(row))
-        return jsonify({"error": "Not found"}), 404
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-@app.route('/api/test_management/<int:item_id>', methods=['PUT'])
-def update_test_management(item_id):
-    try:
-        data = request.json
-        conn = get_db_connection()
-        conn.execute('''
-            UPDATE test_management SET title = ?, description = ?, status = ?, owner = ?, steps = ?
-            WHERE id = ?
-        ''', (data.get('title'), data.get('description'), data.get('status'), data.get('owner'), data.get('steps'), item_id))
-        conn.commit()
-        conn.close()
-        return jsonify({"status": "success"})
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-@app.route('/api/test_management/<int:item_id>', methods=['DELETE'])
-def delete_test_management(item_id):
-    try:
-        conn = get_db_connection()
-        conn.execute('DELETE FROM test_management WHERE id = ?', (item_id,))
-        conn.commit()
-        conn.close()
-        return jsonify({"status": "success"})
     except Exception as e:
         return jsonify({"error": str(e)}), 500
     # ============== AI SERVICES API (Mock) ==============
@@ -2276,554 +1429,85 @@ def update_risk(id):
 
 @app.route('/api/scenarios', methods=['GET'])
 def get_scenarios():
-    """Get scenarios with optional filtering and composite scenario expansion"""
     project_id = request.args.get('project_id')
-    status = request.args.get('status')
-    include_composite_details = request.args.get('expand_composite', 'false').lower() == 'true'
-    
     try:
-        with db_conn() as conn:
-            query = 'SELECT * FROM scenarios WHERE 1=1'
-            params = []
-            
-            if project_id:
-                query += ' AND project_id = ?'
-                params.append(project_id)
-            
-            if status:
-                query += ' AND status = ?'
-                params.append(status)
-            
-            query += ' ORDER BY created_at DESC'
-            
-            scenarios = conn.execute(query, params).fetchall()
-            result = [dict(s) for s in scenarios]
-            
-            # Expand composite scenarios if requested
-            if include_composite_details:
-                for scenario in result:
-                    if scenario.get('is_composite') == 1 and scenario.get('included_scenario_ids'):
-                        # Parse included scenario IDs
-                        included_ids = scenario['included_scenario_ids'].split(',')
-                        placeholders = ','.join(['?'] * len(included_ids))
-                        included_scenarios = conn.execute(
-                            f'SELECT id, scenario_id, name, status FROM scenarios WHERE id IN ({placeholders})',
-                            included_ids
-                        ).fetchall()
-                        scenario['included_scenarios'] = [dict(s) for s in included_scenarios]
-            
-            return jsonify(result)
+        query = Scenario.query
+        if project_id:
+            query = query.filter(Scenario.project_id == project_id)
+        scenarios = query.order_by(Scenario.created_at.desc()).all()
+        return jsonify([scenario.to_dict() for scenario in scenarios])
     except Exception as e:
-        logger.exception("Error fetching scenarios")
-        return jsonify({"error": "Failed to fetch scenarios"}), 500
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/api/scenarios', methods=['POST'])
 def add_scenario():
-    """Create a new scenario with composite support and validation"""
     try:
         data = request.json
-        
-        # Validate required fields
-        missing = require_fields(data, ['project_id', 'name'])
-        if missing:
-            return jsonify({"error": f"Missing required fields: {', '.join(missing)}"}), 400
-        
         project_id = data.get('project_id')
-        is_composite = data.get('is_composite', 0)
-        included_scenario_ids = data.get('included_scenario_ids', [])
-        tags = data.get('tags', [])
-        
-        # Validate composite scenario
-        if is_composite and not included_scenario_ids:
-            return jsonify({"error": "Composite scenarios must include at least one scenario"}), 400
-        
-        # Convert arrays to comma-separated strings
-        included_ids_str = ','.join(map(str, included_scenario_ids)) if included_scenario_ids else None
-        tags_str = ','.join(tags) if tags else None
-        
-        with db_conn() as conn:
-            # Generate auto ID
-            auto_id = generate_auto_id(project_id, "S") if project_id else None
-            
-            # Validate included scenarios exist (if composite)
-            if is_composite and included_scenario_ids:
-                placeholders = ','.join(['?'] * len(included_scenario_ids))
-                existing = conn.execute(
-                    f'SELECT COUNT(*) FROM scenarios WHERE id IN ({placeholders}) AND project_id = ?',
-                    included_scenario_ids + [project_id]
-                ).fetchone()[0]
-                
-                if existing != len(included_scenario_ids):
-                    return jsonify({"error": "Some included scenarios do not exist or belong to different project"}), 400
-            
-            cursor = conn.execute('''
-                INSERT INTO scenarios (
-                    scenario_id, project_id, name, description, process_area, priority, status,
-                    is_composite, included_scenario_ids, tags
-                )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ''', (
-                auto_id, project_id, data.get('name'), data.get('description'),
-                data.get('process_area'), data.get('priority', 'Medium'), data.get('status', 'Draft'),
-                is_composite, included_ids_str, tags_str
-            ))
-            conn.commit()
-            new_id = cursor.lastrowid
-            
-            return jsonify({
-                "status": "success",
-                "id": new_id,
-                "scenario_id": auto_id
-            }), 201
+        auto_id = generate_auto_id(project_id, "S") if project_id else None
+        scenario = Scenario(
+            code=auto_id,
+            project_id=project_id,
+            name=data.get('name'),
+            description=data.get('description'),
+            process_area=data.get('process_area'),
+            priority=data.get('priority', 'Medium'),
+            status=data.get('status', 'Draft'),
+            tags=data.get('tags'),
+            is_composite=bool(data.get('is_composite', False)),
+            included_scenario_ids=data.get('included_scenario_ids')
+        )
+        db.session.add(scenario)
+        db.session.commit()
+        return jsonify({"status": "success", "scenario_id": auto_id, "id": scenario.id}), 201
     except Exception as e:
-        logger.exception("Error creating scenario")
-        return jsonify({"error": "Failed to create scenario"}), 500
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/api/scenarios/<int:id>', methods=['GET'])
 def get_scenario_by_id(id):
-    """Get scenario by ID with expanded composite scenario details"""
     try:
-        with db_conn() as conn:
-            scenario = conn.execute('SELECT * FROM scenarios WHERE id = ?', (id,)).fetchone()
-            
-            if not scenario:
-                return jsonify({"error": "Scenario not found"}), 404
-            
-            result = dict(scenario)
-            
-            # Expand composite scenario details
-            if result.get('is_composite') == 1 and result.get('included_scenario_ids'):
-                included_ids = result['included_scenario_ids'].split(',')
-                placeholders = ','.join(['?'] * len(included_ids))
-                included_scenarios = conn.execute(
-                    f'SELECT * FROM scenarios WHERE id IN ({placeholders})',
-                    included_ids
-                ).fetchall()
-                result['included_scenarios'] = [dict(s) for s in included_scenarios]
-            
-            # Get related analyses count
-            analyses_count = conn.execute(
-                'SELECT COUNT(*) FROM scenario_analyses WHERE scenario_id = ?',
-                (id,)
-            ).fetchone()[0]
-            result['analyses_count'] = analyses_count
-            
-            # Parse tags if present
-            if result.get('tags'):
-                result['tags'] = result['tags'].split(',')
-            
-            return jsonify(result)
+        scenario = Scenario.query.get(id)
+        if scenario:
+            return jsonify(scenario.to_dict())
+        return jsonify({"error": "Not found"}), 404
     except Exception as e:
-        logger.exception(f"Error fetching scenario {id}")
-        return jsonify({"error": "Failed to fetch scenario"}), 500
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/api/scenarios/<int:id>', methods=['PUT'])
 def update_scenario(id):
-    """Update scenario including composite scenario relationships"""
     try:
         data = request.json
-        
-        with db_conn() as conn:
-            # Check if scenario exists
-            existing = conn.execute('SELECT * FROM scenarios WHERE id = ?', (id,)).fetchone()
-            if not existing:
-                return jsonify({"error": "Scenario not found"}), 404
-            
-            # Handle composite scenario updates
-            is_composite = data.get('is_composite', existing['is_composite'])
-            included_scenario_ids = data.get('included_scenario_ids')
-            tags = data.get('tags')
-            
-            # Validate composite scenario
-            if is_composite and included_scenario_ids is not None:
-                if not included_scenario_ids:
-                    return jsonify({"error": "Composite scenarios must include at least one scenario"}), 400
-                
-                # Validate included scenarios exist and don't include self
-                if id in included_scenario_ids:
-                    return jsonify({"error": "Scenario cannot include itself"}), 400
-                
-                placeholders = ','.join(['?'] * len(included_scenario_ids))
-                existing_count = conn.execute(
-                    f'SELECT COUNT(*) FROM scenarios WHERE id IN ({placeholders}) AND project_id = ?',
-                    included_scenario_ids + [existing['project_id']]
-                ).fetchone()[0]
-                
-                if existing_count != len(included_scenario_ids):
-                    return jsonify({"error": "Some included scenarios do not exist or belong to different project"}), 400
-            
-            # Convert arrays to strings
-            included_ids_str = ','.join(map(str, included_scenario_ids)) if included_scenario_ids is not None else existing['included_scenario_ids']
-            tags_str = ','.join(tags) if tags is not None else existing['tags']
-            
-            conn.execute('''
-                UPDATE scenarios 
-                SET name = ?, description = ?, process_area = ?, priority = ?, status = ?,
-                    is_composite = ?, included_scenario_ids = ?, tags = ?
-                WHERE id = ?
-            ''', (
-                data.get('name', existing['name']),
-                data.get('description', existing['description']),
-                data.get('process_area', existing['process_area']),
-                data.get('priority', existing['priority']),
-                data.get('status', existing['status']),
-                is_composite,
-                included_ids_str,
-                tags_str,
-                id
-            ))
-            conn.commit()
-            
-            return jsonify({"status": "success"})
+        scenario = Scenario.query.get(id)
+        if not scenario:
+            return jsonify({"error": "Not found"}), 404
+        scenario.name = data.get('name', scenario.name)
+        scenario.description = data.get('description', scenario.description)
+        scenario.process_area = data.get('process_area', scenario.process_area)
+        scenario.priority = data.get('priority', scenario.priority)
+        scenario.status = data.get('status', scenario.status)
+        scenario.tags = data.get('tags', scenario.tags)
+        if 'is_composite' in data:
+            scenario.is_composite = bool(data.get('is_composite'))
+        scenario.included_scenario_ids = data.get('included_scenario_ids', scenario.included_scenario_ids)
+        db.session.commit()
+        return jsonify({"status": "success"})
     except Exception as e:
-        logger.exception(f"Error updating scenario {id}")
-        return jsonify({"error": "Failed to update scenario"}), 500
-
-@app.route('/api/scenarios/<int:id>/create-test', methods=['POST'])
-def create_test_from_scenario(id):
-    """Create SIT/UAT/other test from scenario (with composite expansion support)"""
-    try:
-        data = request.json or {}
-        test_type = data.get('test_type', 'SIT')  # SIT, UAT, String, Sprint, PerformanceLoad, Regression
-        
-        # Validate test_type
-        valid_test_types = ['Unit', 'SIT', 'UAT', 'String', 'Sprint', 'PerformanceLoad', 'Regression']
-        if test_type not in valid_test_types:
-            return jsonify({
-                "error": f"Invalid test_type. Must be one of: {', '.join(valid_test_types)}"
-            }), 400
-        
-        with db_conn() as conn:
-            # Get scenario
-            scenario = conn.execute(
-                'SELECT * FROM scenarios WHERE id = ?',
-                (id,)
-            ).fetchone()
-            
-            if not scenario:
-                return jsonify({"error": "Scenario not found"}), 404
-            
-            project_id = scenario['project_id']
-            
-            # Generate auto-code for test
-            auto_code = generate_auto_id(project_id, "TEST") if project_id else None
-            
-            # Build test title and description
-            title = f"{test_type} Test: {scenario['name']}"
-            description = scenario['description'] or ''
-            
-            # For composite scenarios (especially UAT), expand included scenarios
-            scenario_details = {
-                "main_scenario": scenario['name'],
-                "is_composite": bool(scenario['is_composite'])
-            }
-            
-            if scenario['is_composite'] and scenario['included_scenario_ids']:
-                try:
-                    import json
-                    included_ids = json.loads(scenario['included_scenario_ids'])
-                    included_scenarios = []
-                    
-                    for inc_id in included_ids:
-                        inc_scenario = conn.execute(
-                            'SELECT id, scenario_id, name FROM scenarios WHERE id = ?',
-                            (inc_id,)
-                        ).fetchone()
-                        if inc_scenario:
-                            included_scenarios.append({
-                                "id": inc_scenario['id'],
-                                "scenario_id": inc_scenario['scenario_id'],
-                                "name": inc_scenario['name']
-                            })
-                    
-                    scenario_details["included_scenarios"] = included_scenarios
-                    
-                    # Add included scenario names to description
-                    if included_scenarios:
-                        description += f"\n\nComposite Test Coverage:\n"
-                        for inc in included_scenarios:
-                            description += f"- {inc['name']}\n"
-                except:
-                    pass
-            
-            # Create test in test_management
-            import json
-            cursor = conn.execute('''
-                INSERT INTO test_management (
-                    project_id, code, test_type, title, description,
-                    status, owner, source_type, source_id, steps
-                )
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-            ''', (
-                project_id,
-                auto_code,
-                test_type,
-                title,
-                description,
-                data.get('status', 'Draft'),
-                data.get('owner'),
-                'SCENARIO',
-                id,
-                json.dumps(data.get('steps', []))
-            ))
-            test_id = cursor.lastrowid
-            
-            conn.commit()
-            
-            return jsonify({
-                "status": "success",
-                "test_id": test_id,
-                "test_code": auto_code,
-                "test_type": test_type,
-                "scenario_details": scenario_details,
-                "message": f"{test_type} test successfully created from scenario"
-            }), 201
-            
-    except Exception as e:
-        logger.exception(f"Error creating test from scenario {id}")
-        return jsonify({"error": "Failed to create test from scenario"}), 500
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/api/scenarios/<int:id>', methods=['DELETE'])
 def delete_scenario(id):
-    """Delete scenario with cascade checks"""
     try:
-        with db_conn() as conn:
-            # Check if scenario exists
-            scenario = conn.execute('SELECT * FROM scenarios WHERE id = ?', (id,)).fetchone()
-            if not scenario:
-                return jsonify({"error": "Scenario not found"}), 404
-            
-            # Check for related analyses
-            analyses_count = conn.execute(
-                'SELECT COUNT(*) FROM scenario_analyses WHERE scenario_id = ?',
-                (id,)
-            ).fetchone()[0]
-            
-            if analyses_count > 0:
-                return jsonify({
-                    "error": f"Cannot delete scenario with {analyses_count} related analyses. Delete analyses first."
-                }), 400
-            
-            # Check if this scenario is included in composite scenarios
-            composite_scenarios = conn.execute(
-                "SELECT id, name FROM scenarios WHERE included_scenario_ids LIKE ?",
-                (f'%{id}%',)
-            ).fetchall()
-            
-            if composite_scenarios:
-                scenario_names = [s['name'] for s in composite_scenarios]
-                return jsonify({
-                    "error": f"Scenario is included in composite scenarios: {', '.join(scenario_names)}. Remove from composite scenarios first."
-                }), 400
-            
-            # Safe to delete
-            conn.execute('DELETE FROM scenarios WHERE id = ?', (id,))
-            conn.commit()
-            
-            return jsonify({"status": "success"})
+        deleted = Scenario.query.filter(Scenario.id == id).delete()
+        if deleted == 0:
+            return jsonify({"error": "Not found"}), 404
+        db.session.commit()
+        return jsonify({"status": "success"})
     except Exception as e:
-        logger.exception(f"Error deleting scenario {id}")
-        return jsonify({"error": "Failed to delete scenario"}), 500
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
 
-
-
-
-# ============== ANALYSIS MANAGEMENT APIs (Epic A2) ==============
-
-@app.route('/api/analyses', methods=['GET'])
-def get_analyses():
-    """Get analyses with optional scenario filtering"""
-    scenario_id = request.args.get('scenario_id')
-    status = request.args.get('status')
-    
-    try:
-        with db_conn() as conn:
-            query = 'SELECT * FROM scenario_analyses WHERE 1=1'
-            params = []
-            
-            if scenario_id:
-                query += ' AND scenario_id = ?'
-                params.append(scenario_id)
-            
-            if status:
-                query += ' AND status = ?'
-                params.append(status)
-            
-            query += ' ORDER BY created_at DESC'
-            
-            analyses = conn.execute(query, params).fetchall()
-            result = [dict(a) for a in analyses]
-            
-            # Add scenario info for each analysis
-            for analysis in result:
-                scenario = conn.execute(
-                    'SELECT id, scenario_id, name FROM scenarios WHERE id = ?',
-                    (analysis['scenario_id'],)
-                ).fetchone()
-                if scenario:
-                    analysis['scenario'] = dict(scenario)
-            
-            return jsonify(result)
-    except Exception as e:
-        logger.exception("Error fetching analyses")
-        return jsonify({"error": "Failed to fetch analyses"}), 500
-
-@app.route('/api/analyses', methods=['POST'])
-def add_analysis():
-    """Create a new analysis with auto-generated code"""
-    try:
-        data = request.json
-        
-        # Validate required fields
-        missing = require_fields(data, ['scenario_id', 'title'])
-        if missing:
-            return jsonify({"error": f"Missing required fields: {', '.join(missing)}"}), 400
-        
-        scenario_id = data.get('scenario_id')
-        
-        with db_conn() as conn:
-            # Validate scenario exists
-            scenario = conn.execute(
-                'SELECT id, project_id FROM scenarios WHERE id = ?',
-                (scenario_id,)
-            ).fetchone()
-            
-            if not scenario:
-                return jsonify({"error": "Scenario not found"}), 404
-            
-            # Generate auto code (ANL-001 format)
-            project_id = scenario['project_id']
-            auto_code = generate_auto_id(project_id, "ANL") if project_id else None
-            
-            cursor = conn.execute('''
-                INSERT INTO scenario_analyses (
-                    scenario_id, code, title, description, owner, status
-                )
-                VALUES (?, ?, ?, ?, ?, ?)
-            ''', (
-                scenario_id,
-                auto_code,
-                data.get('title'),
-                data.get('description'),
-                data.get('owner'),
-                data.get('status', 'Draft')
-            ))
-            conn.commit()
-            new_id = cursor.lastrowid
-            
-            return jsonify({
-                "status": "success",
-                "id": new_id,
-                "code": auto_code
-            }), 201
-    except Exception as e:
-        logger.exception("Error creating analysis")
-        return jsonify({"error": "Failed to create analysis"}), 500
-
-@app.route('/api/analyses/<int:id>', methods=['GET'])
-def get_analysis_by_id(id):
-    """Get analysis by ID with scenario details"""
-    try:
-        with db_conn() as conn:
-            analysis = conn.execute(
-                'SELECT * FROM scenario_analyses WHERE id = ?',
-                (id,)
-            ).fetchone()
-            
-            if not analysis:
-                return jsonify({"error": "Analysis not found"}), 404
-            
-            result = dict(analysis)
-            
-            # Add scenario details
-            scenario = conn.execute(
-                'SELECT * FROM scenarios WHERE id = ?',
-                (result['scenario_id'],)
-            ).fetchone()
-            if scenario:
-                result['scenario'] = dict(scenario)
-            
-            # Count related requirements
-            req_count = conn.execute(
-                'SELECT COUNT(*) FROM new_requirements WHERE analysis_id = ?',
-                (id,)
-            ).fetchone()[0]
-            result['requirements_count'] = req_count
-            
-            return jsonify(result)
-    except Exception as e:
-        logger.exception(f"Error fetching analysis {id}")
-        return jsonify({"error": "Failed to fetch analysis"}), 500
-
-@app.route('/api/analyses/<int:id>', methods=['PUT'])
-def update_analysis(id):
-    """Update analysis"""
-    try:
-        data = request.json
-        
-        with db_conn() as conn:
-            # Check if analysis exists
-            existing = conn.execute(
-                'SELECT * FROM scenario_analyses WHERE id = ?',
-                (id,)
-            ).fetchone()
-            
-            if not existing:
-                return jsonify({"error": "Analysis not found"}), 404
-            
-            # Update timestamp
-            conn.execute('''
-                UPDATE scenario_analyses 
-                SET title = ?, description = ?, owner = ?, status = ?,
-                    updated_at = CURRENT_TIMESTAMP
-                WHERE id = ?
-            ''', (
-                data.get('title', existing['title']),
-                data.get('description', existing['description']),
-                data.get('owner', existing['owner']),
-                data.get('status', existing['status']),
-                id
-            ))
-            conn.commit()
-            
-            return jsonify({"status": "success"})
-    except Exception as e:
-        logger.exception(f"Error updating analysis {id}")
-        return jsonify({"error": "Failed to update analysis"}), 500
-
-@app.route('/api/analyses/<int:id>', methods=['DELETE'])
-def delete_analysis(id):
-    """Delete analysis with cascade checks"""
-    try:
-        with db_conn() as conn:
-            # Check if analysis exists
-            analysis = conn.execute(
-                'SELECT * FROM scenario_analyses WHERE id = ?',
-                (id,)
-            ).fetchone()
-            
-            if not analysis:
-                return jsonify({"error": "Analysis not found"}), 404
-            
-            # Check for related requirements
-            req_count = conn.execute(
-                'SELECT COUNT(*) FROM new_requirements WHERE analysis_id = ?',
-                (id,)
-            ).fetchone()[0]
-            
-            if req_count > 0:
-                return jsonify({
-                    "error": f"Cannot delete analysis with {req_count} related requirements. Delete requirements first."
-                }), 400
-            
-            # Safe to delete
-            conn.execute('DELETE FROM scenario_analyses WHERE id = ?', (id,))
-            conn.commit()
-            
-            return jsonify({"status": "success"})
-    except Exception as e:
-        logger.exception(f"Error deleting analysis {id}")
-        return jsonify({"error": "Failed to delete analysis"}), 500
 
 
 # ============== WRICEF CRUD APIs ==============
@@ -2927,8 +1611,342 @@ def update_decision_full(id):
     except Exception as e:
         return jsonify({"error": str(e)}), 500
 
+# ============== NEW REQUIREMENTS API (Phase 2.4 Group A) ==============
+@app.route('/api/new_requirements', methods=['GET'])
+def get_new_requirements():
+    project_id = request.args.get('project_id')
+    session_id = request.args.get('session_id')
+    try:
+        query = Requirement.query
+        if session_id:
+            query = query.filter(Requirement.session_id == session_id)
+        elif project_id:
+            query = query.filter(Requirement.project_id == project_id)
+        requirements = query.order_by(Requirement.created_at.desc()).all()
+        return jsonify([requirement.to_dict() for requirement in requirements])
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/new_requirements', methods=['POST'])
+def add_new_requirement():
+    try:
+        data = request.json
+        requirement = Requirement(
+            session_id=data.get('session_id'),
+            project_id=data.get('project_id'),
+            gap_id=data.get('gap_id'),
+            analysis_id=data.get('analysis_id'),
+            code=data.get('code'),
+            title=data['title'],
+            description=data.get('description'),
+            module=data.get('module'),
+            fit_type=data.get('fit_type'),
+            classification=data.get('classification', 'Gap'),
+            priority=data.get('priority', 'Medium'),
+            acceptance_criteria=data.get('acceptance_criteria'),
+            status=data.get('status', 'Draft')
+        )
+        db.session.add(requirement)
+        db.session.commit()
+        return jsonify({"status": "success", "id": requirement.id}), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/new_requirements/<int:req_id>', methods=['GET'])
+def get_new_requirement_detail(req_id):
+    try:
+        requirement = Requirement.query.get(req_id)
+        if requirement:
+            return jsonify(requirement.to_dict())
+        return jsonify({"error": "Not found"}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/new_requirements/<int:req_id>', methods=['PUT'])
+def update_new_requirement(req_id):
+    try:
+        data = request.json
+        requirement = Requirement.query.get(req_id)
+        if not requirement:
+            return jsonify({"error": "Not found"}), 404
+        requirement.title = data.get('title', requirement.title)
+        requirement.description = data.get('description', requirement.description)
+        requirement.classification = data.get('classification', requirement.classification)
+        requirement.priority = data.get('priority', requirement.priority)
+        requirement.status = data.get('status', requirement.status)
+        requirement.acceptance_criteria = data.get('acceptance_criteria', requirement.acceptance_criteria)
+        db.session.commit()
+        return jsonify({"status": "success"})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+# ============== WRICEF ITEMS API (Phase 3.6 ORM) ==============
+@app.route('/api/wricef_items', methods=['GET'])
+def get_wricef_items():
+    project_id = request.args.get('project_id')
+    requirement_id = request.args.get('requirement_id')
+    try:
+        query = WricefItem.query
+        if requirement_id:
+            query = query.filter(WricefItem.requirement_id == requirement_id)
+        elif project_id:
+            query = query.filter(WricefItem.project_id == project_id)
+        items = query.order_by(WricefItem.created_at.desc()).all()
+        return jsonify([item.to_dict() for item in items])
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/wricef_items', methods=['POST'])
+def add_wricef_item():
+    try:
+        data = request.json
+        item = WricefItem(
+            project_id=data.get('project_id'),
+            requirement_id=data.get('requirement_id'),
+            code=data.get('code'),
+            title=data.get('title'),
+            description=data.get('description'),
+            wricef_type=data.get('wricef_type'),
+            module=data.get('module'),
+            complexity=data.get('complexity'),
+            effort_days=data.get('effort_days'),
+            status=data.get('status', 'Draft'),
+            owner=data.get('owner'),
+            fs_content=data.get('fs_content'),
+            ts_content=data.get('ts_content'),
+            unit_test_steps=data.get('unit_test_steps'),
+            fs_link=data.get('fs_link'),
+            ts_link=data.get('ts_link')
+        )
+        db.session.add(item)
+        db.session.commit()
+        return jsonify({"status": "success", "id": item.id}), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/wricef_items/<int:item_id>', methods=['GET'])
+def get_wricef_item_detail(item_id):
+    try:
+        item = WricefItem.query.get(item_id)
+        if item:
+            return jsonify(item.to_dict())
+        return jsonify({"error": "Not found"}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/wricef_items/<int:item_id>', methods=['PUT'])
+def update_wricef_item(item_id):
+    try:
+        data = request.json
+        item = WricefItem.query.get(item_id)
+        if not item:
+            return jsonify({"error": "Not found"}), 404
+        item.title = data.get('title', item.title)
+        item.description = data.get('description', item.description)
+        item.wricef_type = data.get('wricef_type', item.wricef_type)
+        item.module = data.get('module', item.module)
+        item.complexity = data.get('complexity', item.complexity)
+        item.effort_days = data.get('effort_days', item.effort_days)
+        item.status = data.get('status', item.status)
+        item.owner = data.get('owner', item.owner)
+        if 'fs_content' in data:
+            item.fs_content = data['fs_content']
+        if 'ts_content' in data:
+            item.ts_content = data['ts_content']
+        if 'unit_test_steps' in data:
+            item.unit_test_steps = data['unit_test_steps']
+        if 'fs_link' in data:
+            item.fs_link = data['fs_link']
+        if 'ts_link' in data:
+            item.ts_link = data['ts_link']
+        db.session.commit()
+        return jsonify({"status": "success"})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/wricef_items/<int:item_id>', methods=['DELETE'])
+def delete_wricef_item(item_id):
+    try:
+        deleted = WricefItem.query.filter(WricefItem.id == item_id).delete()
+        if deleted == 0:
+            return jsonify({"error": "Not found"}), 404
+        db.session.commit()
+        return jsonify({"status": "success"})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+# ============== CONFIG ITEMS API (Phase 3.7 ORM) ==============
+@app.route('/api/config_items', methods=['GET'])
+def get_config_items():
+    project_id = request.args.get('project_id')
+    requirement_id = request.args.get('requirement_id')
+    try:
+        query = ConfigItem.query
+        if requirement_id:
+            query = query.filter(ConfigItem.requirement_id == requirement_id)
+        elif project_id:
+            query = query.filter(ConfigItem.project_id == project_id)
+        items = query.order_by(ConfigItem.created_at.desc()).all()
+        return jsonify([item.to_dict() for item in items])
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/config_items', methods=['POST'])
+def add_config_item():
+    try:
+        data = request.json
+        item = ConfigItem(
+            project_id=data.get('project_id'),
+            requirement_id=data.get('requirement_id'),
+            code=data.get('code'),
+            title=data.get('title'),
+            description=data.get('description'),
+            config_type=data.get('config_type'),
+            module=data.get('module'),
+            status=data.get('status', 'Draft'),
+            owner=data.get('owner'),
+            config_details=data.get('config_details'),
+            unit_test_steps=data.get('unit_test_steps')
+        )
+        db.session.add(item)
+        db.session.commit()
+        return jsonify({"status": "success", "id": item.id}), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/config_items/<int:item_id>', methods=['GET'])
+def get_config_item_detail(item_id):
+    try:
+        item = ConfigItem.query.get(item_id)
+        if item:
+            return jsonify(item.to_dict())
+        return jsonify({"error": "Not found"}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/config_items/<int:item_id>', methods=['PUT'])
+def update_config_item(item_id):
+    try:
+        data = request.json
+        item = ConfigItem.query.get(item_id)
+        if not item:
+            return jsonify({"error": "Not found"}), 404
+        item.title = data.get('title', item.title)
+        item.description = data.get('description', item.description)
+        item.config_type = data.get('config_type', item.config_type)
+        item.module = data.get('module', item.module)
+        item.status = data.get('status', item.status)
+        item.owner = data.get('owner', item.owner)
+        if 'config_details' in data:
+            item.config_details = data['config_details']
+        if 'unit_test_steps' in data:
+            item.unit_test_steps = data['unit_test_steps']
+        db.session.commit()
+        return jsonify({"status": "success"})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/config_items/<int:item_id>', methods=['DELETE'])
+def delete_config_item(item_id):
+    try:
+        deleted = ConfigItem.query.filter(ConfigItem.id == item_id).delete()
+        if deleted == 0:
+            return jsonify({"error": "Not found"}), 404
+        db.session.commit()
+        return jsonify({"status": "success"})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+# ============== TEST MANAGEMENT API (Phase 3.8 ORM) ==============
+@app.route('/api/test_management', methods=['GET'])
+def get_test_management():
+    project_id = request.args.get('project_id')
+    try:
+        query = TestCase.query
+        if project_id:
+            query = query.filter(TestCase.project_id == project_id)
+        items = query.order_by(TestCase.created_at.desc()).all()
+        return jsonify([item.to_dict() for item in items])
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/test_management', methods=['POST'])
+def add_test_management():
+    try:
+        data = request.json
+        item = TestCase(
+            project_id=data.get('project_id'),
+            code=data.get('code'),
+            test_type=data.get('test_type'),
+            title=data.get('title'),
+            description=data.get('description'),
+            status=data.get('status', 'Draft'),
+            owner=data.get('owner'),
+            source_type=data.get('source_type'),
+            source_id=data.get('source_id'),
+            steps=data.get('steps')
+        )
+        db.session.add(item)
+        db.session.commit()
+        return jsonify({"status": "success", "id": item.id}), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/test_management/<int:item_id>', methods=['GET'])
+def get_test_management_detail(item_id):
+    try:
+        item = TestCase.query.get(item_id)
+        if item:
+            return jsonify(item.to_dict())
+        return jsonify({"error": "Not found"}), 404
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/test_management/<int:item_id>', methods=['PUT'])
+def update_test_management(item_id):
+    try:
+        data = request.json
+        item = TestCase.query.get(item_id)
+        if not item:
+            return jsonify({"error": "Not found"}), 404
+        item.title = data.get('title', item.title)
+        item.description = data.get('description', item.description)
+        item.status = data.get('status', item.status)
+        item.owner = data.get('owner', item.owner)
+        if 'test_type' in data:
+            item.test_type = data['test_type']
+        if 'source_type' in data:
+            item.source_type = data['source_type']
+        if 'source_id' in data:
+            item.source_id = data['source_id']
+        if 'steps' in data:
+            item.steps = data['steps']
+        db.session.commit()
+        return jsonify({"status": "success"})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/test_management/<int:item_id>', methods=['DELETE'])
+def delete_test_management(item_id):
+    try:
+        deleted = TestCase.query.filter(TestCase.id == item_id).delete()
+        if deleted == 0:
+            return jsonify({"error": "Not found"}), 404
+        db.session.commit()
+        return jsonify({"status": "success"})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
 if __name__ == "__main__":
-    host = os.environ.get("FLASK_HOST", "0.0.0.0")
-    port = int(os.environ.get("FLASK_PORT", "8080"))
-    debug = os.environ.get("FLASK_DEBUG", "false").lower() in ("1", "true", "yes")
-    app.run(host=host, port=port, debug=debug)
+    app.run(host="0.0.0.0", port=8080, debug=True)

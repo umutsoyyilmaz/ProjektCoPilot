@@ -16,8 +16,33 @@ Kullanım:
 
 from datetime import datetime, date
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.types import TypeDecorator, Date
 
 db = SQLAlchemy()
+
+
+class SafeDate(TypeDecorator):
+    impl = db.String
+    cache_ok = True
+
+    def process_bind_param(self, value, dialect):
+        if value in (None, ""):
+            return None
+        if isinstance(value, str):
+            return value
+        if isinstance(value, date):
+            return value.isoformat()
+        return str(value)
+
+    def process_result_value(self, value, dialect):
+        if value in (None, ""):
+            return None
+        if isinstance(value, str):
+            try:
+                return datetime.fromisoformat(value).date()
+            except ValueError:
+                return None
+        return value
 
 
 # ===========================================================================
@@ -63,8 +88,8 @@ class Project(db.Model):
     description = db.Column(db.Text, nullable=True)
     status = db.Column(db.String(20), nullable=False, default='Active')
     phase = db.Column('current_phase', db.String(20), nullable=True)
-    start_date = db.Column(db.Date, nullable=True)
-    end_date = db.Column(db.Date, nullable=True)
+    start_date = db.Column(SafeDate, nullable=True)
+    end_date = db.Column(SafeDate, nullable=True)
     
     # Extended fields (from existing projects table)
     customer_name = db.Column(db.String(200), nullable=True)
@@ -77,8 +102,8 @@ class Project(db.Model):
     sap_modules = db.Column(db.String(500), nullable=True)
     modules = db.Column(db.String(500), nullable=True)  # Legacy field
     environment = db.Column(db.String(50), nullable=True)
-    golive_planned = db.Column(db.Date, nullable=True)
-    golive_actual = db.Column(db.Date, nullable=True)
+    golive_planned = db.Column(SafeDate, nullable=True)
+    golive_actual = db.Column(SafeDate, nullable=True)
     project_manager = db.Column(db.String(200), nullable=True)
     solution_architect = db.Column(db.String(200), nullable=True)
     functional_lead = db.Column(db.String(200), nullable=True)
@@ -87,7 +112,6 @@ class Project(db.Model):
     completion_percent = db.Column(db.Integer, nullable=True, default=0)
     
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     scenarios = db.relationship('Scenario', backref='project', lazy='dynamic', cascade='all, delete-orphan')
     wricef_items = db.relationship('WricefItem', backref='project', lazy='dynamic', cascade='all, delete-orphan')
@@ -133,23 +157,33 @@ class Scenario(db.Model):
     __tablename__ = 'scenarios'  # Match existing database table
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False, index=True)
-    code = db.Column(db.String(20), nullable=False)
+    code = db.Column('scenario_id', db.String(50), nullable=True)
     name = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text, nullable=True)
-    level = db.Column(db.String(5), nullable=True)
+    process_area = db.Column(db.String(100), nullable=True)
+    priority = db.Column(db.String(20), nullable=True, default='Medium')
     tags = db.Column(db.Text, nullable=True)
     is_composite = db.Column(db.Boolean, nullable=False, default=False)
-    included_scenario_ids = db.Column(db.JSON, nullable=True)
-    parent_scenario_id = db.Column(db.Integer, db.ForeignKey('scenarios.id'), nullable=True)
-    sort_order = db.Column(db.Integer, nullable=True, default=0)
+    included_scenario_ids = db.Column(db.Text, nullable=True)
     status = db.Column(db.String(20), nullable=True, default='Draft')
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
-
     analyses = db.relationship('Analysis', backref='scenario', lazy='dynamic', cascade='all, delete-orphan')
-    children = db.relationship('Scenario', backref=db.backref('parent', remote_side=[id]), lazy='dynamic')
 
-    __table_args__ = (db.UniqueConstraint('project_id', 'code', name='uq_scenario_project_code'),)
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'scenario_id': self.code,
+            'project_id': self.project_id,
+            'name': self.name,
+            'description': self.description,
+            'process_area': self.process_area,
+            'priority': self.priority,
+            'status': self.status,
+            'tags': self.tags,
+            'is_composite': bool(self.is_composite),
+            'included_scenario_ids': self.included_scenario_ids,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
 
 
 class Analysis(db.Model):
@@ -171,14 +205,19 @@ class Analysis(db.Model):
 
 class Requirement(db.Model):
     """SSOT entity — classification alanı Fit-Gap kararını tutar."""
-    __tablename__ = 'requirement'
+    __tablename__ = 'new_requirements'
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    analysis_id = db.Column(db.Integer, db.ForeignKey('analysis.id', ondelete='CASCADE'), nullable=False, index=True)
-    code = db.Column(db.String(20), nullable=False)
+    session_id = db.Column(db.Integer, nullable=True)
+    project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='SET NULL'), nullable=True, index=True)
+    gap_id = db.Column(db.Integer, nullable=True)
+    analysis_id = db.Column(db.Integer, db.ForeignKey('analyses.id', ondelete='SET NULL'), nullable=True, index=True)
+    code = db.Column(db.String(20), nullable=True)
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text, nullable=True)
+    module = db.Column(db.String(50), nullable=True)
+    fit_type = db.Column(db.String(50), nullable=True)
     classification = db.Column(db.String(20), nullable=True)  # Fit | PartialFit | Gap
-    priority = db.Column(db.String(20), nullable=True)
+    priority = db.Column(db.String(20), nullable=True, default='Medium')
     acceptance_criteria = db.Column(db.Text, nullable=True)
     conversion_status = db.Column(db.String(20), nullable=False, default='None')
     converted_item_id = db.Column(db.Integer, nullable=True)
@@ -187,10 +226,33 @@ class Requirement(db.Model):
     converted_by = db.Column(db.String(50), nullable=True)
     status = db.Column(db.String(20), nullable=True, default='Draft')
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     wricef_items = db.relationship('WricefItem', backref='requirement', lazy='dynamic')
     config_items = db.relationship('ConfigItem', backref='requirement', lazy='dynamic')
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'session_id': self.session_id,
+            'project_id': self.project_id,
+            'gap_id': self.gap_id,
+            'analysis_id': self.analysis_id,
+            'code': self.code,
+            'title': self.title,
+            'description': self.description,
+            'module': self.module,
+            'fit_type': self.fit_type,
+            'classification': self.classification,
+            'priority': self.priority,
+            'acceptance_criteria': self.acceptance_criteria,
+            'conversion_status': self.conversion_status,
+            'converted_item_id': self.converted_item_id,
+            'converted_item_type': self.converted_item_type,
+            'converted_at': self.converted_at.isoformat() if self.converted_at else None,
+            'converted_by': self.converted_by,
+            'status': self.status,
+            'created_at': self.created_at.isoformat() if self.created_at else None
+        }
 
 
 class WricefItem(db.Model):
@@ -204,18 +266,44 @@ class WricefItem(db.Model):
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text, nullable=True)
     module = db.Column(db.String(20), nullable=True)
-    status = db.Column(db.String(30), nullable=False, default='Backlog')
+    status = db.Column(db.String(30), nullable=False, default='Draft')
     owner = db.Column(db.String(50), nullable=True)
     complexity = db.Column(db.String(20), nullable=True)
-    estimated_effort_days = db.Column(db.Float, nullable=True)
+    effort_days = db.Column(db.Integer, nullable=True)
     fs_content = db.Column(db.Text, nullable=True)
     ts_content = db.Column(db.Text, nullable=True)
-    unit_test_steps = db.Column(db.JSON, nullable=True)
+    unit_test_steps = db.Column(db.Text, nullable=True)
+    fs_link = db.Column(db.String(500), nullable=True)
+    ts_link = db.Column(db.String(500), nullable=True)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     defects = db.relationship('Defect', backref='wricef', lazy='dynamic')
     __table_args__ = (db.UniqueConstraint('project_id', 'code', name='uq_wricef_project_code'),)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'project_id': self.project_id,
+            'scenario_id': self.scenario_id,
+            'requirement_id': self.requirement_id,
+            'code': self.code,
+            'wricef_type': self.wricef_type,
+            'title': self.title,
+            'description': self.description,
+            'module': self.module,
+            'status': self.status,
+            'owner': self.owner,
+            'complexity': self.complexity,
+            'effort_days': self.effort_days,
+            'fs_content': self.fs_content,
+            'ts_content': self.ts_content,
+            'unit_test_steps': self.unit_test_steps,
+            'fs_link': self.fs_link,
+            'ts_link': self.ts_link,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }
 
 
 class ConfigItem(db.Model):
@@ -227,15 +315,35 @@ class ConfigItem(db.Model):
     code = db.Column(db.String(20), nullable=False)
     title = db.Column(db.String(200), nullable=False)
     description = db.Column(db.Text, nullable=True)
+    config_type = db.Column(db.String(50), nullable=True)
     module = db.Column(db.String(20), nullable=True)
-    config_details = db.Column(db.JSON, nullable=True)
-    unit_test_steps = db.Column(db.JSON, nullable=True)
     status = db.Column(db.String(20), nullable=False, default='Draft')
     owner = db.Column(db.String(50), nullable=True)
+    config_details = db.Column(db.Text, nullable=True)
+    unit_test_steps = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     __table_args__ = (db.UniqueConstraint('project_id', 'code', name='uq_config_project_code'),)
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'project_id': self.project_id,
+            'requirement_id': self.requirement_id,
+            'code': self.code,
+            'title': self.title,
+            'description': self.description,
+            'config_type': self.config_type,
+            'module': self.module,
+            'status': self.status,
+            'owner': self.owner,
+            'config_details': self.config_details,
+            'unit_test_steps': self.unit_test_steps,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'scenario_id': self.scenario_id,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }
 
 
 # ===========================================================================
@@ -247,31 +355,37 @@ class TestCase(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     project_id = db.Column(db.Integer, db.ForeignKey('projects.id', ondelete='CASCADE'), nullable=False, index=True)
     code = db.Column(db.String(20), nullable=False)
-    test_type = db.Column(db.String(20), nullable=False)
+    test_type = db.Column(db.String(20), nullable=True)
     title = db.Column(db.String(300), nullable=False)
     description = db.Column(db.Text, nullable=True)
-    module = db.Column(db.String(20), nullable=True)
     status = db.Column(db.String(20), nullable=False, default='Draft')
     owner = db.Column(db.String(50), nullable=True)
     source_type = db.Column(db.String(20), nullable=True)
     source_id = db.Column(db.Integer, nullable=True)
-    steps = db.Column(db.JSON, nullable=True)
-    priority = db.Column(db.String(20), nullable=True)
-    preconditions = db.Column(db.Text, nullable=True)
-    automation_status = db.Column(db.String(20), nullable=True, default='Manual')
-    # AI Layer
-    ai_generated = db.Column(db.Boolean, nullable=False, default=False)
-    ai_confidence_score = db.Column(db.Float, nullable=True)
-    risk_score = db.Column(db.Float, nullable=True)
+    steps = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
     updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
 
-    executions = db.relationship('TestExecution', backref='test_case', lazy='dynamic', cascade='all, delete-orphan')
     __table_args__ = (
         db.UniqueConstraint('project_id', 'code', name='uq_testcase_project_code'),
-        db.Index('ix_testcase_type_status', 'test_type', 'status'),
-        db.Index('ix_testcase_source', 'source_type', 'source_id'),
     )
+
+    def to_dict(self):
+        return {
+            'id': self.id,
+            'project_id': self.project_id,
+            'code': self.code,
+            'test_type': self.test_type,
+            'title': self.title,
+            'description': self.description,
+            'status': self.status,
+            'owner': self.owner,
+            'source_type': self.source_type,
+            'source_id': self.source_id,
+            'steps': self.steps,
+            'created_at': self.created_at.isoformat() if self.created_at else None,
+            'updated_at': self.updated_at.isoformat() if self.updated_at else None
+        }
 
 
 class TestCycle(db.Model):
