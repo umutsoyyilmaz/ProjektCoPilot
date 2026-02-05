@@ -455,5 +455,101 @@ def init_db():
     print("  decisions, risks_issues, analyses, new_requirements,")
     print("  wricef_items, config_items, wricef, test_management")
 
+
+def run_migrations():
+    """Run database migrations for newreq architecture"""
+    db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'project_copilot.db')
+    conn = sqlite3.connect(db_path)
+    cursor = conn.cursor()
+    
+    print("\n=== Running NewReq Architecture Migrations ===\n")
+    
+    try:
+        # Check if migrations already applied
+        cursor.execute("PRAGMA table_info(scenarios)")
+        scenarios_cols = [col[1] for col in cursor.fetchall()]
+        
+        if 'is_composite' not in scenarios_cols:
+            print("1. Adding composite scenario support to scenarios table...")
+            cursor.execute("ALTER TABLE scenarios ADD COLUMN is_composite INTEGER DEFAULT 0")
+            cursor.execute("ALTER TABLE scenarios ADD COLUMN included_scenario_ids TEXT")
+            cursor.execute("ALTER TABLE scenarios ADD COLUMN tags TEXT")
+            print("   ✓ Scenarios updated")
+        else:
+            print("1. Scenarios table already migrated ✓")
+        
+        # Check new_requirements columns
+        cursor.execute("PRAGMA table_info(new_requirements)")
+        req_cols = [col[1] for col in cursor.fetchall()]
+        
+        if 'code' not in req_cols:
+            print("2. Enhancing new_requirements table...")
+            cursor.execute("ALTER TABLE new_requirements ADD COLUMN code TEXT")
+            cursor.execute("ALTER TABLE new_requirements ADD COLUMN analysis_id INTEGER")
+            cursor.execute("ALTER TABLE new_requirements ADD COLUMN acceptance_criteria TEXT")
+            print("   ✓ New_requirements updated")
+        else:
+            print("2. New_requirements table already migrated ✓")
+        
+        # Check wricef_items columns
+        cursor.execute("PRAGMA table_info(wricef_items)")
+        wricef_cols = [col[1] for col in cursor.fetchall()]
+        
+        if 'scenario_id' not in wricef_cols:
+            print("3. Enhancing wricef_items table...")
+            cursor.execute("ALTER TABLE wricef_items ADD COLUMN scenario_id INTEGER")
+            cursor.execute("ALTER TABLE wricef_items ADD COLUMN fs_link TEXT")
+            cursor.execute("ALTER TABLE wricef_items ADD COLUMN ts_link TEXT")
+            cursor.execute("ALTER TABLE wricef_items ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+            print("   ✓ Wricef_items updated")
+        else:
+            print("3. Wricef_items table already migrated ✓")
+        
+        # Check config_items columns
+        cursor.execute("PRAGMA table_info(config_items)")
+        config_cols = [col[1] for col in cursor.fetchall()]
+        
+        if 'scenario_id' not in config_cols:
+            print("4. Enhancing config_items table...")
+            cursor.execute("ALTER TABLE config_items ADD COLUMN scenario_id INTEGER")
+            cursor.execute("ALTER TABLE config_items ADD COLUMN updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
+            print("   ✓ Config_items updated")
+        else:
+            print("4. Config_items table already migrated ✓")
+        
+        # Create scenario_analyses table
+        cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='scenario_analyses'")
+        if not cursor.fetchone():
+            print("5. Creating scenario_analyses table...")
+            cursor.execute('''
+                CREATE TABLE IF NOT EXISTS scenario_analyses (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    scenario_id INTEGER NOT NULL,
+                    code TEXT UNIQUE,
+                    title TEXT NOT NULL,
+                    description TEXT,
+                    owner TEXT,
+                    status TEXT DEFAULT 'Draft',
+                    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+                    FOREIGN KEY (scenario_id) REFERENCES scenarios(id)
+                )
+            ''')
+            print("   ✓ Scenario_analyses table created")
+        else:
+            print("5. Scenario_analyses table already exists ✓")
+        
+        conn.commit()
+        print("\n=== Migrations completed successfully! ===\n")
+        
+    except Exception as e:
+        print(f"\n✗ Migration failed: {e}")
+        conn.rollback()
+        raise
+    finally:
+        conn.close()
+
+
 if __name__ == '__main__':
     init_db()
+    run_migrations()

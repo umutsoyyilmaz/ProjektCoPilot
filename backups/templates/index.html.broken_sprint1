@@ -405,29 +405,57 @@ grep -n "</head>" templates/index.html | head -1
     <div class="nav-item active" onclick="navTo('dashboard', this)">
         <div class="nav-icon">🏠</div> <span class="nav-text">Cockpit</span>
     </div>
-    <div class="nav-item" onclick="navTo('analysis', this)">
-        <div class="nav-icon">⚡</div> <span class="nav-text">Analysis</span>
-    </div>
     <div class="nav-item" onclick="navTo('scenarios', this)">
         <div class="nav-icon">📋</div> <span class="nav-text">Scenarios</span>
     </div>
-    <div class="nav-item" onclick="navTo('requirements', this)">
+    <div class="nav-item" onclick="navTo('analysis', this)">
+        <div class="nav-icon">⚡</div> <span class="nav-text">Analysis</span>
+    </div>
+    <div class="nav-item" onclick="navTo('req-management', this)">
         <div class="nav-icon">📑</div> <span class="nav-text">Requirements</span>
     </div>
-    <div class="nav-item" onclick="navTo('testing', this)">
-        <div class="nav-icon">🧪</div> <span class="nav-text">Testing</span>
+    <div class="nav-item" onclick="navTo('wricef-list', this)">
+        <div class="nav-icon">🔧</div> <span class="nav-text">WRICEF List</span>
     </div>
-    <div class="nav-item" onclick="navTo('wricef', this)">
-                <div class="nav-icon">🔧</div> <span class="nav-text">WRICEF</span>
-            </div>
-            <div class="nav-item" onclick="navTo('design', this)">
+    <div class="nav-item" onclick="navTo('config-list', this)">
+        <div class="nav-icon">⚙️</div> <span class="nav-text">Config List</span>
+    </div>
+    <!-- Test Management Section -->
+    <div style="padding:8px 14px;margin-top:8px;margin-bottom:4px;">
+        <span class="nav-text" style="font-size:10px;text-transform:uppercase;color:#64748b;letter-spacing:1px;">Testing</span>
+    </div>
+    <div class="nav-item" onclick="navTo('test-unit', this)">
+        <div class="nav-icon">🔬</div> <span class="nav-text">Unit Tests</span>
+    </div>
+    <div class="nav-item" onclick="navTo('test-sit', this)">
+        <div class="nav-icon">🔗</div> <span class="nav-text">SIT</span>
+    </div>
+    <div class="nav-item" onclick="navTo('test-uat', this)">
+        <div class="nav-icon">👥</div> <span class="nav-text">UAT</span>
+    </div>
+    <div class="nav-item" onclick="navTo('test-string', this)">
+        <div class="nav-icon">🧵</div> <span class="nav-text">String Tests</span>
+    </div>
+    <div class="nav-item" onclick="navTo('test-sprint', this)">
+        <div class="nav-icon">🏃</div> <span class="nav-text">Sprint Tests</span>
+    </div>
+    <div class="nav-item" onclick="navTo('test-perf', this)">
+        <div class="nav-icon">⚡</div> <span class="nav-text">Perf & Load</span>
+    </div>
+    <div class="nav-item" onclick="navTo('test-regression', this)">
+        <div class="nav-icon">🔄</div> <span class="nav-text">Regression</span>
+    </div>
+    <!-- Other Section -->
+    <div style="padding:8px 14px;margin-top:8px;margin-bottom:4px;">
+        <span class="nav-text" style="font-size:10px;text-transform:uppercase;color:#64748b;letter-spacing:1px;">Other</span>
+    </div>
+    <div class="nav-item" onclick="navTo('design', this)">
         <div class="nav-icon">🎨</div> <span class="nav-text">Design (FS/TS)</span>
     </div>
     <div class="nav-item" onclick="navTo('projects', this)">
-                    <div class="nav-icon">📁</div> <span class="nav-text">Projects</span>
-                </div>
+        <div class="nav-icon">📁</div> <span class="nav-text">Projects</span>
+    </div>
     <div class="nav-item" onclick="navTo('config', this)">
-   
         <div class="nav-icon">⚙️</div> <span class="nav-text">Settings</span>
     </div>
 </nav>
@@ -438,6 +466,7 @@ grep -n "</head>" templates/index.html | head -1
                 <div class="page-header">
                     <h1 class="page-title">Good Morning, John</h1>
                     <div class="page-subtitle">Project: S/4HANA Migration - Realize Phase</div>
+
                 </div>
 
                 <div class="grid-dashboard">
@@ -550,7 +579,7 @@ grep -n "</head>" templates/index.html | head -1
         <div class="obj-top">
             <div>
                 <h1 class="page-title">Analysis Workspace</h1>
-                <div class="page-subtitle">SAP S/4HANA Transformation - Requirements Analysis & Process Discovery</div>
+                <div class="page-subtitle">SAP S/4HANA Transformation - Fit-Gap Analysis & Process Discovery</div>
             </div>
             <div style="display: flex; gap: 10px;">
                 <button class="btn btn-secondary" onclick="openAnalysisDashboard()">📊 Dashboard</button>
@@ -664,7 +693,7 @@ grep -n "</head>" templates/index.html | head -1
         <div class="tab-item" onclick="switchSessionTab('tab-attendees', this)">👥 Attendees</div>
         <div class="tab-item" onclick="switchSessionTab('tab-agenda', this)">📑 Agenda</div>
         <div class="tab-item" onclick="switchSessionTab('tab-questions', this)">❓ Q&A</div>
-        <div class="tab-item" onclick="switchSessionTab('tab-fitgap', this)">🔍 Fit-Gap</div>
+        <div class="tab-item" onclick="switchSessionTab('tab-requirements', this)">📑 Requirements</div>
         <div class="tab-item" onclick="switchSessionTab('tab-decisions', this)">⚖️ Decisions</div>
         <div class="tab-item" onclick="switchSessionTab('tab-risks', this)">⚠️ Risks</div>
         <div class="tab-item" onclick="switchSessionTab('tab-actions', this)">✅ Actions</div>
@@ -781,18 +810,18 @@ grep -n "</head>" templates/index.html | head -1
     </div>
 
     <!-- TAB: Fit-Gap -->
-    <div id="tab-fitgap" class="session-tab-content" style="display: none;">
+    <div id="tab-requirements" class="session-tab-content" style="display: none;">
         <div class="smart-card" style="padding: 20px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h3 style="margin: 0;">� Requirements</h3>
+                <h3 style="margin: 0;">📑 Requirements</h3>
                 <div style="display: flex; gap: 10px;">
-                    <select id="gapFilterType" class="form-control" style="width:120px;padding:6px;" onchange="loadGapsForSession(currentSessionId)">
+                    <select id="sessionReqClassFilter" class="form-control" style="width:120px;padding:6px;" onchange="loadRequirementsForSession(currentSessionId)">
                         <option value="">All</option>
                         <option value="Fit">Fit</option>
                         <option value="Gap">Gap</option>
                         <option value="Partial Fit">Partial</option>
                     </select>
-                    <button class="btn btn-ai" onclick="openAddGapModal()">+ Add Item</button>
+                    <button class="btn btn-ai" onclick="openAddReqForSessionModal()">+ Add Item</button>
                 </div>
             </div>
             <div class="smart-table-container">
@@ -808,7 +837,7 @@ grep -n "</head>" templates/index.html | head -1
                             <th>Actions</th>
                         </tr>
                     </thead>
-                    <tbody id="fitgap-table-body">
+                    <tbody id="session-requirements-body">
                         <tr><td colspan="8" style="text-align:center;color:#999;">No items yet.</td></tr>
                     </tbody>
                 </table>
@@ -932,48 +961,72 @@ grep -n "</head>" templates/index.html | head -1
         </div>
     </div>
 </div>
+<!-- LEGACY VIEW - Decommissioned in Sprint 1 (Phase 8.6)
+     Replaced by: view-req-management (new_requirements table)
+     This view used old requirements table - use view-req-management instead -->
             <div id="view-requirements" class="view">
+<!--
                 <div class="page-header">
                     <div class="obj-top">
                         <div>
-                            <h1 class="page-title">Requirements Management</h1>
-                            <div class="page-subtitle">Fit / Partial Fit / Gap Analysis & Conversion</div>
+                            <h1 class="page-title">Requirement Explorer</h1>
+                            <div class="page-subtitle">WRICEF Objects & Backlog Management</div>
                         </div>
                         <div style="display: flex; gap: 12px;">
-                            <button class="btn btn-secondary" onclick="showToast('Import feature coming soon!')">Import from Excel</button>
-                            <button class="btn btn-ai" onclick="showToast('Add requirement from Analysis session')">+ New Requirement</button>
+                            <button class="btn btn-secondary">Import from Excel</button>
+                            <!-- New Project Modal -->
+        
+                            <button class="btn btn-ai" onclick="document.getElementById('addModal').style.display='block'">+ New WRICEF</button>
                         </div>
                     </div>
                 </div>
 
                 <div class="tab-bar" style="margin-bottom: 24px; border-bottom: 1px solid var(--border-light);">
-                    <div class="tab-item active" onclick="filterRequirementsByClassification('all', this)">All Requirements (<span id="req-count-all">0</span>)</div>
-                    <div class="tab-item" onclick="filterRequirementsByClassification('Fit', this)">Fit (<span id="req-count-fit">0</span>)</div>
-                    <div class="tab-item" onclick="filterRequirementsByClassification('PartialFit', this)">Partial Fit (<span id="req-count-partial">0</span>)</div>
-                    <div class="tab-item" onclick="filterRequirementsByClassification('Gap', this)">Gap (<span id="req-count-gap">0</span>)</div>
+                    <div class="tab-item active" onclick="showToast('Filtering: All')">All Objects (14)</div>
+                    <div class="tab-item" onclick="showToast('Filtering: Reports')">Reports (5)</div>
+                    <div class="tab-item" onclick="showToast('Filtering: Interfaces')">Interfaces (3)</div>
+                    <div class="tab-item" onclick="showToast('Filtering: Enhancements')">Enhancements (6)</div>
                 </div>
 
                 <div class="smart-table-container">
                     <table class="smart-table">
                         <thead>
                             <tr>
-                                <th>Code</th>
+                                <th>ID</th>
                                 <th>Title</th>
-                                <th>Module</th>
-                                <th>Classification</th>
+                                <th>Type</th>
+                                <th>Complexity</th>
                                 <th>Status</th>
-                                <th>Conversion</th>
+                                <th>AI Enrichment</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody id="requirements-table-body">
-                            <tr><td colspan="7" style="text-align:center;color:#999;">Select a project to see requirements.</td></tr>
-                        </tbody>
+    {% for req in requirements %}
+    <tr onclick="loadRequirementDetails({{ req.id }})">
+        <td><b>{{ req.code }}</b></td>
+        <td>{{ req.title }}</td>
+        <td><span class="pill blue">{{ req.module }}</span></td>
+        <td>{{ req.complexity }}</td>
+        <td>
+            <span class="pill {% if req.status == 'Ready' or req.status == 'Approved' %}green{% elif req.status == 'In Progress' or req.status == 'FS Draft' %}orange{% elif req.status == 'Blocked' %}red{% else %}blue{% endif %}">
+                {{ req.status }}
+            </span>
+        </td>
+        <td>
+            <span style="color: #8900B4; font-size: 12px;">
+                {% if req.ai_status == 'Full' %}✦ Full{% elif req.ai_status == 'Draft' or req.ai_status == 'Partial' %}✦ Partial{% else %}○ None{% endif %}
+            </span>
+        <td style="color: var(--primary);" onclick="event.stopPropagation(); document.getElementById('addModal').style.display='block'">Edit</td>
+    </tr>
+    {% endfor %}
+</tbody>
                     </table>
                 </div>
             </div>
 
             <div id="view-design" class="view">
+-->
     <div class="page-header">
         <div class="obj-top">
             <div>
@@ -1169,7 +1222,11 @@ grep -n "</head>" templates/index.html | head -1
                     <button class="btn btn-ai" onclick="showToast('Configuration Saved Successfully! ✅')">Save Configuration</button>
                 </div>
             </div>
+<!-- LEGACY VIEW - Decommissioned in Sprint 1 (Phase 8.6)
+     Replaced by: view-test-unit/sit/uat etc (test_management table)
+     This view used old test_cases table - use specific test type views instead -->
             <!-- Testing View -->
+<!--
 <div id="view-testing" class="view">
     <div class="page-header">
         <div class="obj-top">
@@ -1237,9 +1294,14 @@ grep -n "</head>" templates/index.html | head -1
     </div>
 </div>
 <!-- Projects View -->
+-->
             <div id="view-wricef" class="view">
             <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+<!-- LEGACY VIEW - Decommissioned in Sprint 1 (Phase 8.6)
+     Replaced by: view-wricef-list (wricef_items table)
+     This view used old wricef table - use view-wricef-list instead -->
                 <div>
+<!--
                     <h2 style="margin:0;">🔧 WRICEF Register</h2>
                     <p style="color:#64748b;margin:4px 0 0;">Workflow, Report, Interface, Conversion, Enhancement, Form</p>
                 </div>
@@ -1269,6 +1331,7 @@ grep -n "</head>" templates/index.html | head -1
         <div id="view-projects" class="view">
                 <div class="page-header">
                     <div class="obj-top">
+-->
                         <div>
                             <h1 class="page-title">Project Management</h1>
                             <div class="page-subtitle">Manage your SAP implementation projects</div>
@@ -1282,7 +1345,752 @@ grep -n "</head>" templates/index.html | head -1
                     <!-- Projects will be loaded here -->
                 </div>
             </div>
-        </main>
+                <div id="view-req-management" class="view">
+            <div class="page-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+                <div>
+                    <h1 class="page-title">Requirements Management</h1>
+                    <p class="page-subtitle">Manage project requirements - Fit, Partial Fit, and Gap items</p>
+                </div>
+                <button class="btn btn-primary" onclick="openAddRequirementModal()">+ Add Requirement</button>
+            </div>
+            <div class="smart-card" style="margin-bottom:20px;padding:16px;">
+                <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;">
+                    <div>
+                        <label style="font-size:12px;color:#64748b;display:block;margin-bottom:4px;">Analysis</label>
+                        <select id="reqAnalysisFilter" onchange="loadNewRequirements()" class="form-control" style="min-width:200px;">
+                            <option value="">All Analyses</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size:12px;color:#64748b;display:block;margin-bottom:4px;">Classification</label>
+                        <select id="reqClassFilter" onchange="loadNewRequirements()" class="form-control" style="min-width:150px;">
+                            <option value="">All</option>
+                            <option value="Fit">Fit</option>
+                            <option value="PartialFit">Partial Fit</option>
+                            <option value="Gap">Gap</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size:12px;color:#64748b;display:block;margin-bottom:4px;">Priority</label>
+                        <select id="reqPriorityFilter" onchange="loadNewRequirements()" class="form-control" style="min-width:120px;">
+                            <option value="">All</option>
+                            <option value="Must">Must</option>
+                            <option value="Should">Should</option>
+                            <option value="Could">Could</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="smart-card" style="padding:0;">
+                <table class="smart-table" style="width:100%;"><thead><tr>
+                    <th style="width:120px;">Code</th>
+                    <th style="min-width:250px;">Title</th>
+                    <th style="width:120px;">Classification</th>
+                    <th style="width:100px;">Priority</th>
+                    <th style="width:150px;">Conversion</th>
+                    <th style="width:100px;">Analysis</th>
+                    <th style="width:100px;">Actions</th>
+                </tr></thead><tbody id="reqTableBody">
+                    <tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:40px;">Loading...</td></tr>
+                </tbody></table>
+            </div>
+        </div>
+        <div id="view-wricef-list" class="view">
+            <div class="page-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+                <div>
+                    <h1 class="page-title">WRICEF Items</h1>
+                    <p class="page-subtitle">Workflow, Report, Interface, Conversion, Enhancement, Form development items</p>
+                </div>
+                <button class="btn btn-primary" onclick="openAddWricefItemModal()">+ Add WRICEF Item</button>
+            </div>
+            <div class="smart-card" style="margin-bottom:20px;padding:16px;">
+                <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;">
+                    <div>
+                        <label style="font-size:12px;color:#64748b;display:block;margin-bottom:4px;">Type</label>
+                        <select id="wricefTypeFilter" onchange="loadWricefList()" class="form-control" style="min-width:150px;">
+                            <option value="">All Types</option>
+                            <option value="W">Workflow</option>
+                            <option value="R">Report</option>
+                            <option value="I">Interface</option>
+                            <option value="C">Conversion</option>
+                            <option value="E">Enhancement</option>
+                            <option value="F">Form</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size:12px;color:#64748b;display:block;margin-bottom:4px;">Status</label>
+                        <select id="wricefStatusFilter" onchange="loadWricefList()" class="form-control" style="min-width:150px;">
+                            <option value="">All Statuses</option>
+                            <option value="Open">Open</option>
+                            <option value="In Progress">In Progress</option>
+                            <option value="Completed">Completed</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="smart-card" style="padding:0;">
+                <table class="smart-table" style="width:100%;"><thead><tr>
+                    <th style="width:100px;">Code</th>
+                    <th style="width:100px;">Type</th>
+                    <th style="min-width:200px;">Title</th>
+                    <th style="width:120px;">Status</th>
+                    <th style="width:120px;">Owner</th>
+                    <th style="width:80px;">Module</th>
+                    <th style="width:100px;">Source Req</th>
+                    <th style="width:120px;">Actions</th>
+                </tr></thead><tbody id="wricefListBody">
+                    <tr><td colspan="8" style="text-align:center;color:#94a3b8;padding:40px;">Loading...</td></tr>
+                </tbody></table>
+            </div>
+        </div>
+        <div id="view-config-list" class="view">
+            <div class="page-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+                <div>
+                    <h1 class="page-title">Configuration Items</h1>
+                    <p class="page-subtitle">SAP standard configuration and customizing items</p>
+                </div>
+                <button class="btn btn-primary" onclick="openAddConfigItemModal()">+ Add Config Item</button>
+            </div>
+            <div class="smart-card" style="margin-bottom:20px;padding:16px;">
+                <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;">
+                    <div>
+                        <label style="font-size:12px;color:#64748b;display:block;margin-bottom:4px;">Status</label>
+                        <select id="configStatusFilter" onchange="loadConfigList()" class="form-control" style="min-width:150px;">
+                            <option value="">All Statuses</option>
+                            <option value="Open">Open</option>
+                            <option value="In Progress">In Progress</option>
+                            <option value="Completed">Completed</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size:12px;color:#64748b;display:block;margin-bottom:4px;">Module</label>
+                        <select id="configModuleFilter" onchange="loadConfigList()" class="form-control" style="min-width:120px;">
+                            <option value="">All Modules</option>
+                            <option value="MM">MM</option>
+                            <option value="SD">SD</option>
+                            <option value="FI">FI</option>
+                            <option value="CO">CO</option>
+                            <option value="PP">PP</option>
+                            <option value="HR">HR</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            <div class="smart-card" style="padding:0;">
+                <table class="smart-table" style="width:100%;"><thead><tr>
+                    <th style="width:100px;">Code</th>
+                    <th style="min-width:200px;">Title</th>
+                    <th style="width:80px;">Module</th>
+                    <th style="width:120px;">Status</th>
+                    <th style="width:120px;">Owner</th>
+                    <th style="width:100px;">Source Req</th>
+                    <th style="width:120px;">Actions</th>
+                </tr></thead><tbody id="configListBody">
+                    <tr><td colspan="7" style="text-align:center;color:#94a3b8;padding:40px;">Loading...</td></tr>
+                </tbody></table>
+            </div>
+        </div>
+
+        <!-- Unit Tests View -->
+        <div id="view-test-unit" class="view">
+            <div class="page-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+                <div>
+                    <h1 class="page-title">🔬 Unit Tests</h1>
+                    <p class="page-subtitle">Developer-level tests for individual WRICEF and Config items</p>
+                </div>
+                <button class="btn btn-primary" onclick="openAddTestModal('Unit')">+ Add Unit Tests</button>
+            </div>
+            
+            <!-- Stats Cards -->
+            <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-bottom:24px;">
+                <div class="smart-card" style="padding:16px;text-align:center;">
+                    <div style="font-size:12px;color:#64748b;margin-bottom:4px;">Total</div>
+                    <div id="test-unit-total" style="font-size:28px;font-weight:700;color:#1e293b;">0</div>
+                </div>
+                <div class="smart-card" style="padding:16px;text-align:center;border-left:4px solid #22c55e;">
+                    <div style="font-size:12px;color:#64748b;margin-bottom:4px;">Passed</div>
+                    <div id="test-unit-passed" style="font-size:28px;font-weight:700;color:#22c55e;">0</div>
+                </div>
+                <div class="smart-card" style="padding:16px;text-align:center;border-left:4px solid #ef4444;">
+                    <div style="font-size:12px;color:#64748b;margin-bottom:4px;">Failed</div>
+                    <div id="test-unit-failed" style="font-size:28px;font-weight:700;color:#ef4444;">0</div>
+                </div>
+                <div class="smart-card" style="padding:16px;text-align:center;border-left:4px solid #f59e0b;">
+                    <div style="font-size:12px;color:#64748b;margin-bottom:4px;">In Progress</div>
+                    <div id="test-unit-progress" style="font-size:28px;font-weight:700;color:#f59e0b;">0</div>
+                </div>
+                <div class="smart-card" style="padding:16px;text-align:center;border-left:4px solid #94a3b8;">
+                    <div style="font-size:12px;color:#64748b;margin-bottom:4px;">Not Started</div>
+                    <div id="test-unit-notstarted" style="font-size:28px;font-weight:700;color:#94a3b8;">0</div>
+                </div>
+            </div>
+            
+            <!-- Filters -->
+            <div class="smart-card" style="margin-bottom:20px;padding:16px;">
+                <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;">
+                    <div>
+                        <label style="font-size:12px;color:#64748b;display:block;margin-bottom:4px;">Status</label>
+                        <select id="test-unit-status-filter" onchange="loadTestsByType('Unit')" class="form-control" style="min-width:150px;">
+                            <option value="">All Statuses</option>
+                            <option value="Draft">Draft</option>
+                            <option value="Ready">Ready</option>
+                            <option value="In Progress">In Progress</option>
+                            <option value="Passed">Passed</option>
+                            <option value="Failed">Failed</option>
+                            <option value="Blocked">Blocked</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size:12px;color:#64748b;display:block;margin-bottom:4px;">Owner</label>
+                        <select id="test-unit-owner-filter" onchange="loadTestsByType('Unit')" class="form-control" style="min-width:150px;">
+                            <option value="">All Owners</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size:12px;color:#64748b;display:block;margin-bottom:4px;">Source</label>
+                        <select id="test-unit-source-filter" onchange="loadTestsByType('Unit')" class="form-control" style="min-width:150px;">
+                            <option value="">All Sources</option>
+                            <option value="WRICEF">From WRICEF</option>
+                            <option value="CONFIG">From Config</option>
+                            <option value="Manual">Manual</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Test Cases Table -->
+            <div class="smart-card" style="padding:0;">
+                <table class="smart-table" style="width:100%;"><thead><tr>
+                    <th style="width:100px;">Code</th>
+                    <th style="min-width:200px;">Title</th>
+                    <th style="width:100px;">Status</th>
+                    <th style="width:120px;">Source</th>
+                    <th style="width:100px;">Owner</th>
+                    <th style="width:120px;">Last Run</th>
+                    <th style="width:80px;">Result</th>
+                    <th style="width:120px;">Actions</th>
+                </tr></thead><tbody id="test-unit-tbody">
+                    <tr><td colspan="8" style="text-align:center;color:#94a3b8;padding:40px;">Loading...</td></tr>
+                </tbody></table>
+            </div>
+        </div>
+        <!-- System Integration Tests (SIT) View -->
+        <div id="view-test-sit" class="view">
+            <div class="page-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+                <div>
+                    <h1 class="page-title">🔗 System Integration Tests (SIT)</h1>
+                    <p class="page-subtitle">End-to-end integration tests across modules and systems</p>
+                </div>
+                <button class="btn btn-primary" onclick="openAddTestModal('SIT')">+ Add System Integration Tests (SIT)</button>
+            </div>
+            
+            <!-- Stats Cards -->
+            <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-bottom:24px;">
+                <div class="smart-card" style="padding:16px;text-align:center;">
+                    <div style="font-size:12px;color:#64748b;margin-bottom:4px;">Total</div>
+                    <div id="test-sit-total" style="font-size:28px;font-weight:700;color:#1e293b;">0</div>
+                </div>
+                <div class="smart-card" style="padding:16px;text-align:center;border-left:4px solid #22c55e;">
+                    <div style="font-size:12px;color:#64748b;margin-bottom:4px;">Passed</div>
+                    <div id="test-sit-passed" style="font-size:28px;font-weight:700;color:#22c55e;">0</div>
+                </div>
+                <div class="smart-card" style="padding:16px;text-align:center;border-left:4px solid #ef4444;">
+                    <div style="font-size:12px;color:#64748b;margin-bottom:4px;">Failed</div>
+                    <div id="test-sit-failed" style="font-size:28px;font-weight:700;color:#ef4444;">0</div>
+                </div>
+                <div class="smart-card" style="padding:16px;text-align:center;border-left:4px solid #f59e0b;">
+                    <div style="font-size:12px;color:#64748b;margin-bottom:4px;">In Progress</div>
+                    <div id="test-sit-progress" style="font-size:28px;font-weight:700;color:#f59e0b;">0</div>
+                </div>
+                <div class="smart-card" style="padding:16px;text-align:center;border-left:4px solid #94a3b8;">
+                    <div style="font-size:12px;color:#64748b;margin-bottom:4px;">Not Started</div>
+                    <div id="test-sit-notstarted" style="font-size:28px;font-weight:700;color:#94a3b8;">0</div>
+                </div>
+            </div>
+            
+            <div class="smart-card" style="margin-bottom:20px;padding:16px;">
+                <h4 style="margin:0 0 12px 0;">🔗 Linked Scenarios</h4>
+                <div id="test-sit-scenarios" style="display:flex;gap:8px;flex-wrap:wrap;">
+                    <span style="color:#94a3b8;font-size:14px;">No scenarios linked yet.</span>
+                </div>
+            </div>
+            <!-- Filters -->
+            <div class="smart-card" style="margin-bottom:20px;padding:16px;">
+                <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;">
+                    <div>
+                        <label style="font-size:12px;color:#64748b;display:block;margin-bottom:4px;">Status</label>
+                        <select id="test-sit-status-filter" onchange="loadTestsByType('SIT')" class="form-control" style="min-width:150px;">
+                            <option value="">All Statuses</option>
+                            <option value="Draft">Draft</option>
+                            <option value="Ready">Ready</option>
+                            <option value="In Progress">In Progress</option>
+                            <option value="Passed">Passed</option>
+                            <option value="Failed">Failed</option>
+                            <option value="Blocked">Blocked</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size:12px;color:#64748b;display:block;margin-bottom:4px;">Owner</label>
+                        <select id="test-sit-owner-filter" onchange="loadTestsByType('SIT')" class="form-control" style="min-width:150px;">
+                            <option value="">All Owners</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size:12px;color:#64748b;display:block;margin-bottom:4px;">Source</label>
+                        <select id="test-sit-source-filter" onchange="loadTestsByType('SIT')" class="form-control" style="min-width:150px;">
+                            <option value="">All Sources</option>
+                            <option value="WRICEF">From WRICEF</option>
+                            <option value="CONFIG">From Config</option>
+                            <option value="Manual">Manual</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Test Cases Table -->
+            <div class="smart-card" style="padding:0;">
+                <table class="smart-table" style="width:100%;"><thead><tr>
+                    <th style="width:100px;">Code</th>
+                    <th style="min-width:200px;">Title</th>
+                    <th style="width:100px;">Status</th>
+                    <th style="width:120px;">Source</th>
+                    <th style="width:100px;">Owner</th>
+                    <th style="width:120px;">Last Run</th>
+                    <th style="width:80px;">Result</th>
+                    <th style="width:120px;">Actions</th>
+                </tr></thead><tbody id="test-sit-tbody">
+                    <tr><td colspan="8" style="text-align:center;color:#94a3b8;padding:40px;">Loading...</td></tr>
+                </tbody></table>
+            </div>
+        </div>
+        <!-- User Acceptance Tests (UAT) View -->
+        <div id="view-test-uat" class="view">
+            <div class="page-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+                <div>
+                    <h1 class="page-title">👥 User Acceptance Tests (UAT)</h1>
+                    <p class="page-subtitle">Business user validation and acceptance testing</p>
+                </div>
+                <button class="btn btn-primary" onclick="openAddTestModal('UAT')">+ Add User Acceptance Tests (UAT)</button>
+            </div>
+            
+            <!-- Stats Cards -->
+            <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-bottom:24px;">
+                <div class="smart-card" style="padding:16px;text-align:center;">
+                    <div style="font-size:12px;color:#64748b;margin-bottom:4px;">Total</div>
+                    <div id="test-uat-total" style="font-size:28px;font-weight:700;color:#1e293b;">0</div>
+                </div>
+                <div class="smart-card" style="padding:16px;text-align:center;border-left:4px solid #22c55e;">
+                    <div style="font-size:12px;color:#64748b;margin-bottom:4px;">Passed</div>
+                    <div id="test-uat-passed" style="font-size:28px;font-weight:700;color:#22c55e;">0</div>
+                </div>
+                <div class="smart-card" style="padding:16px;text-align:center;border-left:4px solid #ef4444;">
+                    <div style="font-size:12px;color:#64748b;margin-bottom:4px;">Failed</div>
+                    <div id="test-uat-failed" style="font-size:28px;font-weight:700;color:#ef4444;">0</div>
+                </div>
+                <div class="smart-card" style="padding:16px;text-align:center;border-left:4px solid #f59e0b;">
+                    <div style="font-size:12px;color:#64748b;margin-bottom:4px;">In Progress</div>
+                    <div id="test-uat-progress" style="font-size:28px;font-weight:700;color:#f59e0b;">0</div>
+                </div>
+                <div class="smart-card" style="padding:16px;text-align:center;border-left:4px solid #94a3b8;">
+                    <div style="font-size:12px;color:#64748b;margin-bottom:4px;">Not Started</div>
+                    <div id="test-uat-notstarted" style="font-size:28px;font-weight:700;color:#94a3b8;">0</div>
+                </div>
+            </div>
+            
+            <div class="smart-card" style="margin-bottom:20px;padding:16px;">
+                <h4 style="margin:0 0 12px 0;">🔗 Linked Scenarios</h4>
+                <div id="test-uat-scenarios" style="display:flex;gap:8px;flex-wrap:wrap;">
+                    <span style="color:#94a3b8;font-size:14px;">No scenarios linked yet.</span>
+                </div>
+            </div>
+            <!-- Filters -->
+            <div class="smart-card" style="margin-bottom:20px;padding:16px;">
+                <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;">
+                    <div>
+                        <label style="font-size:12px;color:#64748b;display:block;margin-bottom:4px;">Status</label>
+                        <select id="test-uat-status-filter" onchange="loadTestsByType('UAT')" class="form-control" style="min-width:150px;">
+                            <option value="">All Statuses</option>
+                            <option value="Draft">Draft</option>
+                            <option value="Ready">Ready</option>
+                            <option value="In Progress">In Progress</option>
+                            <option value="Passed">Passed</option>
+                            <option value="Failed">Failed</option>
+                            <option value="Blocked">Blocked</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size:12px;color:#64748b;display:block;margin-bottom:4px;">Owner</label>
+                        <select id="test-uat-owner-filter" onchange="loadTestsByType('UAT')" class="form-control" style="min-width:150px;">
+                            <option value="">All Owners</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size:12px;color:#64748b;display:block;margin-bottom:4px;">Source</label>
+                        <select id="test-uat-source-filter" onchange="loadTestsByType('UAT')" class="form-control" style="min-width:150px;">
+                            <option value="">All Sources</option>
+                            <option value="WRICEF">From WRICEF</option>
+                            <option value="CONFIG">From Config</option>
+                            <option value="Manual">Manual</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Test Cases Table -->
+            <div class="smart-card" style="padding:0;">
+                <table class="smart-table" style="width:100%;"><thead><tr>
+                    <th style="width:100px;">Code</th>
+                    <th style="min-width:200px;">Title</th>
+                    <th style="width:100px;">Status</th>
+                    <th style="width:120px;">Source</th>
+                    <th style="width:100px;">Owner</th>
+                    <th style="width:120px;">Last Run</th>
+                    <th style="width:80px;">Result</th>
+                    <th style="width:120px;">Actions</th>
+                </tr></thead><tbody id="test-uat-tbody">
+                    <tr><td colspan="8" style="text-align:center;color:#94a3b8;padding:40px;">Loading...</td></tr>
+                </tbody></table>
+            </div>
+        </div>
+        <!-- String Tests View -->
+        <div id="view-test-string" class="view">
+            <div class="page-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+                <div>
+                    <h1 class="page-title">🧵 String Tests</h1>
+                    <p class="page-subtitle">End-to-end business process flow testing</p>
+                </div>
+                <button class="btn btn-primary" onclick="openAddTestModal('String')">+ Add String Tests</button>
+            </div>
+            
+            <!-- Stats Cards -->
+            <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-bottom:24px;">
+                <div class="smart-card" style="padding:16px;text-align:center;">
+                    <div style="font-size:12px;color:#64748b;margin-bottom:4px;">Total</div>
+                    <div id="test-string-total" style="font-size:28px;font-weight:700;color:#1e293b;">0</div>
+                </div>
+                <div class="smart-card" style="padding:16px;text-align:center;border-left:4px solid #22c55e;">
+                    <div style="font-size:12px;color:#64748b;margin-bottom:4px;">Passed</div>
+                    <div id="test-string-passed" style="font-size:28px;font-weight:700;color:#22c55e;">0</div>
+                </div>
+                <div class="smart-card" style="padding:16px;text-align:center;border-left:4px solid #ef4444;">
+                    <div style="font-size:12px;color:#64748b;margin-bottom:4px;">Failed</div>
+                    <div id="test-string-failed" style="font-size:28px;font-weight:700;color:#ef4444;">0</div>
+                </div>
+                <div class="smart-card" style="padding:16px;text-align:center;border-left:4px solid #f59e0b;">
+                    <div style="font-size:12px;color:#64748b;margin-bottom:4px;">In Progress</div>
+                    <div id="test-string-progress" style="font-size:28px;font-weight:700;color:#f59e0b;">0</div>
+                </div>
+                <div class="smart-card" style="padding:16px;text-align:center;border-left:4px solid #94a3b8;">
+                    <div style="font-size:12px;color:#64748b;margin-bottom:4px;">Not Started</div>
+                    <div id="test-string-notstarted" style="font-size:28px;font-weight:700;color:#94a3b8;">0</div>
+                </div>
+            </div>
+            
+            <div class="smart-card" style="margin-bottom:20px;padding:16px;">
+                <h4 style="margin:0 0 12px 0;">🔗 Linked Scenarios</h4>
+                <div id="test-string-scenarios" style="display:flex;gap:8px;flex-wrap:wrap;">
+                    <span style="color:#94a3b8;font-size:14px;">No scenarios linked yet.</span>
+                </div>
+            </div>
+            <!-- Filters -->
+            <div class="smart-card" style="margin-bottom:20px;padding:16px;">
+                <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;">
+                    <div>
+                        <label style="font-size:12px;color:#64748b;display:block;margin-bottom:4px;">Status</label>
+                        <select id="test-string-status-filter" onchange="loadTestsByType('String')" class="form-control" style="min-width:150px;">
+                            <option value="">All Statuses</option>
+                            <option value="Draft">Draft</option>
+                            <option value="Ready">Ready</option>
+                            <option value="In Progress">In Progress</option>
+                            <option value="Passed">Passed</option>
+                            <option value="Failed">Failed</option>
+                            <option value="Blocked">Blocked</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size:12px;color:#64748b;display:block;margin-bottom:4px;">Owner</label>
+                        <select id="test-string-owner-filter" onchange="loadTestsByType('String')" class="form-control" style="min-width:150px;">
+                            <option value="">All Owners</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size:12px;color:#64748b;display:block;margin-bottom:4px;">Source</label>
+                        <select id="test-string-source-filter" onchange="loadTestsByType('String')" class="form-control" style="min-width:150px;">
+                            <option value="">All Sources</option>
+                            <option value="WRICEF">From WRICEF</option>
+                            <option value="CONFIG">From Config</option>
+                            <option value="Manual">Manual</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Test Cases Table -->
+            <div class="smart-card" style="padding:0;">
+                <table class="smart-table" style="width:100%;"><thead><tr>
+                    <th style="width:100px;">Code</th>
+                    <th style="min-width:200px;">Title</th>
+                    <th style="width:100px;">Status</th>
+                    <th style="width:120px;">Source</th>
+                    <th style="width:100px;">Owner</th>
+                    <th style="width:120px;">Last Run</th>
+                    <th style="width:80px;">Result</th>
+                    <th style="width:120px;">Actions</th>
+                </tr></thead><tbody id="test-string-tbody">
+                    <tr><td colspan="8" style="text-align:center;color:#94a3b8;padding:40px;">Loading...</td></tr>
+                </tbody></table>
+            </div>
+        </div>
+        <!-- Sprint Tests View -->
+        <div id="view-test-sprint" class="view">
+            <div class="page-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+                <div>
+                    <h1 class="page-title">🏃 Sprint Tests</h1>
+                    <p class="page-subtitle">Agile sprint-based testing cycles</p>
+                </div>
+                <button class="btn btn-primary" onclick="openAddTestModal('Sprint')">+ Add Sprint Tests</button>
+            </div>
+            
+            <!-- Stats Cards -->
+            <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-bottom:24px;">
+                <div class="smart-card" style="padding:16px;text-align:center;">
+                    <div style="font-size:12px;color:#64748b;margin-bottom:4px;">Total</div>
+                    <div id="test-sprint-total" style="font-size:28px;font-weight:700;color:#1e293b;">0</div>
+                </div>
+                <div class="smart-card" style="padding:16px;text-align:center;border-left:4px solid #22c55e;">
+                    <div style="font-size:12px;color:#64748b;margin-bottom:4px;">Passed</div>
+                    <div id="test-sprint-passed" style="font-size:28px;font-weight:700;color:#22c55e;">0</div>
+                </div>
+                <div class="smart-card" style="padding:16px;text-align:center;border-left:4px solid #ef4444;">
+                    <div style="font-size:12px;color:#64748b;margin-bottom:4px;">Failed</div>
+                    <div id="test-sprint-failed" style="font-size:28px;font-weight:700;color:#ef4444;">0</div>
+                </div>
+                <div class="smart-card" style="padding:16px;text-align:center;border-left:4px solid #f59e0b;">
+                    <div style="font-size:12px;color:#64748b;margin-bottom:4px;">In Progress</div>
+                    <div id="test-sprint-progress" style="font-size:28px;font-weight:700;color:#f59e0b;">0</div>
+                </div>
+                <div class="smart-card" style="padding:16px;text-align:center;border-left:4px solid #94a3b8;">
+                    <div style="font-size:12px;color:#64748b;margin-bottom:4px;">Not Started</div>
+                    <div id="test-sprint-notstarted" style="font-size:28px;font-weight:700;color:#94a3b8;">0</div>
+                </div>
+            </div>
+            
+            <!-- Filters -->
+            <div class="smart-card" style="margin-bottom:20px;padding:16px;">
+                <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;">
+                    <div>
+                        <label style="font-size:12px;color:#64748b;display:block;margin-bottom:4px;">Status</label>
+                        <select id="test-sprint-status-filter" onchange="loadTestsByType('Sprint')" class="form-control" style="min-width:150px;">
+                            <option value="">All Statuses</option>
+                            <option value="Draft">Draft</option>
+                            <option value="Ready">Ready</option>
+                            <option value="In Progress">In Progress</option>
+                            <option value="Passed">Passed</option>
+                            <option value="Failed">Failed</option>
+                            <option value="Blocked">Blocked</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size:12px;color:#64748b;display:block;margin-bottom:4px;">Owner</label>
+                        <select id="test-sprint-owner-filter" onchange="loadTestsByType('Sprint')" class="form-control" style="min-width:150px;">
+                            <option value="">All Owners</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size:12px;color:#64748b;display:block;margin-bottom:4px;">Source</label>
+                        <select id="test-sprint-source-filter" onchange="loadTestsByType('Sprint')" class="form-control" style="min-width:150px;">
+                            <option value="">All Sources</option>
+                            <option value="WRICEF">From WRICEF</option>
+                            <option value="CONFIG">From Config</option>
+                            <option value="Manual">Manual</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Test Cases Table -->
+            <div class="smart-card" style="padding:0;">
+                <table class="smart-table" style="width:100%;"><thead><tr>
+                    <th style="width:100px;">Code</th>
+                    <th style="min-width:200px;">Title</th>
+                    <th style="width:100px;">Status</th>
+                    <th style="width:120px;">Source</th>
+                    <th style="width:100px;">Owner</th>
+                    <th style="width:120px;">Last Run</th>
+                    <th style="width:80px;">Result</th>
+                    <th style="width:120px;">Actions</th>
+                </tr></thead><tbody id="test-sprint-tbody">
+                    <tr><td colspan="8" style="text-align:center;color:#94a3b8;padding:40px;">Loading...</td></tr>
+                </tbody></table>
+            </div>
+        </div>
+        <!-- Performance & Load Tests View -->
+        <div id="view-test-perf" class="view">
+            <div class="page-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+                <div>
+                    <h1 class="page-title">⚡ Performance & Load Tests</h1>
+                    <p class="page-subtitle">System performance, load, and stress testing</p>
+                </div>
+                <button class="btn btn-primary" onclick="openAddTestModal('PerformanceLoad')">+ Add Performance & Load Tests</button>
+            </div>
+            
+            <!-- Stats Cards -->
+            <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-bottom:24px;">
+                <div class="smart-card" style="padding:16px;text-align:center;">
+                    <div style="font-size:12px;color:#64748b;margin-bottom:4px;">Total</div>
+                    <div id="test-perf-total" style="font-size:28px;font-weight:700;color:#1e293b;">0</div>
+                </div>
+                <div class="smart-card" style="padding:16px;text-align:center;border-left:4px solid #22c55e;">
+                    <div style="font-size:12px;color:#64748b;margin-bottom:4px;">Passed</div>
+                    <div id="test-perf-passed" style="font-size:28px;font-weight:700;color:#22c55e;">0</div>
+                </div>
+                <div class="smart-card" style="padding:16px;text-align:center;border-left:4px solid #ef4444;">
+                    <div style="font-size:12px;color:#64748b;margin-bottom:4px;">Failed</div>
+                    <div id="test-perf-failed" style="font-size:28px;font-weight:700;color:#ef4444;">0</div>
+                </div>
+                <div class="smart-card" style="padding:16px;text-align:center;border-left:4px solid #f59e0b;">
+                    <div style="font-size:12px;color:#64748b;margin-bottom:4px;">In Progress</div>
+                    <div id="test-perf-progress" style="font-size:28px;font-weight:700;color:#f59e0b;">0</div>
+                </div>
+                <div class="smart-card" style="padding:16px;text-align:center;border-left:4px solid #94a3b8;">
+                    <div style="font-size:12px;color:#64748b;margin-bottom:4px;">Not Started</div>
+                    <div id="test-perf-notstarted" style="font-size:28px;font-weight:700;color:#94a3b8;">0</div>
+                </div>
+            </div>
+            
+            <!-- Filters -->
+            <div class="smart-card" style="margin-bottom:20px;padding:16px;">
+                <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;">
+                    <div>
+                        <label style="font-size:12px;color:#64748b;display:block;margin-bottom:4px;">Status</label>
+                        <select id="test-perf-status-filter" onchange="loadTestsByType('PerformanceLoad')" class="form-control" style="min-width:150px;">
+                            <option value="">All Statuses</option>
+                            <option value="Draft">Draft</option>
+                            <option value="Ready">Ready</option>
+                            <option value="In Progress">In Progress</option>
+                            <option value="Passed">Passed</option>
+                            <option value="Failed">Failed</option>
+                            <option value="Blocked">Blocked</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size:12px;color:#64748b;display:block;margin-bottom:4px;">Owner</label>
+                        <select id="test-perf-owner-filter" onchange="loadTestsByType('PerformanceLoad')" class="form-control" style="min-width:150px;">
+                            <option value="">All Owners</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size:12px;color:#64748b;display:block;margin-bottom:4px;">Source</label>
+                        <select id="test-perf-source-filter" onchange="loadTestsByType('PerformanceLoad')" class="form-control" style="min-width:150px;">
+                            <option value="">All Sources</option>
+                            <option value="WRICEF">From WRICEF</option>
+                            <option value="CONFIG">From Config</option>
+                            <option value="Manual">Manual</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Test Cases Table -->
+            <div class="smart-card" style="padding:0;">
+                <table class="smart-table" style="width:100%;"><thead><tr>
+                    <th style="width:100px;">Code</th>
+                    <th style="min-width:200px;">Title</th>
+                    <th style="width:100px;">Status</th>
+                    <th style="width:120px;">Source</th>
+                    <th style="width:100px;">Owner</th>
+                    <th style="width:120px;">Last Run</th>
+                    <th style="width:80px;">Result</th>
+                    <th style="width:120px;">Actions</th>
+                </tr></thead><tbody id="test-perf-tbody">
+                    <tr><td colspan="8" style="text-align:center;color:#94a3b8;padding:40px;">Loading...</td></tr>
+                </tbody></table>
+            </div>
+        </div>
+        <!-- Regression Tests View -->
+        <div id="view-test-regression" class="view">
+            <div class="page-header" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
+                <div>
+                    <h1 class="page-title">🔄 Regression Tests</h1>
+                    <p class="page-subtitle">Regression testing for system stability</p>
+                </div>
+                <button class="btn btn-primary" onclick="openAddTestModal('Regression')">+ Add Regression Tests</button>
+            </div>
+            
+            <!-- Stats Cards -->
+            <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:16px;margin-bottom:24px;">
+                <div class="smart-card" style="padding:16px;text-align:center;">
+                    <div style="font-size:12px;color:#64748b;margin-bottom:4px;">Total</div>
+                    <div id="test-regression-total" style="font-size:28px;font-weight:700;color:#1e293b;">0</div>
+                </div>
+                <div class="smart-card" style="padding:16px;text-align:center;border-left:4px solid #22c55e;">
+                    <div style="font-size:12px;color:#64748b;margin-bottom:4px;">Passed</div>
+                    <div id="test-regression-passed" style="font-size:28px;font-weight:700;color:#22c55e;">0</div>
+                </div>
+                <div class="smart-card" style="padding:16px;text-align:center;border-left:4px solid #ef4444;">
+                    <div style="font-size:12px;color:#64748b;margin-bottom:4px;">Failed</div>
+                    <div id="test-regression-failed" style="font-size:28px;font-weight:700;color:#ef4444;">0</div>
+                </div>
+                <div class="smart-card" style="padding:16px;text-align:center;border-left:4px solid #f59e0b;">
+                    <div style="font-size:12px;color:#64748b;margin-bottom:4px;">In Progress</div>
+                    <div id="test-regression-progress" style="font-size:28px;font-weight:700;color:#f59e0b;">0</div>
+                </div>
+                <div class="smart-card" style="padding:16px;text-align:center;border-left:4px solid #94a3b8;">
+                    <div style="font-size:12px;color:#64748b;margin-bottom:4px;">Not Started</div>
+                    <div id="test-regression-notstarted" style="font-size:28px;font-weight:700;color:#94a3b8;">0</div>
+                </div>
+            </div>
+            
+            <!-- Filters -->
+            <div class="smart-card" style="margin-bottom:20px;padding:16px;">
+                <div style="display:flex;gap:16px;align-items:center;flex-wrap:wrap;">
+                    <div>
+                        <label style="font-size:12px;color:#64748b;display:block;margin-bottom:4px;">Status</label>
+                        <select id="test-regression-status-filter" onchange="loadTestsByType('Regression')" class="form-control" style="min-width:150px;">
+                            <option value="">All Statuses</option>
+                            <option value="Draft">Draft</option>
+                            <option value="Ready">Ready</option>
+                            <option value="In Progress">In Progress</option>
+                            <option value="Passed">Passed</option>
+                            <option value="Failed">Failed</option>
+                            <option value="Blocked">Blocked</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size:12px;color:#64748b;display:block;margin-bottom:4px;">Owner</label>
+                        <select id="test-regression-owner-filter" onchange="loadTestsByType('Regression')" class="form-control" style="min-width:150px;">
+                            <option value="">All Owners</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label style="font-size:12px;color:#64748b;display:block;margin-bottom:4px;">Source</label>
+                        <select id="test-regression-source-filter" onchange="loadTestsByType('Regression')" class="form-control" style="min-width:150px;">
+                            <option value="">All Sources</option>
+                            <option value="WRICEF">From WRICEF</option>
+                            <option value="CONFIG">From Config</option>
+                            <option value="Manual">Manual</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Test Cases Table -->
+            <div class="smart-card" style="padding:0;">
+                <table class="smart-table" style="width:100%;"><thead><tr>
+                    <th style="width:100px;">Code</th>
+                    <th style="min-width:200px;">Title</th>
+                    <th style="width:100px;">Status</th>
+                    <th style="width:120px;">Source</th>
+                    <th style="width:100px;">Owner</th>
+                    <th style="width:120px;">Last Run</th>
+                    <th style="width:80px;">Result</th>
+                    <th style="width:120px;">Actions</th>
+                </tr></thead><tbody id="test-regression-tbody">
+                    <tr><td colspan="8" style="text-align:center;color:#94a3b8;padding:40px;">Loading...</td></tr>
+                </tbody></table>
+            </div>
+        </div>
+</main>
     </div>
 
     <div class="toast" id="toast">
@@ -1372,7 +2180,12 @@ function navTo(viewId, navEl) {
         navEl.classList.add('active');
     } else {
         const items = document.querySelectorAll('.nav-item');
-        const mapping = { 'dashboard': 0, 'analysis': 1, 'scenarios': 2, 'requirements': 3, 'design': 4, 'testing': 5, 'wricef': 8, 'projects': 6, 'config': 7 };
+        const mapping = { 'dashboard': 0, 'analysis': 1, 'scenarios': 2, 'requirements': 3, 'design': 4, 'testing': 5, 'wricef': 8, 'projects': 6, 'config': 7, 
+            'req-management': null,
+            'wricef-list': null,
+            'config-list': null,
+            'test-mgmt': null,
+        };
         if(mapping[viewId] !== undefined && items[mapping[viewId]]) {
             items[mapping[viewId]].classList.add('active');
         }
@@ -1392,6 +2205,17 @@ function navTo(viewId, navEl) {
     if(viewId === 'design') loadDocuments();
     if(viewId === 'testing') loadTestCases();
             if(viewId === 'wricef') loadWricefList();
+            if(viewId === 'req-management') loadNewRequirements();
+            if(viewId === 'wricef-list') loadWricefList();
+            if(viewId === 'config-list') loadConfigList();
+    // Test pages
+    if(viewId === 'test-unit') loadTestsByType('Unit');
+    if(viewId === 'test-sit') loadTestsByType('SIT');
+    if(viewId === 'test-uat') loadTestsByType('UAT');
+    if(viewId === 'test-string') loadTestsByType('String');
+    if(viewId === 'test-sprint') loadTestsByType('Sprint');
+    if(viewId === 'test-perf') loadTestsByType('PerformanceLoad');
+    if(viewId === 'test-regression') loadTestsByType('Regression');
 }
 
 // ============== DASHBOARD ==============
@@ -1953,6 +2777,90 @@ function closeAddQuestionModal() { document.getElementById('addQuestionModal').s
 function openAddGapModal() { document.getElementById('addGapModal').style.display = 'block'; }
 function closeAddGapModal() { document.getElementById('addGapModal').style.display = 'none'; }
 
+
+// Load requirements for session (Analysis tab)
+async function loadRequirementsForSession(sessionId) {
+    if (!sessionId) return;
+    try {
+        const classFilter = document.getElementById('sessionReqClassFilter')?.value || '';
+        const priorityFilter = document.getElementById('sessionReqPriorityFilter')?.value || '';
+        
+        // Load requirements for this specific session/workshop
+        let url = '/api/new-requirements?session_id=' + sessionId;
+        const res = await fetch(url);
+        let data = await res.json();
+        
+        // Client-side filtering
+        if (classFilter) data = data.filter(r => r.classification === classFilter);
+        if (priorityFilter) data = data.filter(r => r.priority === priorityFilter);
+        
+        const tbody = document.getElementById('session-requirements-body');
+        if (!data.length) {
+            tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:#999;">No requirements yet. Click "+ Add Requirement" to create one.</td></tr>';
+            return;
+        }
+        
+        tbody.innerHTML = data.map(r => {
+            const classBadge = r.classification === 'Fit' 
+                ? '<span style="background:#10b981;color:white;padding:2px 8px;border-radius:12px;font-size:12px;">Fit</span>'
+                : r.classification === 'PartialFit'
+                ? '<span style="background:#f59e0b;color:white;padding:2px 8px;border-radius:12px;font-size:12px;">Partial Fit</span>'
+                : '<span style="background:#ef4444;color:white;padding:2px 8px;border-radius:12px;font-size:12px;">Gap</span>';
+            
+            const priorityBadge = r.priority === 'Must'
+                ? '<span style="color:#ef4444;font-weight:600;">Must</span>'
+                : r.priority === 'Should'
+                ? '<span style="color:#f59e0b;font-weight:600;">Should</span>'
+                : '<span style="color:#22c55e;font-weight:600;">Could</span>';
+            
+            const convBadge = r.conversion_status === 'None' 
+                ? '<span style="color:#94a3b8;">-</span>'
+                : r.conversion_status === 'WRICEF'
+                ? '<span style="background:#3b82f6;color:white;padding:2px 8px;border-radius:12px;font-size:11px;">WRICEF</span>'
+                : '<span style="background:#8b5cf6;color:white;padding:2px 8px;border-radius:12px;font-size:11px;">CONFIG</span>';
+            
+            return '<tr>' +
+                '<td><strong>' + (r.code || '-') + '</strong></td>' +
+                '<td>' + (r.title || '-') + '</td>' +
+                '<td>' + classBadge + '</td>' +
+                '<td>' + priorityBadge + '</td>' +
+                '<td>' + convBadge + '</td>' +
+                '<td><button class="btn btn-sm" onclick="viewRequirementDetail(' + r.id + ')">View</button></td>' +
+                '</tr>';
+        }).join('');
+    } catch(e) {
+        console.error('loadRequirementsForSession error:', e);
+    }
+}
+
+// Open add requirement modal for session
+function openAddReqForSessionModal() {
+    if (!currentSessionId) {
+        alert('Please select a workshop first');
+        return;
+    }
+    // Store session ID for the modal
+    window.currentReqSessionId = currentSessionId;
+    
+    // Open modal and set session context
+    document.getElementById('addReqModal').style.display = 'flex';
+    document.getElementById('newReqTitle').value = '';
+    document.getElementById('newReqDescription').value = '';
+    document.getElementById('newReqClassification').value = 'Gap';
+    document.getElementById('newReqPriority').value = 'Must';
+    
+    // Show session context
+    const sessionLabel = document.getElementById('newReqSessionLabel');
+    if (sessionLabel) sessionLabel.textContent = 'Adding to Workshop #' + currentSessionId;
+}
+
+// View requirement detail
+function viewRequirementDetail(id) {
+    // Navigate to requirements management and highlight
+    navTo('req-management');
+    // Could add highlighting logic here
+}
+
 async function saveNewQuestion() {
     const data = {
         session_id: currentSessionId,
@@ -2038,7 +2946,7 @@ function switchSessionTab(tabId, tabEl) {
     if(tabId === 'tab-attendees') loadAttendeesForSession(currentSessionId);
     if(tabId === 'tab-agenda') loadAgendaForSession(currentSessionId);
     if(tabId === 'tab-questions') loadQuestionsForSession(currentSessionId);
-    if(tabId === 'tab-fitgap') loadGapsForSession(currentSessionId);
+    if(tabId === 'tab-requirements') loadRequirementsForSession(currentSessionId);
     if(tabId === 'tab-decisions') loadDecisionsForSession(currentSessionId);
     if(tabId === 'tab-risks') loadRisksForSession(currentSessionId);
     if(tabId === 'tab-actions') loadActionsForSession(currentSessionId);
@@ -3118,24 +4026,18 @@ async function saveNewTestCase() {
     }
 }
 // ============== REQUIREMENTS ==============
-let allRequirements = [];
-let currentRequirementFilter = 'all';
-let currentRequirementId = null;
-let currentRequirementData = null;
-
 async function loadRequirements() {
     try {
-        let url = '/api/new-requirements';
+        let url = '/api/requirements';
         if(globalProjectId) url += `?project_id=${globalProjectId}`;
         
         const response = await fetch(url);
-        allRequirements = await response.json();
+        const requirements = await response.json();
         
-        renderRequirementsTable(allRequirements);
-        updateRequirementsTabs(allRequirements);
+        renderRequirementsTable(requirements);
+        updateRequirementsTabs(requirements);
     } catch(error) {
-        console.error('Error loading requirements:', error);
-        showToast('Error loading requirements');
+        console.error('Error:', error);
     }
 }
 
@@ -3144,239 +4046,68 @@ function renderRequirementsTable(requirements) {
     if(!tbody) return;
     
     if(requirements.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#999;">No requirements found.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#999;">No requirements found.</td></tr>';
         return;
     }
     
-    tbody.innerHTML = requirements.map(req => {
-        // Classification badge
-        let classColor = 'blue';
-        let classLabel = req.classification || 'Gap';
-        if(classLabel === 'Fit') classColor = 'green';
-        else if(classLabel === 'PartialFit') { classColor = 'orange'; classLabel = 'Partial Fit'; }
-        else if(classLabel === 'Gap') classColor = 'red';
-        
-        // Status badge
-        let statusColor = 'blue';
-        if(req.status === 'Approved' || req.status === 'Ready') statusColor = 'green';
-        else if(req.status === 'In Progress') statusColor = 'orange';
-        else if(req.status === 'Blocked') statusColor = 'red';
-        
-        // Conversion status badge
-        let conversionBadge = '<span class="pill blue" style="font-size:11px;">Not Converted</span>';
-        if(req.conversion_status === 'converted') {
-            const itemType = req.converted_item_type || '-';
-            const itemCode = req.converted_item_id || '-';
-            if(itemType === 'WRICEF') {
-                conversionBadge = `<span class="pill orange" style="font-size:11px;" title="Converted to WRICEF">→ WRICEF</span>`;
-            } else if(itemType === 'CONFIG') {
-                conversionBadge = `<span class="pill green" style="font-size:11px;" title="Converted to Config">→ Config</span>`;
-            }
-        }
-        
-        return `
-        <tr onclick="viewRequirementDetail(${req.id})" style="cursor:pointer;">
+    tbody.innerHTML = requirements.map(req => `
+        <tr onclick="loadRequirementDetails(${req.id})">
             <td><b>${req.code || '-'}</b></td>
             <td>${req.title || '-'}</td>
             <td><span class="pill blue">${req.module || '-'}</span></td>
-            <td><span class="pill ${classColor}">${classLabel}</span></td>
-            <td><span class="pill ${statusColor}">${req.status || 'Draft'}</span></td>
-            <td>${conversionBadge}</td>
-            <td style="color:var(--primary);" onclick="event.stopPropagation(); viewRequirementDetail(${req.id})">View</td>
+            <td>${req.complexity || '-'}</td>
+            <td><span class="pill ${req.status === 'Ready' ? 'green' : 'orange'}">${req.status || '-'}</span></td>
+            <td><span style="color:#8900B4;font-size:12px;">${req.ai_status === 'Full' ? '✦ Full' : '○ None'}</span></td>
+            <td style="color:var(--primary);">Edit</td>
         </tr>
-        `;
-    }).join('');
+    `).join('');
 }
 
 function updateRequirementsTabs(requirements) {
-    // Count by classification
-    const fitCount = requirements.filter(r => r.classification === 'Fit').length;
-    const partialCount = requirements.filter(r => r.classification === 'PartialFit').length;
-    const gapCount = requirements.filter(r => r.classification === 'Gap').length;
-    
-    document.getElementById('req-count-all').textContent = requirements.length;
-    document.getElementById('req-count-fit').textContent = fitCount;
-    document.getElementById('req-count-partial').textContent = partialCount;
-    document.getElementById('req-count-gap').textContent = gapCount;
-}
-
-function filterRequirementsByClassification(classification, tabEl) {
-    // Update active tab
-    document.querySelectorAll('#view-requirements .tab-item').forEach(el => el.classList.remove('active'));
-    tabEl.classList.add('active');
-    
-    // Filter requirements
-    currentRequirementFilter = classification;
-    let filtered = allRequirements;
-    if(classification !== 'all') {
-        filtered = allRequirements.filter(r => r.classification === classification);
-    }
-    
-    renderRequirementsTable(filtered);
-}
-
-async function viewRequirementDetail(id) {
-    currentRequirementId = id;
-    try {
-        const response = await fetch(`/api/new-requirements/${id}`);
-        const req = await response.json();
-        currentRequirementData = req;
-        
-        // Fill modal
-        document.getElementById('reqDetailCode').textContent = req.code || 'REQ-???';
-        document.getElementById('reqDetailTitle').textContent = req.title || '-';
-        document.getElementById('reqDetailDescription').textContent = req.description || 'No description';
-        document.getElementById('reqDetailModule').textContent = req.module || '-';
-        document.getElementById('reqDetailPriority').textContent = req.priority || 'Medium';
-        document.getElementById('reqDetailStatus').textContent = req.status || 'Draft';
-        
-        // Analysis info
-        if(req.analysis && req.analysis.code) {
-            document.getElementById('reqDetailAnalysis').innerHTML = `<span class="pill blue">${req.analysis.code}</span> ${req.analysis.title || ''}`;
-        } else {
-            document.getElementById('reqDetailAnalysis').textContent = '-';
-        }
-        
-        // Classification badge
-        let classColor = 'blue';
-        let classLabel = req.classification || 'Gap';
-        if(classLabel === 'Fit') classColor = 'green';
-        else if(classLabel === 'PartialFit') { classColor = 'orange'; classLabel = 'Partial Fit'; }
-        else if(classLabel === 'Gap') classColor = 'red';
-        
-        const classBadge = document.getElementById('reqDetailClassification');
-        classBadge.className = `pill ${classColor}`;
-        classBadge.textContent = classLabel;
-        
-        // Conversion status
-        const convertSection = document.getElementById('reqConvertSection');
-        const convertedInfo = document.getElementById('reqConvertedInfo');
-        const btnConfig = document.getElementById('btnConvertToConfig');
-        const btnWricef = document.getElementById('btnConvertToWricef');
-        
-        if(req.conversion_status === 'converted') {
-            // Already converted - hide convert section, show info
-            convertSection.style.display = 'none';
-            convertedInfo.style.display = 'block';
-            
-            const itemType = req.converted_item_type || '-';
-            document.getElementById('reqConvertedType').textContent = itemType;
-            
-            const convBadge = document.getElementById('reqDetailConversion');
-            if(itemType === 'WRICEF') {
-                convBadge.className = 'pill orange';
-                convBadge.textContent = '→ WRICEF';
-            } else if(itemType === 'CONFIG') {
-                convBadge.className = 'pill green';
-                convBadge.textContent = '→ Config';
-            }
-        } else {
-            // Not converted - show convert section
-            convertSection.style.display = 'block';
-            convertedInfo.style.display = 'none';
-            
-            const convBadge = document.getElementById('reqDetailConversion');
-            convBadge.className = 'pill blue';
-            convBadge.textContent = 'Not Converted';
-            
-            // Show appropriate convert button
-            btnConfig.style.display = 'none';
-            btnWricef.style.display = 'none';
-            
-            if(req.classification === 'Fit') {
-                btnConfig.style.display = 'block';
-            } else if(req.classification === 'Gap' || req.classification === 'PartialFit') {
-                btnWricef.style.display = 'block';
-            }
-        }
-        
-        document.getElementById('requirementDetailModal').style.display = 'flex';
-    } catch(error) {
-        console.error('Error loading requirement detail:', error);
-        showToast('Error loading requirement details');
-    }
-}
-
-async function convertRequirementToConfig() {
-    if(!currentRequirementId) return;
-    
-    if(!confirm('Convert this Fit requirement to a Config Item?')) return;
-    
-    try {
-        const response = await fetch(`/api/new-requirements/${currentRequirementId}/convert`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ owner: 'System' })
-        });
-        
-        const result = await response.json();
-        
-        if(response.ok) {
-            showToast(`✓ Converted to Config: ${result.item_code}`);
-            closeModal('requirementDetailModal');
-            loadRequirements(); // Reload list
-        } else {
-            showToast('Error: ' + result.error);
-        }
-    } catch(error) {
-        console.error('Error converting:', error);
-        showToast('Conversion failed');
-    }
-}
-
-async function convertRequirementToWricef() {
-    if(!currentRequirementId) return;
-    
-    if(!confirm('Convert this Gap/Partial Fit requirement to a WRICEF Item?')) return;
-    
-    try {
-        const response = await fetch(`/api/new-requirements/${currentRequirementId}/convert`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ owner: 'System' })
-        });
-        
-        const result = await response.json();
-        
-        if(response.ok) {
-            showToast(`✓ Converted to WRICEF: ${result.item_code}`);
-            closeModal('requirementDetailModal');
-            loadRequirements(); // Reload list
-        } else {
-            showToast('Error: ' + result.error);
-        }
-    } catch(error) {
-        console.error('Error converting:', error);
-        showToast('Conversion failed');
-    }
-}
-
-function viewConvertedItem() {
-    if(!currentRequirementData) return;
-    
-    const itemType = currentRequirementData.converted_item_type;
-    const itemId = currentRequirementData.converted_item_id;
-    
-    if(itemType === 'WRICEF') {
-        closeModal('requirementDetailModal');
-        navTo('wricef');
-        showToast(`Opening WRICEF item ${itemId}...`);
-        // TODO: Implement viewWricefDetail(itemId) when WRICEF detail view is ready
-    } else if(itemType === 'CONFIG') {
-        closeModal('requirementDetailModal');
-        navTo('config');
-        showToast(`Opening Config item ${itemId}...`);
-        // TODO: Implement viewConfigDetail(itemId) when Config detail view is ready
+    const tabs = document.querySelectorAll('#view-requirements .tab-item');
+    if(tabs.length >= 4) {
+        tabs[0].textContent = `All Objects (${requirements.length})`;
     }
 }
 
 function loadRequirementDetails(id) {
-    // Fallback for old code - redirect to new function
-    viewRequirementDetail(id);
+    fetch(`/api/requirements/${id}`)
+        .then(res => res.json())
+        .then(data => {
+            document.querySelector('#view-design .page-title').innerText = data.code;
+            document.querySelector('#view-design .page-subtitle').innerText = data.title;
+            navTo('design');
+        })
+        .catch(err => console.error('Error:', err));
 }
 
 function saveRequirement() {
-    showToast('Use Analysis session to create requirements');
+    if(!globalProjectId) {
+        alert('Please select a project first!');
+        return;
+    }
+    
+    const data = {
+        project_id: globalProjectId,
+        code: document.getElementById('newCode').value,
+        title: document.getElementById('newTitle').value,
+        module: document.getElementById('newModule').value,
+        complexity: document.getElementById('newComplexity').value
+    };
+    
+    if(!data.code || !data.title) { alert('Fill all fields!'); return; }
+    
+    fetch('/api/requirements', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    }).then(response => {
+        if(response.ok) {
+            document.getElementById('addModal').style.display = 'none';
+            loadRequirements();
+            showToast('Requirement saved!');
+        }
+    });
 }
 // ============== AI SERVICES ==============
 
@@ -4316,9 +5047,1054 @@ document.addEventListener('DOMContentLoaded', initializeApp);
         </div>
     </div>
 </div>
+
+<!-- Convert Requirement Modal -->
+<div id="convertReqModal" class="modal-overlay" style="display:none;">
+  <div class="smart-card" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:500px;max-height:80vh;overflow-y:auto;">
+    <h3 id="convertReqTitle">Convert Requirement</h3>
+    <div id="convertReqContent">
+      <div class="form-group">
+        <label class="form-label">Requirement</label>
+        <input type="text" id="convertReqName" class="form-control" readonly>
+      </div>
+      <div class="form-group" id="convertTypeGroup">
+        <label class="form-label">WRICEF Type</label>
+        <select id="convertWricefType" class="form-control">
+          <option value="Workflow">Workflow</option><option value="Report">Report</option>
+          <option value="Interface">Interface</option><option value="Conversion">Conversion</option>
+          <option value="Enhancement">Enhancement</option><option value="Form">Form</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:15px;padding-top:15px;border-top:1px solid var(--border-light);">
+      <button class="btn btn-primary" onclick="executeConvert()">Convert</button>
+      <button class="btn btn-secondary" onclick="closeModal('convertReqModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- WRICEF Detail Modal -->
+<div id="wricefDetailModal" class="modal-overlay" style="display:none;">
+  <div class="smart-card" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:700px;max-height:85vh;overflow-y:auto;">
+    <h3 id="wricefDetailTitle">WRICEF Item Detail</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="form-group"><label class="form-label">Code</label><input type="text" id="wricefDetCode" class="form-control" readonly></div>
+      <div class="form-group"><label class="form-label">Type</label><input type="text" id="wricefDetType" class="form-control" readonly></div>
+      <div class="form-group"><label class="form-label">Title</label><input type="text" id="wricefDetTitle" class="form-control"></div>
+      <div class="form-group"><label class="form-label">Status</label>
+        <select id="wricefDetStatus" class="form-control"><option value="Identified">Identified</option><option value="In Progress">In Progress</option><option value="Completed">Completed</option></select>
+      </div>
+      <div class="form-group"><label class="form-label">Owner</label><input type="text" id="wricefDetOwner" class="form-control"></div>
+      <div class="form-group"><label class="form-label">Module</label><input type="text" id="wricefDetModule" class="form-control"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Description</label><textarea id="wricefDetDesc" class="form-control" rows="2"></textarea></div>
+    <div class="form-group"><label class="form-label">Functional Spec (FS)</label><textarea id="wricefDetFS" class="form-control" rows="4" placeholder="Enter functional specification content..."></textarea></div>
+    <div class="form-group"><label class="form-label">Technical Spec (TS)</label><textarea id="wricefDetTS" class="form-control" rows="4" placeholder="Enter technical specification content..."></textarea></div>
+    <div class="form-group"><label class="form-label">Unit Test Steps (JSON)</label><textarea id="wricefDetUnitSteps" class="form-control" rows="3" placeholder="[{&quot;step&quot;:1,&quot;action&quot;:&quot;...&quot;,&quot;expected&quot;:&quot;...&quot;}]"></textarea></div>
+    <div id="wricefDetSourceReq" style="margin-bottom:10px;"></div>
+    <div style="display:flex;gap:10px;margin-top:15px;padding-top:15px;border-top:1px solid var(--border-light);">
+      <button class="btn btn-primary" onclick="saveWricefDetail()">Save</button>
+      <button class="btn" style="background:#059669;color:white;" onclick="convertWricefToTest()">Convert to Unit Test</button>
+      <button class="btn btn-secondary" onclick="closeModal('wricefDetailModal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Config Detail Modal -->
+<div id="configDetailModal" class="modal-overlay" style="display:none;">
+  <div class="smart-card" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:700px;max-height:85vh;overflow-y:auto;">
+    <h3 id="configDetailTitle">Configuration Item Detail</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="form-group"><label class="form-label">Code</label><input type="text" id="configDetCode" class="form-control" readonly></div>
+      <div class="form-group"><label class="form-label">Status</label>
+        <select id="configDetStatus" class="form-control"><option value="Open">Open</option><option value="In Progress">In Progress</option><option value="Completed">Completed</option></select>
+      </div>
+      <div class="form-group"><label class="form-label">Title</label><input type="text" id="configDetTitle" class="form-control"></div>
+      <div class="form-group"><label class="form-label">Module</label><input type="text" id="configDetModule" class="form-control"></div>
+      <div class="form-group"><label class="form-label">Owner</label><input type="text" id="configDetOwner" class="form-control"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Description</label><textarea id="configDetDesc" class="form-control" rows="2"></textarea></div>
+    <div class="form-group"><label class="form-label">Configuration Details (SSCUI, path, etc.)</label><textarea id="configDetDetails" class="form-control" rows="4" placeholder="Enter config details: SSCUI path, transaction codes, etc."></textarea></div>
+    <div class="form-group"><label class="form-label">Unit Test Steps (JSON)</label><textarea id="configDetUnitSteps" class="form-control" rows="3" placeholder="[{&quot;step&quot;:1,&quot;action&quot;:&quot;...&quot;,&quot;expected&quot;:&quot;...&quot;}]"></textarea></div>
+    <div id="configDetSourceReq" style="margin-bottom:10px;"></div>
+    <div style="display:flex;gap:10px;margin-top:15px;padding-top:15px;border-top:1px solid var(--border-light);">
+      <button class="btn btn-primary" onclick="saveConfigDetail()">Save</button>
+      <button class="btn" style="background:#059669;color:white;" onclick="convertConfigToTest()">Convert to Unit Test</button>
+      <button class="btn btn-secondary" onclick="closeModal('configDetailModal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Test Detail Modal -->
+<div id="testDetailModal" class="modal-overlay" style="display:none;">
+  <div class="smart-card" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:700px;max-height:85vh;overflow-y:auto;">
+    <h3 id="testDetailTitle">Test Case Detail</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="form-group"><label class="form-label">Code</label><input type="text" id="testDetCode" class="form-control" readonly></div>
+      <div class="form-group"><label class="form-label">Type</label><input type="text" id="testDetType" class="form-control" readonly></div>
+      <div class="form-group"><label class="form-label">Title</label><input type="text" id="testDetTitle" class="form-control"></div>
+      <div class="form-group"><label class="form-label">Status</label>
+        <select id="testDetStatus" class="form-control"><option value="Draft">Draft</option><option value="Ready">Ready</option><option value="In Progress">In Progress</option><option value="Passed">Passed</option><option value="Failed">Failed</option></select>
+      </div>
+      <div class="form-group"><label class="form-label">Owner</label><input type="text" id="testDetOwner" class="form-control"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Description</label><textarea id="testDetDesc" class="form-control" rows="2"></textarea></div>
+    <div class="form-group"><label class="form-label">Test Steps (JSON)</label><textarea id="testDetSteps" class="form-control" rows="4"></textarea></div>
+    <div class="form-group"><label class="form-label">Evidence / Notes</label><textarea id="testDetEvidence" class="form-control" rows="2"></textarea></div>
+    <div id="testDetSource" style="margin-bottom:10px;font-size:0.85em;color:#94a3b8;"></div>
+    <div style="display:flex;gap:10px;margin-top:15px;padding-top:15px;border-top:1px solid var(--border-light);">
+      <button class="btn btn-primary" onclick="saveTestDetail()">Save</button>
+      <button class="btn btn-secondary" onclick="closeModal('testDetailModal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add WRICEF Item Modal -->
+<div id="addWricefItemModal" class="modal-overlay" style="display:none;">
+  <div class="smart-card" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:500px;max-height:80vh;overflow-y:auto;">
+    <h3>Add WRICEF Item</h3>
+    <div class="form-group"><label class="form-label">Code</label><input type="text" id="newWricefCode" class="form-control" placeholder="e.g. WRICEF-001"></div>
+    <div class="form-group"><label class="form-label">Type</label>
+      <select id="newWricefType" class="form-control"><option value="Workflow">Workflow</option><option value="Report">Report</option><option value="Interface">Interface</option><option value="Conversion">Conversion</option><option value="Enhancement">Enhancement</option><option value="Form">Form</option></select>
+    </div>
+    <div class="form-group"><label class="form-label">Title</label><input type="text" id="newWricefTitle" class="form-control"></div>
+    <div class="form-group"><label class="form-label">Description</label><textarea id="newWricefDesc" class="form-control" rows="2"></textarea></div>
+    <div class="form-group"><label class="form-label">Module</label><input type="text" id="newWricefModule" class="form-control" placeholder="e.g. MM, SD, FI"></div>
+    <div style="display:flex;gap:10px;margin-top:15px;padding-top:15px;border-top:1px solid var(--border-light);">
+      <button class="btn btn-primary" onclick="saveNewWricefItem()">Save</button>
+      <button class="btn btn-secondary" onclick="closeModal('addWricefItemModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Config Item Modal -->
+<div id="addConfigItemModal" class="modal-overlay" style="display:none;">
+  <div class="smart-card" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:500px;max-height:80vh;overflow-y:auto;">
+    <h3>Add Configuration Item</h3>
+    <div class="form-group"><label class="form-label">Code</label><input type="text" id="newConfigCode" class="form-control" placeholder="e.g. CFG-001"></div>
+    <div class="form-group"><label class="form-label">Title</label><input type="text" id="newConfigTitle" class="form-control"></div>
+    <div class="form-group"><label class="form-label">Description</label><textarea id="newConfigDesc" class="form-control" rows="2"></textarea></div>
+    <div class="form-group"><label class="form-label">Module</label><input type="text" id="newConfigModule" class="form-control" placeholder="e.g. MM, SD, FI"></div>
+    <div style="display:flex;gap:10px;margin-top:15px;padding-top:15px;border-top:1px solid var(--border-light);">
+      <button class="btn btn-primary" onclick="saveNewConfigItem()">Save</button>
+      <button class="btn btn-secondary" onclick="closeModal('addConfigItemModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Test Case Modal -->
+<div id="addTestModal" class="modal-overlay" style="display:none;">
+  <div class="smart-card" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:500px;max-height:80vh;overflow-y:auto;">
+    <h3>Add Test Case</h3>
+    <div class="form-group"><label class="form-label">Code</label><input type="text" id="newTestCode" class="form-control" placeholder="e.g. TC-001"></div>
+    <div class="form-group"><label class="form-label">Type</label>
+      <select id="newTestType" class="form-control"><option value="Unit">Unit</option><option value="SIT">SIT</option><option value="UAT">UAT</option><option value="String">String</option><option value="Sprint">Sprint</option><option value="PerformanceLoad">Perf & Load</option><option value="Regression">Regression</option></select>
+    </div>
+    <div class="form-group"><label class="form-label">Title</label><input type="text" id="newTestTitle" class="form-control"></div>
+    <div class="form-group"><label class="form-label">Description</label><textarea id="newTestDesc" class="form-control" rows="2"></textarea></div>
+    <div class="form-group"><label class="form-label">Owner</label><input type="text" id="newTestOwner" class="form-control"></div>
+    <div id="testScenarioSelector" style="display:none;">
+      <div class="form-group"><label class="form-label">Linked Scenario</label>
+        <select id="newTestScenario" class="form-control"><option value="">Select Scenario...</option></select>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:15px;padding-top:15px;border-top:1px solid var(--border-light);">
+      <button class="btn btn-primary" onclick="saveNewTest()">Save</button>
+      <button class="btn btn-secondary" onclick="closeModal('addTestModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
 </body>
+
+<script>
+// ========== Phase 3+4: Requirements Management ==========
+var currentConvertReqId = null;
+var currentConvertType = null; // 'config' or 'wricef'
+var currentWricefDetailId = null;
+var currentConfigDetailId = null;
+var currentTestDetailId = null;
+var currentTestTypeFilter = '';
+
+async function loadNewRequirements() {
+    try {
+        var url = '/api/new-requirements?project_id=' + globalProjectId;
+        var classFilter = document.getElementById('reqClassFilter') ? document.getElementById('reqClassFilter').value : '';
+        var priorityFilter = document.getElementById('reqPriorityFilter') ? document.getElementById('reqPriorityFilter').value : '';
+        var analysisFilter = document.getElementById('reqAnalysisFilter') ? document.getElementById('reqAnalysisFilter').value : '';
+        if (classFilter) url += '&classification=' + classFilter;
+        if (analysisFilter) url += '&analysis_id=' + analysisFilter;
+        
+        var res = await fetch(url);
+        var data = await res.json();
+        var tbody = document.getElementById('reqTableBody');
+        if (!tbody) return;
+        
+        // Filter by priority client-side if needed
+        var items = data;
+        if (priorityFilter) items = items.filter(function(r){ return r.priority === priorityFilter; });
+        
+        if (!items.length) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#94a3b8;">No requirements found.</td></tr>';
+            return;
+        }
+        
+        var classColors = { Fit: '#059669', PartialFit: '#d97706', Gap: '#dc2626' };
+        var classLabels = { Fit: 'Fit', PartialFit: 'Partial Fit', Gap: 'Gap' };
+        var convColors = { None: '#64748b', WRICEF: '#3b82f6', CONFIG: '#8b5cf6' };
+        
+        tbody.innerHTML = items.map(function(r) {
+            var classBadge = '<span style="background:' + (classColors[r.classification]||'#64748b') + ';color:white;padding:2px 8px;border-radius:4px;font-size:0.75em;">' + (classLabels[r.classification]||r.classification) + '</span>';
+            var convBadge = r.conversion_status === 'None' ?
+                getConvertButtons(r) :
+                '<span style="background:' + (convColors[r.converted_item_type]||'#64748b') + ';color:white;padding:2px 8px;border-radius:4px;font-size:0.75em;">' + r.conversion_status + '</span>' +
+                (r.converted_item_id ? ' <a href="#" onclick="openConvertedItem(\''+r.converted_item_type+'\','+r.converted_item_id+');return false;" style="font-size:0.75em;">Open</a>' : '');
+            var priorityColors = { Must: '#dc2626', Should: '#d97706', Could: '#3b82f6' };
+            var priBadge = '<span style="color:' + (priorityColors[r.priority]||'#64748b') + ';font-weight:500;">' + (r.priority||'') + '</span>';
+            return '<tr>' +
+                '<td>' + (r.code||'') + '</td>' +
+                '<td>' + (r.title||'') + '</td>' +
+                '<td>' + classBadge + '</td>' +
+                '<td>' + priBadge + '</td>' +
+                '<td>' + convBadge + '</td>' +
+                '<td style="font-size:0.8em;color:#94a3b8;">' + (r.analysis_id||'-') + '</td>' +
+                '<td><button class="btn btn-sm" onclick="editRequirement('+r.id+')">Edit</button></td>' +
+            '</tr>';
+        }).join('');
+        
+        // Also load analyses for filter dropdown
+        loadAnalysisFilterOptions();
+    } catch(e) { console.error("Error loading requirements:", e); }
+}
+
+function getConvertButtons(r) {
+    if (r.classification === 'Fit') {
+        return '<button class="btn btn-sm" style="background:#8b5cf6;color:white;font-size:0.7em;" onclick="openConvertModal('+r.id+',\'config\',\''+r.title+'\')">To Config</button>';
+    } else if (r.classification === 'Gap' || r.classification === 'PartialFit') {
+        return '<button class="btn btn-sm" style="background:#3b82f6;color:white;font-size:0.7em;" onclick="openConvertModal('+r.id+',\'wricef\',\''+r.title+'\')">To WRICEF</button>';
+    }
+    return '<span style="color:#64748b;font-size:0.75em;">-</span>';
+}
+
+async function loadAnalysisFilterOptions() {
+    try {
+        var res = await fetch('/api/analyses?project_id=' + globalProjectId);
+        var data = await res.json();
+        var sel = document.getElementById('reqAnalysisFilter');
+        if (!sel) return;
+        var current = sel.value;
+        sel.innerHTML = '<option value="">All Analyses</option>' + data.map(function(a){ return '<option value="'+a.id+'">'+a.code+' - '+a.title+'</option>'; }).join('');
+        sel.value = current;
+    } catch(e) {}
+}
+
+function openConvertModal(reqId, type, title) {
+    currentConvertReqId = reqId;
+    currentConvertType = type;
+    document.getElementById('convertReqName').value = title;
+    document.getElementById('convertReqTitle').textContent = type === 'config' ? 'Convert to Configuration' : 'Convert to WRICEF';
+    document.getElementById('convertTypeGroup').style.display = type === 'wricef' ? 'block' : 'none';
+    document.getElementById('convertReqModal').style.display = 'flex';
+}
+
+async function executeConvert() {
+    try {
+        var body = {};
+        if (currentConvertType === 'wricef') {
+            body.wricef_type = document.getElementById('convertWricefType').value;
+        }
+        var res = await fetch('/api/new-requirements/' + currentConvertReqId + '/convert', {
+            method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify(body)
+        });
+        var data = await res.json();
+        if (res.ok) {
+            alert(data.message + ' (' + (data.item_code||'') + ')');
+            closeModal('convertReqModal');
+            loadNewRequirements();
+        } else { alert(data.error || 'Convert failed'); }
+    } catch(e) { alert('Error: ' + e.message); }
+}
+
+function openConvertedItem(type, id) {
+    if (type === 'WRICEF') openWricefDetail(id);
+    else if (type === 'CONFIG') openConfigDetail(id);
+}
+
+async function editRequirement(id) {
+    try {
+        var res = await fetch('/api/new-requirements/' + id);
+        var r = await res.json();
+        // Populate the addReqModal for editing
+        document.getElementById('addReqModal').style.display = 'flex';
+        if (document.getElementById('newReqCode')) document.getElementById('newReqCode').value = r.code || '';
+        if (document.getElementById('newReqTitle')) document.getElementById('newReqTitle').value = r.title || '';
+        if (document.getElementById('newReqDesc')) document.getElementById('newReqDesc').value = r.description || '';
+        if (document.getElementById('newReqClass')) document.getElementById('newReqClass').value = r.classification || 'Gap';
+        if (document.getElementById('newReqPriority')) document.getElementById('newReqPriority').value = r.priority || 'Must';
+        // Store edit ID
+        document.getElementById('addReqModal').dataset.editId = id;
+        // Lock classification if already converted
+        var classEl = document.getElementById('newReqClass');
+        if (classEl) classEl.disabled = (r.conversion_status !== 'None');
+    } catch(e) { console.error(e); }
+}
+
+
+// Save new requirement (or update existing)
+async function saveNewRequirement() {
+    try {
+        var modal = document.getElementById('addReqModal');
+        var editId = modal.dataset.editId;
+        
+        var code = document.getElementById('newReqCode') ? document.getElementById('newReqCode').value : '';
+        var title = document.getElementById('newReqTitle') ? document.getElementById('newReqTitle').value : '';
+        var desc = document.getElementById('newReqDesc') ? document.getElementById('newReqDesc').value : '';
+        var classification = document.getElementById('newReqClass') ? document.getElementById('newReqClass').value : 'Gap';
+        var priority = document.getElementById('newReqPriority') ? document.getElementById('newReqPriority').value : 'Must';
+        var analysisId = document.getElementById('newReqAnalysis') ? document.getElementById('newReqAnalysis').value : '';
+        
+        if (!title) { alert('Title is required'); return; }
+        
+        var body = {
+            project_id: globalProjectId,
+            title: title,
+            description: desc,
+            classification: classification,
+            priority: priority,
+            analysis_id: analysisId || null,
+            session_id: window.currentReqSessionId || null
+        };
+        if (code) body.code = code;
+        
+        var url, method;
+        if (editId) {
+            url = '/api/new-requirements/' + editId;
+            method = 'PUT';
+        } else {
+            url = '/api/new-requirements';
+            method = 'POST';
+        }
+        
+        var res = await fetch(url, {
+            method: method,
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(body)
+        });
+        var data = await res.json();
+        
+        if (res.ok) {
+            showToast(editId ? 'Requirement updated!' : 'Requirement created!');
+            closeModal('addReqModal');
+            modal.dataset.editId = '';
+            window.currentReqSessionId = null;
+            loadNewRequirements();
+            if (currentSessionId) loadRequirementsForSession(currentSessionId);
+        } else {
+            alert(data.error || 'Failed to save');
+        }
+    } catch(e) {
+        console.error('saveNewRequirement error:', e);
+        alert('Error: ' + e.message);
+    }
+}
+
+// Open add requirement modal
+function openAddRequirementModal() {
+    var modal = document.getElementById('addReqModal');
+    modal.dataset.editId = '';
+    window.currentReqSessionId = null;
+    
+    if (document.getElementById('newReqCode')) document.getElementById('newReqCode').value = '';
+    if (document.getElementById('newReqTitle')) document.getElementById('newReqTitle').value = '';
+    if (document.getElementById('newReqDesc')) document.getElementById('newReqDesc').value = '';
+    if (document.getElementById('newReqClass')) { document.getElementById('newReqClass').value = 'Gap'; document.getElementById('newReqClass').disabled = false; }
+    if (document.getElementById('newReqPriority')) document.getElementById('newReqPriority').value = 'Must';
+    
+    fetch('/api/analyses?project_id=' + globalProjectId)
+        .then(function(r){ return r.json(); })
+        .then(function(data) {
+            var sel = document.getElementById('newReqAnalysis');
+            if (sel) sel.innerHTML = '<option value="">Select Analysis...</option>' + data.map(function(a){ return '<option value="'+a.id+'">'+a.code+' - '+a.title+'</option>'; }).join('');
+        });
+    
+    modal.style.display = 'flex';
+}
+
+// ========== Phase 5: WRICEF List Functions ==========
+async function loadWricefList() {
+    try {
+        var url = '/api/wricef-items?project_id=' + globalProjectId;
+        var typeFilter = document.getElementById('wricefTypeFilter') ? document.getElementById('wricefTypeFilter').value : '';
+        var statusFilter = document.getElementById('wricefStatusFilter') ? document.getElementById('wricefStatusFilter').value : '';
+        var res = await fetch(url);
+        var data = await res.json();
+        
+        if (typeFilter) data = data.filter(function(w){ return w.wricef_type === typeFilter; });
+        if (statusFilter) data = data.filter(function(w){ return w.status === statusFilter; });
+        
+        var tbody = document.getElementById('wricefListBody');
+        if (!tbody) return;
+        
+        if (!data.length) {
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#94a3b8;">No WRICEF items found.</td></tr>';
+            return;
+        }
+        
+        var typeColors = {Workflow:'#3b82f6',Report:'#8b5cf6',Interface:'#06b6d4',Conversion:'#d97706',Enhancement:'#059669',Form:'#ec4899'};
+        tbody.innerHTML = data.map(function(w) {
+            var typeBadge = '<span style="background:'+(typeColors[w.wricef_type]||'#64748b')+';color:white;padding:2px 8px;border-radius:4px;font-size:0.75em;">'+w.wricef_type+'</span>';
+            return '<tr onclick="openWricefDetail('+w.id+')" style="cursor:pointer;">' +
+                '<td>'+(w.code||'')+'</td><td>'+typeBadge+'</td><td>'+(w.title||'')+'</td>' +
+                '<td>'+(w.status||'')+'</td><td>'+(w.owner||'-')+'</td><td>'+(w.module||'-')+'</td>' +
+                '<td style="font-size:0.8em;color:#94a3b8;">'+(w.requirement_id||'-')+'</td>' +
+                '<td><button class="btn btn-sm" onclick="event.stopPropagation();openWricefDetail('+w.id+')">Detail</button></td></tr>';
+        }).join('');
+    } catch(e) { console.error("Error loading WRICEF list:", e); }
+}
+
+async function openWricefDetail(id) {
+    try {
+        var res = await fetch('/api/wricef-items/' + id);
+        var w = await res.json();
+        currentWricefDetailId = id;
+        document.getElementById('wricefDetCode').value = w.code || '';
+        document.getElementById('wricefDetType').value = w.wricef_type || '';
+        document.getElementById('wricefDetTitle').value = w.title || '';
+        document.getElementById('wricefDetStatus').value = w.status || 'Identified';
+        document.getElementById('wricefDetOwner').value = w.owner || '';
+        document.getElementById('wricefDetModule').value = w.module || '';
+        document.getElementById('wricefDetDesc').value = w.description || '';
+        document.getElementById('wricefDetFS').value = w.fs_content || '';
+        document.getElementById('wricefDetTS').value = w.ts_content || '';
+        document.getElementById('wricefDetUnitSteps').value = w.unit_test_steps || '[]';
+        document.getElementById('wricefDetSourceReq').innerHTML = w.requirement_id ? '<small style="color:#94a3b8;">Source Requirement ID: '+w.requirement_id+'</small>' : '';
+        document.getElementById('wricefDetailModal').style.display = 'flex';
+    } catch(e) { console.error(e); }
+}
+
+async function saveWricefDetail() {
+    try {
+        var body = {
+            title: document.getElementById('wricefDetTitle').value,
+            description: document.getElementById('wricefDetDesc').value,
+            status: document.getElementById('wricefDetStatus').value,
+            owner: document.getElementById('wricefDetOwner').value,
+            module: document.getElementById('wricefDetModule').value,
+            fs_content: document.getElementById('wricefDetFS').value,
+            ts_content: document.getElementById('wricefDetTS').value,
+            unit_test_steps: document.getElementById('wricefDetUnitSteps').value
+        };
+        var res = await fetch('/api/wricef-items/' + currentWricefDetailId, {method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+        if (res.ok) { alert('WRICEF item saved!'); closeModal('wricefDetailModal'); loadWricefList(); }
+        else { var d = await res.json(); alert(d.error||'Save failed'); }
+    } catch(e) { alert('Error: '+e.message); }
+}
+
+async function convertWricefToTest() {
+    try {
+        var res = await fetch('/api/wricef-items/' + currentWricefDetailId + '/convert-to-test', {method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+        var data = await res.json();
+        if (res.ok) { alert(data.message + ' (' + data.test_code + ')'); }
+        else { alert(data.error||'Convert failed'); }
+    } catch(e) { alert('Error: '+e.message); }
+}
+
+function openAddWricefItemModal() {
+    document.getElementById('newWricefCode').value = '';
+    document.getElementById('newWricefTitle').value = '';
+    document.getElementById('newWricefDesc').value = '';
+    document.getElementById('newWricefModule').value = '';
+    document.getElementById('addWricefItemModal').style.display = 'flex';
+}
+
+async function saveNewWricefItem() {
+    try {
+        var body = {
+            project_id: globalProjectId, code: document.getElementById('newWricefCode').value,
+            wricef_type: document.getElementById('newWricefType').value, title: document.getElementById('newWricefTitle').value,
+            description: document.getElementById('newWricefDesc').value, module: document.getElementById('newWricefModule').value
+        };
+        var res = await fetch('/api/wricef-items', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+        if (res.ok) { closeModal('addWricefItemModal'); loadWricefList(); }
+        else { var d = await res.json(); alert(d.error||'Save failed'); }
+    } catch(e) { alert('Error: '+e.message); }
+}
+
+// ========== Phase 6: Config List Functions ==========
+async function loadConfigList() {
+    try {
+        var url = '/api/config-items?project_id=' + globalProjectId;
+        var res = await fetch(url);
+        var data = await res.json();
+        
+        var statusFilter = document.getElementById('configStatusFilter') ? document.getElementById('configStatusFilter').value : '';
+        var moduleFilter = document.getElementById('configModuleFilter') ? document.getElementById('configModuleFilter').value : '';
+        if (statusFilter) data = data.filter(function(c){ return c.status === statusFilter; });
+        if (moduleFilter) data = data.filter(function(c){ return (c.module||'').indexOf(moduleFilter) >= 0; });
+        
+        var tbody = document.getElementById('configListBody');
+        if (!tbody) return;
+        
+        if (!data.length) {
+            tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#94a3b8;">No config items found.</td></tr>';
+            return;
+        }
+        
+        tbody.innerHTML = data.map(function(c) {
+            return '<tr onclick="openConfigDetail('+c.id+')" style="cursor:pointer;">' +
+                '<td>'+(c.code||'')+'</td><td>'+(c.title||'')+'</td><td>'+(c.module||'-')+'</td>' +
+                '<td>'+(c.status||'')+'</td><td>'+(c.owner||'-')+'</td>' +
+                '<td style="font-size:0.8em;color:#94a3b8;">'+(c.requirement_id||'-')+'</td>' +
+                '<td><button class="btn btn-sm" onclick="event.stopPropagation();openConfigDetail('+c.id+')">Detail</button></td></tr>';
+        }).join('');
+    } catch(e) { console.error("Error loading config list:", e); }
+}
+
+async function openConfigDetail(id) {
+    try {
+        var res = await fetch('/api/config-items/' + id);
+        var c = await res.json();
+        currentConfigDetailId = id;
+        document.getElementById('configDetCode').value = c.code || '';
+        document.getElementById('configDetStatus').value = c.status || 'Open';
+        document.getElementById('configDetTitle').value = c.title || '';
+        document.getElementById('configDetModule').value = c.module || '';
+        document.getElementById('configDetOwner').value = c.owner || '';
+        document.getElementById('configDetDesc').value = c.description || '';
+        document.getElementById('configDetDetails').value = c.config_details || '';
+        document.getElementById('configDetUnitSteps').value = c.unit_test_steps || '[]';
+        document.getElementById('configDetSourceReq').innerHTML = c.requirement_id ? '<small style="color:#94a3b8;">Source Requirement ID: '+c.requirement_id+'</small>' : '';
+        document.getElementById('configDetailModal').style.display = 'flex';
+    } catch(e) { console.error(e); }
+}
+
+async function saveConfigDetail() {
+    try {
+        var body = {
+            title: document.getElementById('configDetTitle').value,
+            description: document.getElementById('configDetDesc').value,
+            status: document.getElementById('configDetStatus').value,
+            owner: document.getElementById('configDetOwner').value,
+            module: document.getElementById('configDetModule').value,
+            config_details: document.getElementById('configDetDetails').value,
+            unit_test_steps: document.getElementById('configDetUnitSteps').value
+        };
+        var res = await fetch('/api/config-items/' + currentConfigDetailId, {method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+        if (res.ok) { alert('Config item saved!'); closeModal('configDetailModal'); loadConfigList(); }
+        else { var d = await res.json(); alert(d.error||'Save failed'); }
+    } catch(e) { alert('Error: '+e.message); }
+}
+
+async function convertConfigToTest() {
+    try {
+        var res = await fetch('/api/config-items/' + currentConfigDetailId + '/convert-to-test', {method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});
+        var data = await res.json();
+        if (res.ok) { alert(data.message + ' (' + data.test_code + ')'); }
+        else { alert(data.error||'Convert failed'); }
+    } catch(e) { alert('Error: '+e.message); }
+}
+
+function openAddConfigItemModal() {
+    document.getElementById('newConfigCode').value = '';
+    document.getElementById('newConfigTitle').value = '';
+    document.getElementById('newConfigDesc').value = '';
+    document.getElementById('newConfigModule').value = '';
+    document.getElementById('addConfigItemModal').style.display = 'flex';
+}
+
+async function saveNewConfigItem() {
+    try {
+        var body = {
+            project_id: globalProjectId, code: document.getElementById('newConfigCode').value,
+            title: document.getElementById('newConfigTitle').value, description: document.getElementById('newConfigDesc').value,
+            module: document.getElementById('newConfigModule').value
+        };
+        var res = await fetch('/api/config-items', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+        if (res.ok) { closeModal('addConfigItemModal'); loadConfigList(); }
+        else { var d = await res.json(); alert(d.error||'Save failed'); }
+    } catch(e) { alert('Error: '+e.message); }
+}
+
+// ========== Phase 7: Test Management Functions ==========
+async function loadTestManagement() {
+    try {
+        var url = '/api/test-management?project_id=' + globalProjectId;
+        if (currentTestTypeFilter) url += '&test_type=' + currentTestTypeFilter;
+        var statusFilter = document.getElementById('testStatusFilter') ? document.getElementById('testStatusFilter').value : '';
+        if (statusFilter) url += '&status=' + statusFilter;
+        
+        var res = await fetch(url);
+        var data = await res.json();
+        var tbody = document.getElementById('testMgmtBody');
+        if (!tbody) return;
+        
+        if (!data.length) {
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#94a3b8;">No test cases found.</td></tr>';
+            return;
+        }
+        
+        var statusColors = {Draft:'#64748b',Ready:'#3b82f6','In Progress':'#d97706',Passed:'#059669',Failed:'#dc2626'};
+        var typeColors = {Unit:'#3b82f6',SIT:'#8b5cf6',UAT:'#06b6d4',String:'#d97706',Sprint:'#059669',PerformanceLoad:'#ec4899',Regression:'#64748b'};
+        
+        tbody.innerHTML = data.map(function(t) {
+            var statusBadge = '<span style="background:'+(statusColors[t.status]||'#64748b')+';color:white;padding:2px 8px;border-radius:4px;font-size:0.75em;">'+t.status+'</span>';
+            var typeBadge = '<span style="background:'+(typeColors[t.test_type]||'#64748b')+';color:white;padding:2px 8px;border-radius:4px;font-size:0.75em;">'+(t.test_type||'')+'</span>';
+            var source = t.source_type ? (t.source_type + (t.source_id ? ' #'+t.source_id : '')) : '-';
+            var execDate = t.execution_date ? new Date(t.execution_date).toLocaleDateString() : '-';
+            return '<tr onclick="openTestDetail('+t.id+')" style="cursor:pointer;">' +
+                '<td>'+(t.code||'')+'</td><td>'+typeBadge+'</td><td>'+(t.title||'')+'</td>' +
+                '<td>'+statusBadge+'</td><td style="font-size:0.8em;">'+source+'</td>' +
+                '<td>'+(t.owner||'-')+'</td><td style="font-size:0.8em;">'+execDate+'</td>' +
+                '<td><button class="btn btn-sm" onclick="event.stopPropagation();openTestDetail('+t.id+')">Detail</button></td></tr>';
+        }).join('');
+    } catch(e) { console.error("Error loading test management:", e); }
+}
+
+function filterTestType(type) {
+    currentTestTypeFilter = type;
+    document.querySelectorAll('[id^="test-tab-"]').forEach(function(b){ b.style.background=''; b.style.color=''; });
+    var ab = document.getElementById('test-tab-' + (type || 'all'));
+    if (ab) { ab.style.background = '#3b82f6'; ab.style.color = 'white'; }
+    loadTestManagement();
+}
+
+// Load tests for specific test type page
+async function loadTestsByType(testType) {
+    const viewMap = {
+        'Unit': 'test-unit',
+        'SIT': 'test-sit', 
+        'UAT': 'test-uat',
+        'String': 'test-string',
+        'Sprint': 'test-sprint',
+        'PerformanceLoad': 'test-perf',
+        'Regression': 'test-regression'
+    };
+    const viewId = viewMap[testType];
+    if (!viewId) return;
+    
+    try {
+        const statusFilter = document.getElementById(viewId + '-status-filter')?.value || '';
+        const ownerFilter = document.getElementById(viewId + '-owner-filter')?.value || '';
+        const sourceFilter = document.getElementById(viewId + '-source-filter')?.value || '';
+        
+        let url = '/api/test-management?project_id=' + globalProjectId + '&test_type=' + testType;
+        if (statusFilter) url += '&status=' + statusFilter;
+        
+        const res = await fetch(url);
+        const tests = await res.json();
+        
+        // Filter by source if needed
+        let filtered = tests;
+        if (sourceFilter) {
+            filtered = tests.filter(t => t.source_type === sourceFilter);
+        }
+        if (ownerFilter) {
+            filtered = filtered.filter(t => t.owner === ownerFilter);
+        }
+        
+        // Update stats
+        const total = filtered.length;
+        const passed = filtered.filter(t => t.status === 'Passed').length;
+        const failed = filtered.filter(t => t.status === 'Failed').length;
+        const progress = filtered.filter(t => t.status === 'In Progress').length;
+        const notStarted = filtered.filter(t => t.status === 'Draft' || t.status === 'Ready').length;
+        
+        const setVal = (id, val) => { const el = document.getElementById(id); if(el) el.textContent = val; };
+        setVal(viewId + '-total', total);
+        setVal(viewId + '-passed', passed);
+        setVal(viewId + '-failed', failed);
+        setVal(viewId + '-progress', progress);
+        setVal(viewId + '-notstarted', notStarted);
+        
+        // Render table
+        const tbody = document.getElementById(viewId + '-tbody');
+        if (!tbody) return;
+        
+        if (!filtered.length) {
+            tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#94a3b8;padding:40px;">No ' + testType + ' tests found. Click "+ Add" to create one.</td></tr>';
+            return;
+        }
+        
+        tbody.innerHTML = filtered.map(t => {
+            const statusColors = {
+                'Draft': '#94a3b8', 'Ready': '#3b82f6', 'In Progress': '#f59e0b',
+                'Passed': '#22c55e', 'Failed': '#ef4444', 'Blocked': '#6b7280'
+            };
+            const statusColor = statusColors[t.status] || '#94a3b8';
+            const sourceLabel = t.source_type ? t.source_type + (t.source_id ? ' #' + t.source_id : '') : 'Manual';
+            const lastRun = t.executed_at ? new Date(t.executed_at).toLocaleDateString() : '-';
+            const resultBadge = t.execution_status ? 
+                '<span style="background:' + (t.execution_status === 'Passed' ? '#22c55e' : '#ef4444') + ';color:white;padding:2px 8px;border-radius:12px;font-size:11px;">' + t.execution_status + '</span>' : '-';
+            
+            return '<tr>' +
+                '<td><strong>' + (t.code || '-') + '</strong></td>' +
+                '<td>' + (t.title || '-') + '</td>' +
+                '<td><span style="background:' + statusColor + ';color:white;padding:2px 10px;border-radius:12px;font-size:12px;">' + (t.status || 'Draft') + '</span></td>' +
+                '<td style="font-size:12px;color:#64748b;">' + sourceLabel + '</td>' +
+                '<td>' + (t.owner || '-') + '</td>' +
+                '<td style="font-size:12px;">' + lastRun + '</td>' +
+                '<td>' + resultBadge + '</td>' +
+                '<td><button class="btn btn-sm" onclick="openTestDetail(' + t.id + ')">View</button> ' +
+                '<button class="btn btn-sm" style="background:#22c55e;color:white;" onclick="runTest(' + t.id + ')">Run</button></td>' +
+                '</tr>';
+        }).join('');
+        
+    } catch(e) {
+        console.error('loadTestsByType error:', e);
+    }
+}
+
+// Run test (placeholder)
+async function runTest(testId) {
+    if (!confirm('Execute this test case?')) return;
+    try {
+        const res = await fetch('/api/test-management/' + testId, {
+            method: 'PUT',
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify({
+                status: 'In Progress',
+                executed_at: new Date().toISOString(),
+                executed_by: 'User'
+            })
+        });
+        if (res.ok) {
+            showToast('Test execution started');
+            // Reload current view
+            const activeView = document.querySelector('.view.active');
+            if (activeView && activeView.id.startsWith('view-test-')) {
+                const testType = activeView.id.replace('view-test-', '');
+                const typeMap = {'unit':'Unit','sit':'SIT','uat':'UAT','string':'String','sprint':'Sprint','perf':'PerformanceLoad','regression':'Regression'};
+                if (typeMap[testType]) loadTestsByType(typeMap[testType]);
+            }
+        }
+    } catch(e) { console.error(e); alert('Error: ' + e.message); }
+}
+
+async function openTestDetail(id) {
+    try {
+        var res = await fetch('/api/test-management/' + id);
+        var t = await res.json();
+        currentTestDetailId = id;
+        document.getElementById('testDetCode').value = t.code || '';
+        document.getElementById('testDetType').value = t.test_type || '';
+        document.getElementById('testDetTitle').value = t.title || '';
+        document.getElementById('testDetStatus').value = t.status || 'Draft';
+        document.getElementById('testDetOwner').value = t.owner || '';
+        document.getElementById('testDetDesc').value = t.description || '';
+        document.getElementById('testDetSteps').value = t.steps || '[]';
+        document.getElementById('testDetEvidence').value = t.evidence || '';
+        document.getElementById('testDetSource').innerHTML = t.source_type ? 'Source: ' + t.source_type + (t.source_id ? ' #'+t.source_id : '') : '';
+        document.getElementById('testDetailModal').style.display = 'flex';
+    } catch(e) { console.error(e); }
+}
+
+async function saveTestDetail() {
+    try {
+        var body = {
+            title: document.getElementById('testDetTitle').value,
+            description: document.getElementById('testDetDesc').value,
+            status: document.getElementById('testDetStatus').value,
+            owner: document.getElementById('testDetOwner').value,
+            steps: document.getElementById('testDetSteps').value,
+            evidence: document.getElementById('testDetEvidence').value
+        };
+        var res = await fetch('/api/test-management/' + currentTestDetailId, {method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+        if (res.ok) { alert('Test case saved!'); closeModal('testDetailModal'); loadTestManagement(); }
+        else { var d = await res.json(); alert(d.error||'Save failed'); }
+    } catch(e) { alert('Error: '+e.message); }
+}
+
+function openAddTestModal() {
+    document.getElementById('newTestCode').value = '';
+    document.getElementById('newTestTitle').value = '';
+    document.getElementById('newTestDesc').value = '';
+    document.getElementById('newTestOwner').value = '';
+    // Show scenario selector for SIT/UAT
+    var typeEl = document.getElementById('newTestType');
+    typeEl.onchange = function() {
+        var show = ['SIT','UAT'].indexOf(typeEl.value) >= 0;
+        document.getElementById('testScenarioSelector').style.display = show ? 'block' : 'none';
+        if (show) loadScenariosForTestModal();
+    };
+    document.getElementById('testScenarioSelector').style.display = 'none';
+    document.getElementById('addTestModal').style.display = 'flex';
+}
+
+async function loadScenariosForTestModal() {
+    try {
+        var res = await fetch('/api/scenarios?project_id=' + globalProjectId);
+        var data = await res.json();
+        var sel = document.getElementById('newTestScenario');
+        sel.innerHTML = '<option value="">Select Scenario...</option>' + data.map(function(s){
+            var label = s.name + (s.is_composite ? ' (Composite)' : '');
+            return '<option value="'+s.id+'">'+label+'</option>';
+        }).join('');
+    } catch(e) {}
+}
+
+async function saveNewTest() {
+    try {
+        var typeVal = document.getElementById('newTestType').value;
+        var body = {
+            project_id: globalProjectId,
+            code: document.getElementById('newTestCode').value,
+            test_type: typeVal,
+            title: document.getElementById('newTestTitle').value,
+            description: document.getElementById('newTestDesc').value,
+            owner: document.getElementById('newTestOwner').value
+        };
+        // Link scenario for SIT/UAT
+        if (['SIT','UAT'].indexOf(typeVal) >= 0) {
+            var scenId = document.getElementById('newTestScenario').value;
+            if (scenId) {
+                body.source_type = 'SCENARIO';
+                body.source_id = parseInt(scenId);
+            }
+        }
+        var res = await fetch('/api/test-management', {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+        if (res.ok) { closeModal('addTestModal'); loadTestManagement(); }
+        else { var d = await res.json(); alert(d.error||'Save failed'); }
+    } catch(e) { alert('Error: '+e.message); }
+}
+</script>
+
 </html><!-- Question Detail Modal -->
+
+    <!-- REQUIREMENTS MANAGEMENT VIEW -->
+
+    <!-- WRICEF LIST VIEW -->
+
+    <!-- CONFIG LIST VIEW -->
+
+    <!-- TEST MANAGEMENT VIEW -->
+
+    <!-- MODALS -->
+    <div id="wricefItemModal" class="modal-overlay" style="display:none;">
+        <div class="smart-card" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:700px;max-height:90vh;overflow-y:auto;padding:30px;z-index:1001;">
+            <h3 id="wricefItemModalTitle">WRICEF Item Detail</h3>
+            <input type="hidden" id="wricefItemId">
+            <div class="form-group"><label>Title</label><input id="wiTitle" class="form-control"></div>
+            <div class="form-group"><label>Type</label><select id="wiType" class="form-control"><option value="W">W - Workflow</option><option value="R">R - Report</option><option value="I">I - Interface</option><option value="C">C - Conversion</option><option value="E">E - Enhancement</option><option value="F">F - Form</option></select></div>
+            <div class="form-group"><label>Status</label><select id="wiStatus" class="form-control"><option>Open</option><option>In Progress</option><option>Completed</option></select></div>
+            <div class="form-group"><label>Owner</label><input id="wiOwner" class="form-control"></div>
+            <div class="form-group"><label>FS Content</label><textarea id="wiFsContent" class="form-control" rows="3"></textarea></div>
+            <div class="form-group"><label>TS Content</label><textarea id="wiTsContent" class="form-control" rows="3"></textarea></div>
+            <div class="form-group"><label>Unit Test Steps (JSON)</label><textarea id="wiUnitSteps" class="form-control" rows="4"></textarea></div>
+            <div style="display:flex;gap:10px;margin-top:20px;">
+                <button class="btn btn-primary" onclick="saveWricefItem()">Save</button>
+                <button class="btn" style="background:#10b981;color:white;" onclick="convertWricefToTest()">Convert to Unit Test</button>
+                <button class="btn btn-secondary" onclick="closeModal('wricefItemModal')">Cancel</button>
+            </div>
+        </div>
+    </div>
+    <div id="configItemModal" class="modal-overlay" style="display:none;">
+        <div class="smart-card" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:700px;max-height:90vh;overflow-y:auto;padding:30px;z-index:1001;">
+            <h3 id="configItemModalTitle">Config Item Detail</h3>
+            <input type="hidden" id="configItemId">
+            <div class="form-group"><label>Title</label><input id="ciTitle" class="form-control"></div>
+            <div class="form-group"><label>Status</label><select id="ciStatus" class="form-control"><option>Open</option><option>In Progress</option><option>Completed</option></select></div>
+            <div class="form-group"><label>Owner</label><input id="ciOwner" class="form-control"></div>
+            <div class="form-group"><label>Config Details</label><textarea id="ciConfigDetails" class="form-control" rows="4"></textarea></div>
+            <div class="form-group"><label>Unit Test Steps (JSON)</label><textarea id="ciUnitSteps" class="form-control" rows="4"></textarea></div>
+            <div style="display:flex;gap:10px;margin-top:20px;">
+                <button class="btn btn-primary" onclick="saveConfigItem()">Save</button>
+                <button class="btn" style="background:#10b981;color:white;" onclick="convertConfigToTest()">Convert to Unit Test</button>
+                <button class="btn btn-secondary" onclick="closeModal('configItemModal')">Cancel</button>
+            </div>
+        </div>
+    </div>
+    <div id="addReqModal" class="modal-overlay" style="display:none;">
+        <div class="smart-card" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:600px;max-height:90vh;overflow-y:auto;padding:30px;z-index:1001;">
+            <h3>Add Requirement</h3>
+            <div class="form-group"><label>Code</label><input id="newReqCode" class="form-control" placeholder="REQ-006"></div>
+            <div class="form-group"><label>Title</label><input id="newReqTitle" class="form-control"></div>
+            <div class="form-group"><label>Description</label><textarea id="newReqDesc" class="form-control" rows="3"></textarea></div>
+            <div class="form-group"><label>Classification</label><select id="newReqClass" class="form-control"><option value="Fit">Fit</option><option value="PartialFit">Partial Fit</option><option value="Gap" selected>Gap</option></select></div>
+            <div class="form-group"><label>Priority</label><select id="newReqPriority" class="form-control"><option value="Must">Must</option><option value="Should">Should</option><option value="Could">Could</option></select></div>
+            <div class="form-group"><label>Analysis</label><select id="newReqAnalysis" class="form-control"><option value="">Select Analysis...</option></select></div>
+            <div style="display:flex;gap:10px;margin-top:20px;">
+                <button class="btn btn-primary" onclick="saveNewRequirement()">Save</button>
+                <button class="btn btn-secondary" onclick="closeModal('addReqModal')">Cancel</button>
+            </div>
+        </div>
+    </div>
+    <div id="addTestModal" class="modal-overlay" style="display:none;">
+        <div class="smart-card" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:600px;max-height:90vh;overflow-y:auto;padding:30px;z-index:1001;">
+            <h3>Add Test Case</h3>
+            <div class="form-group"><label>Test Type</label><select id="newTestType" class="form-control"><option value="Unit">Unit Test</option><option value="SIT">SIT</option><option value="UAT">UAT</option><option value="String">String Test</option><option value="Sprint">Sprint Test</option><option value="PerformanceLoad">Performance &amp; Load</option><option value="Regression">Regression</option></select></div>
+            <div class="form-group"><label>Title</label><input id="newTestTitle" class="form-control"></div>
+            <div class="form-group"><label>Description</label><textarea id="newTestDesc" class="form-control" rows="3"></textarea></div>
+            <div class="form-group"><label>Owner</label><input id="newTestOwner" class="form-control"></div>
+            <div style="display:flex;gap:10px;margin-top:20px;">
+                <button class="btn btn-primary" onclick="saveNewTestCase()">Save</button>
+                <button class="btn btn-secondary" onclick="closeModal('addTestModal')">Cancel</button>
+            </div>
+        </div>
+    </div>
+
+
+
+
+<!-- Convert Requirement Modal -->
+<div id="convertReqModal" class="modal-overlay" style="display:none;">
+  <div class="smart-card" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:500px;max-height:80vh;overflow-y:auto;">
+    <h3 id="convertReqTitle">Convert Requirement</h3>
+    <div id="convertReqContent">
+      <div class="form-group">
+        <label class="form-label">Requirement</label>
+        <input type="text" id="convertReqName" class="form-control" readonly>
+      </div>
+      <div class="form-group" id="convertTypeGroup">
+        <label class="form-label">WRICEF Type</label>
+        <select id="convertWricefType" class="form-control">
+          <option value="Workflow">Workflow</option><option value="Report">Report</option>
+          <option value="Interface">Interface</option><option value="Conversion">Conversion</option>
+          <option value="Enhancement">Enhancement</option><option value="Form">Form</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:15px;padding-top:15px;border-top:1px solid var(--border-light);">
+      <button class="btn btn-primary" onclick="executeConvert()">Convert</button>
+      <button class="btn btn-secondary" onclick="closeModal('convertReqModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- WRICEF Detail Modal -->
+<div id="wricefDetailModal" class="modal-overlay" style="display:none;">
+  <div class="smart-card" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:700px;max-height:85vh;overflow-y:auto;">
+    <h3 id="wricefDetailTitle">WRICEF Item Detail</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="form-group"><label class="form-label">Code</label><input type="text" id="wricefDetCode" class="form-control" readonly></div>
+      <div class="form-group"><label class="form-label">Type</label><input type="text" id="wricefDetType" class="form-control" readonly></div>
+      <div class="form-group"><label class="form-label">Title</label><input type="text" id="wricefDetTitle" class="form-control"></div>
+      <div class="form-group"><label class="form-label">Status</label>
+        <select id="wricefDetStatus" class="form-control"><option value="Identified">Identified</option><option value="In Progress">In Progress</option><option value="Completed">Completed</option></select>
+      </div>
+      <div class="form-group"><label class="form-label">Owner</label><input type="text" id="wricefDetOwner" class="form-control"></div>
+      <div class="form-group"><label class="form-label">Module</label><input type="text" id="wricefDetModule" class="form-control"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Description</label><textarea id="wricefDetDesc" class="form-control" rows="2"></textarea></div>
+    <div class="form-group"><label class="form-label">Functional Spec (FS)</label><textarea id="wricefDetFS" class="form-control" rows="4" placeholder="Enter functional specification content..."></textarea></div>
+    <div class="form-group"><label class="form-label">Technical Spec (TS)</label><textarea id="wricefDetTS" class="form-control" rows="4" placeholder="Enter technical specification content..."></textarea></div>
+    <div class="form-group"><label class="form-label">Unit Test Steps (JSON)</label><textarea id="wricefDetUnitSteps" class="form-control" rows="3" placeholder="[{&quot;step&quot;:1,&quot;action&quot;:&quot;...&quot;,&quot;expected&quot;:&quot;...&quot;}]"></textarea></div>
+    <div id="wricefDetSourceReq" style="margin-bottom:10px;"></div>
+    <div style="display:flex;gap:10px;margin-top:15px;padding-top:15px;border-top:1px solid var(--border-light);">
+      <button class="btn btn-primary" onclick="saveWricefDetail()">Save</button>
+      <button class="btn" style="background:#059669;color:white;" onclick="convertWricefToTest()">Convert to Unit Test</button>
+      <button class="btn btn-secondary" onclick="closeModal('wricefDetailModal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Config Detail Modal -->
+<div id="configDetailModal" class="modal-overlay" style="display:none;">
+  <div class="smart-card" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:700px;max-height:85vh;overflow-y:auto;">
+    <h3 id="configDetailTitle">Configuration Item Detail</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="form-group"><label class="form-label">Code</label><input type="text" id="configDetCode" class="form-control" readonly></div>
+      <div class="form-group"><label class="form-label">Status</label>
+        <select id="configDetStatus" class="form-control"><option value="Open">Open</option><option value="In Progress">In Progress</option><option value="Completed">Completed</option></select>
+      </div>
+      <div class="form-group"><label class="form-label">Title</label><input type="text" id="configDetTitle" class="form-control"></div>
+      <div class="form-group"><label class="form-label">Module</label><input type="text" id="configDetModule" class="form-control"></div>
+      <div class="form-group"><label class="form-label">Owner</label><input type="text" id="configDetOwner" class="form-control"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Description</label><textarea id="configDetDesc" class="form-control" rows="2"></textarea></div>
+    <div class="form-group"><label class="form-label">Configuration Details (SSCUI, path, etc.)</label><textarea id="configDetDetails" class="form-control" rows="4" placeholder="Enter config details: SSCUI path, transaction codes, etc."></textarea></div>
+    <div class="form-group"><label class="form-label">Unit Test Steps (JSON)</label><textarea id="configDetUnitSteps" class="form-control" rows="3" placeholder="[{&quot;step&quot;:1,&quot;action&quot;:&quot;...&quot;,&quot;expected&quot;:&quot;...&quot;}]"></textarea></div>
+    <div id="configDetSourceReq" style="margin-bottom:10px;"></div>
+    <div style="display:flex;gap:10px;margin-top:15px;padding-top:15px;border-top:1px solid var(--border-light);">
+      <button class="btn btn-primary" onclick="saveConfigDetail()">Save</button>
+      <button class="btn" style="background:#059669;color:white;" onclick="convertConfigToTest()">Convert to Unit Test</button>
+      <button class="btn btn-secondary" onclick="closeModal('configDetailModal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Test Detail Modal -->
+<div id="testDetailModal" class="modal-overlay" style="display:none;">
+  <div class="smart-card" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:700px;max-height:85vh;overflow-y:auto;">
+    <h3 id="testDetailTitle">Test Case Detail</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="form-group"><label class="form-label">Code</label><input type="text" id="testDetCode" class="form-control" readonly></div>
+      <div class="form-group"><label class="form-label">Type</label><input type="text" id="testDetType" class="form-control" readonly></div>
+      <div class="form-group"><label class="form-label">Title</label><input type="text" id="testDetTitle" class="form-control"></div>
+      <div class="form-group"><label class="form-label">Status</label>
+        <select id="testDetStatus" class="form-control"><option value="Draft">Draft</option><option value="Ready">Ready</option><option value="In Progress">In Progress</option><option value="Passed">Passed</option><option value="Failed">Failed</option></select>
+      </div>
+      <div class="form-group"><label class="form-label">Owner</label><input type="text" id="testDetOwner" class="form-control"></div>
+    </div>
+    <div class="form-group"><label class="form-label">Description</label><textarea id="testDetDesc" class="form-control" rows="2"></textarea></div>
+    <div class="form-group"><label class="form-label">Test Steps (JSON)</label><textarea id="testDetSteps" class="form-control" rows="4"></textarea></div>
+    <div class="form-group"><label class="form-label">Evidence / Notes</label><textarea id="testDetEvidence" class="form-control" rows="2"></textarea></div>
+    <div id="testDetSource" style="margin-bottom:10px;font-size:0.85em;color:#94a3b8;"></div>
+    <div style="display:flex;gap:10px;margin-top:15px;padding-top:15px;border-top:1px solid var(--border-light);">
+      <button class="btn btn-primary" onclick="saveTestDetail()">Save</button>
+      <button class="btn btn-secondary" onclick="closeModal('testDetailModal')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add WRICEF Item Modal -->
+<div id="addWricefItemModal" class="modal-overlay" style="display:none;">
+  <div class="smart-card" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:500px;max-height:80vh;overflow-y:auto;">
+    <h3>Add WRICEF Item</h3>
+    <div class="form-group"><label class="form-label">Code</label><input type="text" id="newWricefCode" class="form-control" placeholder="e.g. WRICEF-001"></div>
+    <div class="form-group"><label class="form-label">Type</label>
+      <select id="newWricefType" class="form-control"><option value="Workflow">Workflow</option><option value="Report">Report</option><option value="Interface">Interface</option><option value="Conversion">Conversion</option><option value="Enhancement">Enhancement</option><option value="Form">Form</option></select>
+    </div>
+    <div class="form-group"><label class="form-label">Title</label><input type="text" id="newWricefTitle" class="form-control"></div>
+    <div class="form-group"><label class="form-label">Description</label><textarea id="newWricefDesc" class="form-control" rows="2"></textarea></div>
+    <div class="form-group"><label class="form-label">Module</label><input type="text" id="newWricefModule" class="form-control" placeholder="e.g. MM, SD, FI"></div>
+    <div style="display:flex;gap:10px;margin-top:15px;padding-top:15px;border-top:1px solid var(--border-light);">
+      <button class="btn btn-primary" onclick="saveNewWricefItem()">Save</button>
+      <button class="btn btn-secondary" onclick="closeModal('addWricefItemModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Config Item Modal -->
+<div id="addConfigItemModal" class="modal-overlay" style="display:none;">
+  <div class="smart-card" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:500px;max-height:80vh;overflow-y:auto;">
+    <h3>Add Configuration Item</h3>
+    <div class="form-group"><label class="form-label">Code</label><input type="text" id="newConfigCode" class="form-control" placeholder="e.g. CFG-001"></div>
+    <div class="form-group"><label class="form-label">Title</label><input type="text" id="newConfigTitle" class="form-control"></div>
+    <div class="form-group"><label class="form-label">Description</label><textarea id="newConfigDesc" class="form-control" rows="2"></textarea></div>
+    <div class="form-group"><label class="form-label">Module</label><input type="text" id="newConfigModule" class="form-control" placeholder="e.g. MM, SD, FI"></div>
+    <div style="display:flex;gap:10px;margin-top:15px;padding-top:15px;border-top:1px solid var(--border-light);">
+      <button class="btn btn-primary" onclick="saveNewConfigItem()">Save</button>
+      <button class="btn btn-secondary" onclick="closeModal('addConfigItemModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Add Test Case Modal -->
+<div id="addTestModal" class="modal-overlay" style="display:none;">
+  <div class="smart-card" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:500px;max-height:80vh;overflow-y:auto;">
+    <h3>Add Test Case</h3>
+    <div class="form-group"><label class="form-label">Code</label><input type="text" id="newTestCode" class="form-control" placeholder="e.g. TC-001"></div>
+    <div class="form-group"><label class="form-label">Type</label>
+      <select id="newTestType" class="form-control"><option value="Unit">Unit</option><option value="SIT">SIT</option><option value="UAT">UAT</option><option value="String">String</option><option value="Sprint">Sprint</option><option value="PerformanceLoad">Perf & Load</option><option value="Regression">Regression</option></select>
+    </div>
+    <div class="form-group"><label class="form-label">Title</label><input type="text" id="newTestTitle" class="form-control"></div>
+    <div class="form-group"><label class="form-label">Description</label><textarea id="newTestDesc" class="form-control" rows="2"></textarea></div>
+    <div class="form-group"><label class="form-label">Owner</label><input type="text" id="newTestOwner" class="form-control"></div>
+    <div id="testScenarioSelector" style="display:none;">
+      <div class="form-group"><label class="form-label">Linked Scenario</label>
+        <select id="newTestScenario" class="form-control"><option value="">Select Scenario...</option></select>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:15px;padding-top:15px;border-top:1px solid var(--border-light);">
+      <button class="btn btn-primary" onclick="saveNewTest()">Save</button>
+      <button class="btn btn-secondary" onclick="closeModal('addTestModal')">Cancel</button>
+    </div>
+  </div>
+</div>
+
 </body>
+
+<script>
 </html>
 <!-- Decision Detail Modal -->
 <div id="decisionDetailModal" class="modal-overlay" style="display:none;">
@@ -4376,76 +6152,6 @@ document.addEventListener('DOMContentLoaded', initializeApp);
             <button class="btn btn-primary" onclick="saveDecisionDetail()">Save Changes</button>
             <button class="btn btn-ai" onclick="createActionFromDecision()">+ Create Action</button>
             <button class="btn btn-secondary" onclick="closeModal('decisionDetailModal')">Cancel</button>
-        </div>
-    </div>
-</div>
-
-<!-- Requirement Detail Modal -->
-<div id="requirementDetailModal" class="modal-overlay" style="display:none;">
-    <div class="smart-card" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:700px;max-height:90vh;overflow-y:auto;padding:30px;border-radius:12px;z-index:1001;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-            <h3 style="margin:0;" id="reqDetailCode">REQ-001</h3>
-            <button class="btn btn-secondary" onclick="closeModal('requirementDetailModal')">✕</button>
-        </div>
-        
-        <!-- Info Section -->
-        <div style="background:#F8F9FA;padding:15px;border-radius:8px;margin-bottom:20px;">
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13px;">
-                <div><strong>Analysis:</strong> <span id="reqDetailAnalysis">-</span></div>
-                <div><strong>Module:</strong> <span id="reqDetailModule">-</span></div>
-                <div><strong>Priority:</strong> <span id="reqDetailPriority">-</span></div>
-                <div><strong>Status:</strong> <span id="reqDetailStatus">-</span></div>
-            </div>
-        </div>
-        
-        <div class="form-group">
-            <label class="form-label">Title</label>
-            <div id="reqDetailTitle" style="font-weight:600;font-size:15px;padding:10px;background:#F8F9FA;border-radius:6px;">-</div>
-        </div>
-        
-        <div class="form-group">
-            <label class="form-label">Description</label>
-            <div id="reqDetailDescription" style="padding:10px;background:#F8F9FA;border-radius:6px;min-height:60px;">-</div>
-        </div>
-        
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;">
-            <div class="form-group">
-                <label class="form-label">Classification</label>
-                <span id="reqDetailClassification" class="pill blue">-</span>
-            </div>
-            <div class="form-group">
-                <label class="form-label">Conversion Status</label>
-                <span id="reqDetailConversion" class="pill blue">Not Converted</span>
-            </div>
-        </div>
-        
-        <!-- Convert Section (only if not converted) -->
-        <div id="reqConvertSection" style="margin-top:20px;padding:15px;background:#FFF9E6;border-radius:8px;border:1px solid #FFE082;">
-            <div style="margin-bottom:10px;font-weight:600;color:#B76E00;">🔄 Convert Requirement</div>
-            <div style="font-size:13px;margin-bottom:15px;color:#666;">Convert this requirement to a WRICEF item or Config item based on its classification.</div>
-            <div style="display:flex;gap:10px;">
-                <button id="btnConvertToConfig" class="btn btn-secondary" onclick="convertRequirementToConfig()" style="display:none;">
-                    Convert to Config Item
-                </button>
-                <button id="btnConvertToWricef" class="btn btn-ai" onclick="convertRequirementToWricef()" style="display:none;">
-                    Convert to WRICEF
-                </button>
-            </div>
-        </div>
-        
-        <!-- Converted Item Info (only if converted) -->
-        <div id="reqConvertedInfo" style="display:none;margin-top:20px;padding:15px;background:#E6F6EB;border-radius:8px;border:1px solid #0E8A40;">
-            <div style="margin-bottom:10px;font-weight:600;color:#0E8A40;">✓ Converted Successfully</div>
-            <div style="font-size:13px;margin-bottom:10px;color:#666;">
-                This requirement has been converted to: <strong id="reqConvertedType">-</strong>
-            </div>
-            <button id="btnViewConvertedItem" class="btn btn-primary" onclick="viewConvertedItem()">
-                View Converted Item →
-            </button>
-        </div>
-        
-        <div style="display:flex;gap:10px;margin-top:20px;">
-            <button class="btn btn-secondary" onclick="closeModal('requirementDetailModal')">Close</button>
         </div>
     </div>
 </div>
@@ -5123,6 +6829,102 @@ async function deleteScenario() {
         console.error('Error:', error);
     }
 }
+
+
+// ============== FIX: Eksik WRICEF/Config Fonksiyonları ==============
+
+function openAddWricefModal() {
+    // Legacy WRICEF register view — openAddWricefItemModal ile aynı işlev
+    if (typeof openAddWricefItemModal === 'function') {
+        openAddWricefItemModal();
+    } else {
+        document.getElementById('wricefModal') && (document.getElementById('wricefModal').style.display = 'flex');
+    }
+}
+
+async function saveWricefItem() {
+    // WRICEF Item detail modal save
+    const id = document.getElementById('wricefItemId')?.value || document.getElementById('wricefFormId')?.value;
+    const data = {};
+    
+    // wricefItemModal alanları
+    if (document.getElementById('wiTitle')) {
+        data.title = document.getElementById('wiTitle')?.value || '';
+        data.wricef_type = document.getElementById('wiType')?.value || 'E';
+        data.status = document.getElementById('wiStatus')?.value || 'Open';
+        data.owner = document.getElementById('wiOwner')?.value || '';
+        data.fs_content = document.getElementById('wiFsContent')?.value || '';
+        data.ts_content = document.getElementById('wiTsContent')?.value || '';
+        data.unit_test_steps = document.getElementById('wiUnitSteps')?.value || '[]';
+    }
+    // wricefModal (add new) alanları
+    if (document.getElementById('wricefFormTitle')) {
+        data.title = document.getElementById('wricefFormTitle')?.value || data.title || '';
+        data.wricef_type = document.getElementById('wricefFormType')?.value || data.wricef_type || 'E';
+        data.module = document.getElementById('wricefFormModule')?.value || '';
+        data.complexity = document.getElementById('wricefFormComplexity')?.value || '';
+        data.effort_days = document.getElementById('wricefFormEffort')?.value || 0;
+        data.owner = document.getElementById('wricefFormAssigned')?.value || data.owner || '';
+    }
+    
+    if (!data.title) { showToast('Title is required', 'error'); return; }
+    
+    try {
+        if (id) {
+            await fetch(`/api/wricef-items/${id}`, {
+                method: 'PUT', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
+        } else {
+            data.project_id = globalProjectId;
+            await fetch('/api/wricef-items', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
+        }
+        showToast('WRICEF item saved!', 'success');
+        closeModal('wricefItemModal');
+        closeModal('wricefModal');
+        if (typeof loadWricefList === 'function') loadWricefList();
+    } catch(e) {
+        showToast('Error saving: ' + e.message, 'error');
+    }
+}
+
+async function saveConfigItem() {
+    // Config Item detail modal save
+    const id = document.getElementById('configItemId')?.value;
+    const data = {
+        title: document.getElementById('ciTitle')?.value || '',
+        status: document.getElementById('ciStatus')?.value || 'Open',
+        owner: document.getElementById('ciOwner')?.value || '',
+        config_details: document.getElementById('ciConfigDetails')?.value || '',
+        unit_test_steps: document.getElementById('ciUnitSteps')?.value || '[]'
+    };
+    
+    if (!data.title) { showToast('Title is required', 'error'); return; }
+    
+    try {
+        if (id) {
+            await fetch(`/api/config-items/${id}`, {
+                method: 'PUT', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
+        } else {
+            data.project_id = globalProjectId;
+            await fetch('/api/config-items', {
+                method: 'POST', headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
+        }
+        showToast('Config item saved!', 'success');
+        closeModal('configItemModal');
+        if (typeof loadConfigList === 'function') loadConfigList();
+    } catch(e) {
+        showToast('Error saving: ' + e.message, 'error');
+    }
+}
+
 </script>
 <!-- Scenario Modal -->
 <!-- WRICEF Add/Edit Modal -->
@@ -5200,247 +7002,6 @@ async function deleteScenario() {
         </div>
     </div>
 
-<!-- WRICEF Detail Modal (FS/TS Editor + Unit Test) -->
-<div id="wricefDetailModal" class="modal-overlay" style="display:none;">
-    <div class="smart-card" style="position:fixed;top:5%;left:50%;transform:translateX(-50%);width:900px;max-height:90vh;overflow-y:auto;padding:30px;border-radius:12px;z-index:1002;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-            <h3 style="margin:0;" id="wricefDetailTitle">WR-001: WRICEF Item</h3>
-            <button class="btn btn-secondary" onclick="closeModal('wricefDetailModal')">✕</button>
-        </div>
-        
-        <!-- Tabs -->
-        <div class="tab-bar" style="margin-bottom:20px;">
-            <div class="tab-item active" onclick="switchWricefTab('wricef-fs', this)">Functional Spec</div>
-            <div class="tab-item" onclick="switchWricefTab('wricef-ts', this)">Technical Spec</div>
-            <div class="tab-item" onclick="switchWricefTab('wricef-unittest', this)">Unit Test Steps</div>
-        </div>
-        
-        <!-- Tab: FS -->
-        <div id="wricef-fs" class="wricef-tab-content">
-            <div class="form-group">
-                <label class="form-label">Functional Specification (Markdown)</label>
-                <textarea id="wricefDetailFS" class="form-control" rows="15" placeholder="## Purpose&#10;Describe the business requirement...&#10;&#10;## Inputs&#10;&#10;## Logic&#10;&#10;## Outputs" style="font-family:monospace;font-size:13px;"></textarea>
-            </div>
-        </div>
-        
-        <!-- Tab: TS -->
-        <div id="wricef-ts" class="wricef-tab-content" style="display:none;">
-            <div class="form-group">
-                <label class="form-label">Technical Specification (Markdown)</label>
-                <textarea id="wricefDetailTS" class="form-control" rows="15" placeholder="## Technical Design&#10;&#10;### Objects&#10;- Program: Z...&#10;- Function Module: ...&#10;&#10;### Tables&#10;&#10;### Code Snippets" style="font-family:monospace;font-size:13px;"></textarea>
-            </div>
-        </div>
-        
-        <!-- Tab: Unit Test -->
-        <div id="wricef-unittest" class="wricef-tab-content" style="display:none;">
-            <div style="margin-bottom:15px;">
-                <button class="btn btn-ai" onclick="convertWricefToUnitTest()">
-                    🧪 Convert to Unit Test
-                </button>
-                <span style="margin-left:10px;font-size:13px;color:#666;">Convert unit test steps to Test Management</span>
-            </div>
-            <div class="form-group">
-                <label class="form-label">Unit Test Steps (JSON Array)</label>
-                <textarea id="wricefDetailUnitTest" class="form-control" rows="12" placeholder='[&#10;  {"step": "1. Create test data", "expected": "Data created"},&#10;  {"step": "2. Execute function", "expected": "Success"}&#10;]' style="font-family:monospace;font-size:13px;"></textarea>
-                <small style="color:#999;">Enter test steps as JSON array. Will be converted to Test Management.</small>
-            </div>
-        </div>
-        
-        <div style="display:flex;gap:10px;margin-top:20px;">
-            <button class="btn btn-primary" onclick="saveWricefDetail()">Save Changes</button>
-            <button class="btn btn-secondary" onclick="closeModal('wricefDetailModal')">Close</button>
-        </div>
-    </div>
-</div>
-
-<style>
-.wricef-tab-content { display: none; }
-</style>
-
-    <script>
-    // ============== WRICEF PAGE FUNCTIONS ==============
-    let currentWricefEditId = null;
-    let currentWricefDetailId = null;
-
-    async function loadWricefList() {
-        if(!globalProjectId) {
-            document.getElementById("wricefTableBody").innerHTML = '<tr><td colspan="8" style="text-align:center;color:#94a3b8;">Select a project first.</td></tr>';
-            return;
-        }
-        
-        try {
-            const resp = await fetch("/api/wricef_items?project_id=" + globalProjectId);
-            const items = await resp.json();
-            const tbody = document.getElementById("wricefTableBody");
-            if (!items.length) {
-                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#94a3b8;">No WRICEF items yet.</td></tr>';
-                return;
-            }
-            tbody.innerHTML = items.map(w => `
-                <tr onclick="openWricefDetail(${w.id})" style="cursor:pointer;">
-                    <td><strong>${w.code || 'WR-'+w.id}</strong></td>
-                    <td><span class="pill blue">${w.wricef_type || '-'}</span></td>
-                    <td>${w.title || '-'}</td>
-                    <td>${w.complexity || '-'}</td>
-                    <td><span class="pill ${w.status === 'Deployed' ? 'green' : w.status === 'In Progress' ? 'orange' : 'blue'}">${w.status || '-'}</span></td>
-                    <td>${w.owner || '-'}</td>
-                    <td style="color:var(--primary);" onclick="event.stopPropagation(); openWricefDetail(${w.id})">View</td>
-                </tr>
-            `).join('');
-        } catch(e) {
-            console.error("Error loading WRICEF:", e);
-        }
-    }
-
-    function switchWricefTab(tabId, tabEl) {
-        document.querySelectorAll('#wricefDetailModal .tab-item').forEach(el => el.classList.remove('active'));
-        tabEl.classList.add('active');
-        document.querySelectorAll('.wricef-tab-content').forEach(el => el.style.display = 'none');
-        document.getElementById(tabId).style.display = 'block';
-    }
-
-    async function openWricefDetail(id) {
-        currentWricefDetailId = id;
-        try {
-            const resp = await fetch("/api/wricef_items/" + id);
-            const w = await resp.json();
-            
-            document.getElementById("wricefDetailTitle").textContent = `${w.code || 'WR-'+id}: ${w.title || 'WRICEF Item'}`;
-            document.getElementById("wricefDetailFS").value = w.fs_content || '';
-            document.getElementById("wricefDetailTS").value = w.ts_content || '';
-            document.getElementById("wricefDetailUnitTest").value = w.unit_test_steps || '[]';
-            
-            document.getElementById("wricefDetailModal").style.display = "flex";
-        } catch(e) {
-            console.error("Error loading WRICEF detail:", e);
-            showToast("Error loading WRICEF details");
-        }
-    }
-
-    async function saveWricefDetail() {
-        if(!currentWricefDetailId) return;
-        
-        const data = {
-            fs_content: document.getElementById("wricefDetailFS").value,
-            ts_content: document.getElementById("wricefDetailTS").value,
-            unit_test_steps: document.getElementById("wricefDetailUnitTest").value
-        };
-        
-        try {
-            await fetch("/api/wricef_items/" + currentWricefDetailId, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(data)
-            });
-            showToast("WRICEF details saved!");
-        } catch(e) {
-            console.error("Error saving WRICEF detail:", e);
-            showToast("Error saving details");
-        }
-    }
-
-    async function convertWricefToUnitTest() {
-        if(!currentWricefDetailId) return;
-        
-        if(!confirm('Convert unit test steps to Test Management?')) return;
-        
-        try {
-            const response = await fetch(`/api/wricef_items/${currentWricefDetailId}/convert-to-unit-test`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ owner: 'System' })
-            });
-            
-            const result = await response.json();
-            
-            if(response.ok) {
-                showToast(`✓ Created Unit Test: ${result.test_code}`);
-                closeModal('wricefDetailModal');
-            } else {
-                showToast('Error: ' + result.error);
-            }
-        } catch(error) {
-            console.error('Error converting:', error);
-            showToast('Conversion failed');
-        }
-    }
-
-    function openAddWricefModal() {
-        currentWricefEditId = null;
-        document.getElementById("wricefModalTitle").textContent = "Add WRICEF Item";
-        document.getElementById("wricefFormId").value = "";
-        document.getElementById("wricefFormType").value = "Workflow";
-        document.getElementById("wricefFormName").value = "";
-        document.getElementById("wricefFormDesc").value = "";
-        document.getElementById("wricefFormComplexity").value = "Medium";
-        document.getElementById("wricefFormPriority").value = "Medium";
-        document.getElementById("wricefFormStatus").value = "Identified";
-        document.getElementById("wricefFormEffort").value = "";
-        document.getElementById("wricefFormAssigned").value = "";
-        document.getElementById("wricefModal").style.display = "block";
-    }
-
-    async function editWricefItem(id) {
-        try {
-            const resp = await fetch("/api/wricef/" + id);
-            const w = await resp.json();
-            currentWricefEditId = id;
-            document.getElementById("wricefModalTitle").textContent = "Edit WRICEF: " + (w.wricef_id || w.name);
-            document.getElementById("wricefFormId").value = w.wricef_id || "";
-            document.getElementById("wricefFormType").value = w.type || "Workflow";
-            document.getElementById("wricefFormName").value = w.name || "";
-            document.getElementById("wricefFormDesc").value = w.description || "";
-            document.getElementById("wricefFormComplexity").value = w.complexity || "Medium";
-            document.getElementById("wricefFormPriority").value = w.priority || "Medium";
-            document.getElementById("wricefFormStatus").value = w.status || "Identified";
-            document.getElementById("wricefFormEffort").value = w.estimated_effort || "";
-            document.getElementById("wricefFormAssigned").value = w.assigned_to || "";
-            document.getElementById("wricefModal").style.display = "block";
-        } catch(e) {
-            console.error("Error loading WRICEF:", e);
-        }
-    }
-
-    async function saveWricefItem() {
-        const data = {
-            wricef_id: document.getElementById("wricefFormId").value,
-            project_id: globalProjectId,
-            type: document.getElementById("wricefFormType").value,
-            name: document.getElementById("wricefFormName").value,
-            description: document.getElementById("wricefFormDesc").value,
-            complexity: document.getElementById("wricefFormComplexity").value,
-            priority: document.getElementById("wricefFormPriority").value,
-            status: document.getElementById("wricefFormStatus").value,
-            estimated_effort: document.getElementById("wricefFormEffort").value || null,
-            assigned_to: document.getElementById("wricefFormAssigned").value
-        };
-        try {
-            const url = currentWricefEditId ? "/api/wricef/" + currentWricefEditId : "/api/wricef";
-            const method = currentWricefEditId ? "PUT" : "POST";
-            await fetch(url, {
-                method: method,
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(data)
-            });
-            closeModal("wricefModal");
-            loadWricefList();
-            showToast(currentWricefEditId ? "WRICEF updated!" : "WRICEF created!");
-        } catch(e) {
-            console.error("Error saving WRICEF:", e);
-        }
-    }
-
-    async function deleteWricefItem(id) {
-        if(!confirm("Delete this WRICEF item?")) return;
-        try {
-            await fetch("/api/wricef/" + id, { method: "DELETE" });
-            loadWricefList();
-            showToast("WRICEF deleted");
-        } catch(e) {
-            console.error("Error deleting WRICEF:", e);
-        }
-    }
-    </script>
 
     <div id="scenarioModal" class="modal-overlay" style="display:none;">
     <div class="smart-card" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:600px;max-height:90vh;overflow-y:auto;padding:30px;border-radius:12px;z-index:1001;">

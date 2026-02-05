@@ -1,11 +1,10 @@
-nohup: ignoring input
  * Serving Flask app 'app'
  * Debug mode: on
 WARNING: This is a development server. Do not use it in a production deployment. Use a production WSGI server instead.
  * Running on all addresses (0.0.0.0)
  * Running on http://127.0.0.1:8080
- * Running on http://10.0.0.112:8080
+ * Running on http://10.0.10.198:8080
 Press CTRL+C to quit
  * Restarting with stat
  * Debugger is active!
- * Debugger PIN: 128-221-233
+ * Debugger PIN: 769-152-911

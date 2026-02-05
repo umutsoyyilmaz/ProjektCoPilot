@@ -550,7 +550,7 @@ grep -n "</head>" templates/index.html | head -1
         <div class="obj-top">
             <div>
                 <h1 class="page-title">Analysis Workspace</h1>
-                <div class="page-subtitle">SAP S/4HANA Transformation - Requirements Analysis & Process Discovery</div>
+                <div class="page-subtitle">SAP S/4HANA Transformation - Fit-Gap Analysis & Process Discovery</div>
             </div>
             <div style="display: flex; gap: 10px;">
                 <button class="btn btn-secondary" onclick="openAnalysisDashboard()">📊 Dashboard</button>
@@ -784,7 +784,7 @@ grep -n "</head>" templates/index.html | head -1
     <div id="tab-fitgap" class="session-tab-content" style="display: none;">
         <div class="smart-card" style="padding: 20px;">
             <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
-                <h3 style="margin: 0;">� Requirements</h3>
+                <h3 style="margin: 0;">🔍 Fit-Gap Analysis</h3>
                 <div style="display: flex; gap: 10px;">
                     <select id="gapFilterType" class="form-control" style="width:120px;padding:6px;" onchange="loadGapsForSession(currentSessionId)">
                         <option value="">All</option>
@@ -936,39 +936,58 @@ grep -n "</head>" templates/index.html | head -1
                 <div class="page-header">
                     <div class="obj-top">
                         <div>
-                            <h1 class="page-title">Requirements Management</h1>
-                            <div class="page-subtitle">Fit / Partial Fit / Gap Analysis & Conversion</div>
+                            <h1 class="page-title">Requirement Explorer</h1>
+                            <div class="page-subtitle">WRICEF Objects & Backlog Management</div>
                         </div>
                         <div style="display: flex; gap: 12px;">
-                            <button class="btn btn-secondary" onclick="showToast('Import feature coming soon!')">Import from Excel</button>
-                            <button class="btn btn-ai" onclick="showToast('Add requirement from Analysis session')">+ New Requirement</button>
+                            <button class="btn btn-secondary">Import from Excel</button>
+                            <!-- New Project Modal -->
+        
+                            <button class="btn btn-ai" onclick="document.getElementById('addModal').style.display='block'">+ New WRICEF</button>
                         </div>
                     </div>
                 </div>
 
                 <div class="tab-bar" style="margin-bottom: 24px; border-bottom: 1px solid var(--border-light);">
-                    <div class="tab-item active" onclick="filterRequirementsByClassification('all', this)">All Requirements (<span id="req-count-all">0</span>)</div>
-                    <div class="tab-item" onclick="filterRequirementsByClassification('Fit', this)">Fit (<span id="req-count-fit">0</span>)</div>
-                    <div class="tab-item" onclick="filterRequirementsByClassification('PartialFit', this)">Partial Fit (<span id="req-count-partial">0</span>)</div>
-                    <div class="tab-item" onclick="filterRequirementsByClassification('Gap', this)">Gap (<span id="req-count-gap">0</span>)</div>
+                    <div class="tab-item active" onclick="showToast('Filtering: All')">All Objects (14)</div>
+                    <div class="tab-item" onclick="showToast('Filtering: Reports')">Reports (5)</div>
+                    <div class="tab-item" onclick="showToast('Filtering: Interfaces')">Interfaces (3)</div>
+                    <div class="tab-item" onclick="showToast('Filtering: Enhancements')">Enhancements (6)</div>
                 </div>
 
                 <div class="smart-table-container">
                     <table class="smart-table">
                         <thead>
                             <tr>
-                                <th>Code</th>
+                                <th>ID</th>
                                 <th>Title</th>
-                                <th>Module</th>
-                                <th>Classification</th>
+                                <th>Type</th>
+                                <th>Complexity</th>
                                 <th>Status</th>
-                                <th>Conversion</th>
+                                <th>AI Enrichment</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
                         <tbody id="requirements-table-body">
-                            <tr><td colspan="7" style="text-align:center;color:#999;">Select a project to see requirements.</td></tr>
-                        </tbody>
+    {% for req in requirements %}
+    <tr onclick="loadRequirementDetails({{ req.id }})">
+        <td><b>{{ req.code }}</b></td>
+        <td>{{ req.title }}</td>
+        <td><span class="pill blue">{{ req.module }}</span></td>
+        <td>{{ req.complexity }}</td>
+        <td>
+            <span class="pill {% if req.status == 'Ready' or req.status == 'Approved' %}green{% elif req.status == 'In Progress' or req.status == 'FS Draft' %}orange{% elif req.status == 'Blocked' %}red{% else %}blue{% endif %}">
+                {{ req.status }}
+            </span>
+        </td>
+        <td>
+            <span style="color: #8900B4; font-size: 12px;">
+                {% if req.ai_status == 'Full' %}✦ Full{% elif req.ai_status == 'Draft' or req.ai_status == 'Partial' %}✦ Partial{% else %}○ None{% endif %}
+            </span>
+        <td style="color: var(--primary);" onclick="event.stopPropagation(); document.getElementById('addModal').style.display='block'">Edit</td>
+    </tr>
+    {% endfor %}
+</tbody>
                     </table>
                 </div>
             </div>
@@ -3118,24 +3137,18 @@ async function saveNewTestCase() {
     }
 }
 // ============== REQUIREMENTS ==============
-let allRequirements = [];
-let currentRequirementFilter = 'all';
-let currentRequirementId = null;
-let currentRequirementData = null;
-
 async function loadRequirements() {
     try {
-        let url = '/api/new-requirements';
+        let url = '/api/requirements';
         if(globalProjectId) url += `?project_id=${globalProjectId}`;
         
         const response = await fetch(url);
-        allRequirements = await response.json();
+        const requirements = await response.json();
         
-        renderRequirementsTable(allRequirements);
-        updateRequirementsTabs(allRequirements);
+        renderRequirementsTable(requirements);
+        updateRequirementsTabs(requirements);
     } catch(error) {
-        console.error('Error loading requirements:', error);
-        showToast('Error loading requirements');
+        console.error('Error:', error);
     }
 }
 
@@ -3144,239 +3157,68 @@ function renderRequirementsTable(requirements) {
     if(!tbody) return;
     
     if(requirements.length === 0) {
-        tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:#999;">No requirements found.</td></tr>';
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;color:#999;">No requirements found.</td></tr>';
         return;
     }
     
-    tbody.innerHTML = requirements.map(req => {
-        // Classification badge
-        let classColor = 'blue';
-        let classLabel = req.classification || 'Gap';
-        if(classLabel === 'Fit') classColor = 'green';
-        else if(classLabel === 'PartialFit') { classColor = 'orange'; classLabel = 'Partial Fit'; }
-        else if(classLabel === 'Gap') classColor = 'red';
-        
-        // Status badge
-        let statusColor = 'blue';
-        if(req.status === 'Approved' || req.status === 'Ready') statusColor = 'green';
-        else if(req.status === 'In Progress') statusColor = 'orange';
-        else if(req.status === 'Blocked') statusColor = 'red';
-        
-        // Conversion status badge
-        let conversionBadge = '<span class="pill blue" style="font-size:11px;">Not Converted</span>';
-        if(req.conversion_status === 'converted') {
-            const itemType = req.converted_item_type || '-';
-            const itemCode = req.converted_item_id || '-';
-            if(itemType === 'WRICEF') {
-                conversionBadge = `<span class="pill orange" style="font-size:11px;" title="Converted to WRICEF">→ WRICEF</span>`;
-            } else if(itemType === 'CONFIG') {
-                conversionBadge = `<span class="pill green" style="font-size:11px;" title="Converted to Config">→ Config</span>`;
-            }
-        }
-        
-        return `
-        <tr onclick="viewRequirementDetail(${req.id})" style="cursor:pointer;">
+    tbody.innerHTML = requirements.map(req => `
+        <tr onclick="loadRequirementDetails(${req.id})">
             <td><b>${req.code || '-'}</b></td>
             <td>${req.title || '-'}</td>
             <td><span class="pill blue">${req.module || '-'}</span></td>
-            <td><span class="pill ${classColor}">${classLabel}</span></td>
-            <td><span class="pill ${statusColor}">${req.status || 'Draft'}</span></td>
-            <td>${conversionBadge}</td>
-            <td style="color:var(--primary);" onclick="event.stopPropagation(); viewRequirementDetail(${req.id})">View</td>
+            <td>${req.complexity || '-'}</td>
+            <td><span class="pill ${req.status === 'Ready' ? 'green' : 'orange'}">${req.status || '-'}</span></td>
+            <td><span style="color:#8900B4;font-size:12px;">${req.ai_status === 'Full' ? '✦ Full' : '○ None'}</span></td>
+            <td style="color:var(--primary);">Edit</td>
         </tr>
-        `;
-    }).join('');
+    `).join('');
 }
 
 function updateRequirementsTabs(requirements) {
-    // Count by classification
-    const fitCount = requirements.filter(r => r.classification === 'Fit').length;
-    const partialCount = requirements.filter(r => r.classification === 'PartialFit').length;
-    const gapCount = requirements.filter(r => r.classification === 'Gap').length;
-    
-    document.getElementById('req-count-all').textContent = requirements.length;
-    document.getElementById('req-count-fit').textContent = fitCount;
-    document.getElementById('req-count-partial').textContent = partialCount;
-    document.getElementById('req-count-gap').textContent = gapCount;
-}
-
-function filterRequirementsByClassification(classification, tabEl) {
-    // Update active tab
-    document.querySelectorAll('#view-requirements .tab-item').forEach(el => el.classList.remove('active'));
-    tabEl.classList.add('active');
-    
-    // Filter requirements
-    currentRequirementFilter = classification;
-    let filtered = allRequirements;
-    if(classification !== 'all') {
-        filtered = allRequirements.filter(r => r.classification === classification);
-    }
-    
-    renderRequirementsTable(filtered);
-}
-
-async function viewRequirementDetail(id) {
-    currentRequirementId = id;
-    try {
-        const response = await fetch(`/api/new-requirements/${id}`);
-        const req = await response.json();
-        currentRequirementData = req;
-        
-        // Fill modal
-        document.getElementById('reqDetailCode').textContent = req.code || 'REQ-???';
-        document.getElementById('reqDetailTitle').textContent = req.title || '-';
-        document.getElementById('reqDetailDescription').textContent = req.description || 'No description';
-        document.getElementById('reqDetailModule').textContent = req.module || '-';
-        document.getElementById('reqDetailPriority').textContent = req.priority || 'Medium';
-        document.getElementById('reqDetailStatus').textContent = req.status || 'Draft';
-        
-        // Analysis info
-        if(req.analysis && req.analysis.code) {
-            document.getElementById('reqDetailAnalysis').innerHTML = `<span class="pill blue">${req.analysis.code}</span> ${req.analysis.title || ''}`;
-        } else {
-            document.getElementById('reqDetailAnalysis').textContent = '-';
-        }
-        
-        // Classification badge
-        let classColor = 'blue';
-        let classLabel = req.classification || 'Gap';
-        if(classLabel === 'Fit') classColor = 'green';
-        else if(classLabel === 'PartialFit') { classColor = 'orange'; classLabel = 'Partial Fit'; }
-        else if(classLabel === 'Gap') classColor = 'red';
-        
-        const classBadge = document.getElementById('reqDetailClassification');
-        classBadge.className = `pill ${classColor}`;
-        classBadge.textContent = classLabel;
-        
-        // Conversion status
-        const convertSection = document.getElementById('reqConvertSection');
-        const convertedInfo = document.getElementById('reqConvertedInfo');
-        const btnConfig = document.getElementById('btnConvertToConfig');
-        const btnWricef = document.getElementById('btnConvertToWricef');
-        
-        if(req.conversion_status === 'converted') {
-            // Already converted - hide convert section, show info
-            convertSection.style.display = 'none';
-            convertedInfo.style.display = 'block';
-            
-            const itemType = req.converted_item_type || '-';
-            document.getElementById('reqConvertedType').textContent = itemType;
-            
-            const convBadge = document.getElementById('reqDetailConversion');
-            if(itemType === 'WRICEF') {
-                convBadge.className = 'pill orange';
-                convBadge.textContent = '→ WRICEF';
-            } else if(itemType === 'CONFIG') {
-                convBadge.className = 'pill green';
-                convBadge.textContent = '→ Config';
-            }
-        } else {
-            // Not converted - show convert section
-            convertSection.style.display = 'block';
-            convertedInfo.style.display = 'none';
-            
-            const convBadge = document.getElementById('reqDetailConversion');
-            convBadge.className = 'pill blue';
-            convBadge.textContent = 'Not Converted';
-            
-            // Show appropriate convert button
-            btnConfig.style.display = 'none';
-            btnWricef.style.display = 'none';
-            
-            if(req.classification === 'Fit') {
-                btnConfig.style.display = 'block';
-            } else if(req.classification === 'Gap' || req.classification === 'PartialFit') {
-                btnWricef.style.display = 'block';
-            }
-        }
-        
-        document.getElementById('requirementDetailModal').style.display = 'flex';
-    } catch(error) {
-        console.error('Error loading requirement detail:', error);
-        showToast('Error loading requirement details');
-    }
-}
-
-async function convertRequirementToConfig() {
-    if(!currentRequirementId) return;
-    
-    if(!confirm('Convert this Fit requirement to a Config Item?')) return;
-    
-    try {
-        const response = await fetch(`/api/new-requirements/${currentRequirementId}/convert`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ owner: 'System' })
-        });
-        
-        const result = await response.json();
-        
-        if(response.ok) {
-            showToast(`✓ Converted to Config: ${result.item_code}`);
-            closeModal('requirementDetailModal');
-            loadRequirements(); // Reload list
-        } else {
-            showToast('Error: ' + result.error);
-        }
-    } catch(error) {
-        console.error('Error converting:', error);
-        showToast('Conversion failed');
-    }
-}
-
-async function convertRequirementToWricef() {
-    if(!currentRequirementId) return;
-    
-    if(!confirm('Convert this Gap/Partial Fit requirement to a WRICEF Item?')) return;
-    
-    try {
-        const response = await fetch(`/api/new-requirements/${currentRequirementId}/convert`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ owner: 'System' })
-        });
-        
-        const result = await response.json();
-        
-        if(response.ok) {
-            showToast(`✓ Converted to WRICEF: ${result.item_code}`);
-            closeModal('requirementDetailModal');
-            loadRequirements(); // Reload list
-        } else {
-            showToast('Error: ' + result.error);
-        }
-    } catch(error) {
-        console.error('Error converting:', error);
-        showToast('Conversion failed');
-    }
-}
-
-function viewConvertedItem() {
-    if(!currentRequirementData) return;
-    
-    const itemType = currentRequirementData.converted_item_type;
-    const itemId = currentRequirementData.converted_item_id;
-    
-    if(itemType === 'WRICEF') {
-        closeModal('requirementDetailModal');
-        navTo('wricef');
-        showToast(`Opening WRICEF item ${itemId}...`);
-        // TODO: Implement viewWricefDetail(itemId) when WRICEF detail view is ready
-    } else if(itemType === 'CONFIG') {
-        closeModal('requirementDetailModal');
-        navTo('config');
-        showToast(`Opening Config item ${itemId}...`);
-        // TODO: Implement viewConfigDetail(itemId) when Config detail view is ready
+    const tabs = document.querySelectorAll('#view-requirements .tab-item');
+    if(tabs.length >= 4) {
+        tabs[0].textContent = `All Objects (${requirements.length})`;
     }
 }
 
 function loadRequirementDetails(id) {
-    // Fallback for old code - redirect to new function
-    viewRequirementDetail(id);
+    fetch(`/api/requirements/${id}`)
+        .then(res => res.json())
+        .then(data => {
+            document.querySelector('#view-design .page-title').innerText = data.code;
+            document.querySelector('#view-design .page-subtitle').innerText = data.title;
+            navTo('design');
+        })
+        .catch(err => console.error('Error:', err));
 }
 
 function saveRequirement() {
-    showToast('Use Analysis session to create requirements');
+    if(!globalProjectId) {
+        alert('Please select a project first!');
+        return;
+    }
+    
+    const data = {
+        project_id: globalProjectId,
+        code: document.getElementById('newCode').value,
+        title: document.getElementById('newTitle').value,
+        module: document.getElementById('newModule').value,
+        complexity: document.getElementById('newComplexity').value
+    };
+    
+    if(!data.code || !data.title) { alert('Fill all fields!'); return; }
+    
+    fetch('/api/requirements', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data)
+    }).then(response => {
+        if(response.ok) {
+            document.getElementById('addModal').style.display = 'none';
+            loadRequirements();
+            showToast('Requirement saved!');
+        }
+    });
 }
 // ============== AI SERVICES ==============
 
@@ -4380,76 +4222,6 @@ document.addEventListener('DOMContentLoaded', initializeApp);
     </div>
 </div>
 
-<!-- Requirement Detail Modal -->
-<div id="requirementDetailModal" class="modal-overlay" style="display:none;">
-    <div class="smart-card" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:700px;max-height:90vh;overflow-y:auto;padding:30px;border-radius:12px;z-index:1001;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-            <h3 style="margin:0;" id="reqDetailCode">REQ-001</h3>
-            <button class="btn btn-secondary" onclick="closeModal('requirementDetailModal')">✕</button>
-        </div>
-        
-        <!-- Info Section -->
-        <div style="background:#F8F9FA;padding:15px;border-radius:8px;margin-bottom:20px;">
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:13px;">
-                <div><strong>Analysis:</strong> <span id="reqDetailAnalysis">-</span></div>
-                <div><strong>Module:</strong> <span id="reqDetailModule">-</span></div>
-                <div><strong>Priority:</strong> <span id="reqDetailPriority">-</span></div>
-                <div><strong>Status:</strong> <span id="reqDetailStatus">-</span></div>
-            </div>
-        </div>
-        
-        <div class="form-group">
-            <label class="form-label">Title</label>
-            <div id="reqDetailTitle" style="font-weight:600;font-size:15px;padding:10px;background:#F8F9FA;border-radius:6px;">-</div>
-        </div>
-        
-        <div class="form-group">
-            <label class="form-label">Description</label>
-            <div id="reqDetailDescription" style="padding:10px;background:#F8F9FA;border-radius:6px;min-height:60px;">-</div>
-        </div>
-        
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;">
-            <div class="form-group">
-                <label class="form-label">Classification</label>
-                <span id="reqDetailClassification" class="pill blue">-</span>
-            </div>
-            <div class="form-group">
-                <label class="form-label">Conversion Status</label>
-                <span id="reqDetailConversion" class="pill blue">Not Converted</span>
-            </div>
-        </div>
-        
-        <!-- Convert Section (only if not converted) -->
-        <div id="reqConvertSection" style="margin-top:20px;padding:15px;background:#FFF9E6;border-radius:8px;border:1px solid #FFE082;">
-            <div style="margin-bottom:10px;font-weight:600;color:#B76E00;">🔄 Convert Requirement</div>
-            <div style="font-size:13px;margin-bottom:15px;color:#666;">Convert this requirement to a WRICEF item or Config item based on its classification.</div>
-            <div style="display:flex;gap:10px;">
-                <button id="btnConvertToConfig" class="btn btn-secondary" onclick="convertRequirementToConfig()" style="display:none;">
-                    Convert to Config Item
-                </button>
-                <button id="btnConvertToWricef" class="btn btn-ai" onclick="convertRequirementToWricef()" style="display:none;">
-                    Convert to WRICEF
-                </button>
-            </div>
-        </div>
-        
-        <!-- Converted Item Info (only if converted) -->
-        <div id="reqConvertedInfo" style="display:none;margin-top:20px;padding:15px;background:#E6F6EB;border-radius:8px;border:1px solid #0E8A40;">
-            <div style="margin-bottom:10px;font-weight:600;color:#0E8A40;">✓ Converted Successfully</div>
-            <div style="font-size:13px;margin-bottom:10px;color:#666;">
-                This requirement has been converted to: <strong id="reqConvertedType">-</strong>
-            </div>
-            <button id="btnViewConvertedItem" class="btn btn-primary" onclick="viewConvertedItem()">
-                View Converted Item →
-            </button>
-        </div>
-        
-        <div style="display:flex;gap:10px;margin-top:20px;">
-            <button class="btn btn-secondary" onclick="closeModal('requirementDetailModal')">Close</button>
-        </div>
-    </div>
-</div>
-
 <!-- Risk Detail Modal -->
 <div id="riskDetailModal" class="modal-overlay" style="display:none;">
     <div class="smart-card" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);width:650px;max-height:90vh;overflow-y:auto;padding:30px;border-radius:12px;z-index:1001;">
@@ -5200,76 +4972,13 @@ async function deleteScenario() {
         </div>
     </div>
 
-<!-- WRICEF Detail Modal (FS/TS Editor + Unit Test) -->
-<div id="wricefDetailModal" class="modal-overlay" style="display:none;">
-    <div class="smart-card" style="position:fixed;top:5%;left:50%;transform:translateX(-50%);width:900px;max-height:90vh;overflow-y:auto;padding:30px;border-radius:12px;z-index:1002;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-            <h3 style="margin:0;" id="wricefDetailTitle">WR-001: WRICEF Item</h3>
-            <button class="btn btn-secondary" onclick="closeModal('wricefDetailModal')">✕</button>
-        </div>
-        
-        <!-- Tabs -->
-        <div class="tab-bar" style="margin-bottom:20px;">
-            <div class="tab-item active" onclick="switchWricefTab('wricef-fs', this)">Functional Spec</div>
-            <div class="tab-item" onclick="switchWricefTab('wricef-ts', this)">Technical Spec</div>
-            <div class="tab-item" onclick="switchWricefTab('wricef-unittest', this)">Unit Test Steps</div>
-        </div>
-        
-        <!-- Tab: FS -->
-        <div id="wricef-fs" class="wricef-tab-content">
-            <div class="form-group">
-                <label class="form-label">Functional Specification (Markdown)</label>
-                <textarea id="wricefDetailFS" class="form-control" rows="15" placeholder="## Purpose&#10;Describe the business requirement...&#10;&#10;## Inputs&#10;&#10;## Logic&#10;&#10;## Outputs" style="font-family:monospace;font-size:13px;"></textarea>
-            </div>
-        </div>
-        
-        <!-- Tab: TS -->
-        <div id="wricef-ts" class="wricef-tab-content" style="display:none;">
-            <div class="form-group">
-                <label class="form-label">Technical Specification (Markdown)</label>
-                <textarea id="wricefDetailTS" class="form-control" rows="15" placeholder="## Technical Design&#10;&#10;### Objects&#10;- Program: Z...&#10;- Function Module: ...&#10;&#10;### Tables&#10;&#10;### Code Snippets" style="font-family:monospace;font-size:13px;"></textarea>
-            </div>
-        </div>
-        
-        <!-- Tab: Unit Test -->
-        <div id="wricef-unittest" class="wricef-tab-content" style="display:none;">
-            <div style="margin-bottom:15px;">
-                <button class="btn btn-ai" onclick="convertWricefToUnitTest()">
-                    🧪 Convert to Unit Test
-                </button>
-                <span style="margin-left:10px;font-size:13px;color:#666;">Convert unit test steps to Test Management</span>
-            </div>
-            <div class="form-group">
-                <label class="form-label">Unit Test Steps (JSON Array)</label>
-                <textarea id="wricefDetailUnitTest" class="form-control" rows="12" placeholder='[&#10;  {"step": "1. Create test data", "expected": "Data created"},&#10;  {"step": "2. Execute function", "expected": "Success"}&#10;]' style="font-family:monospace;font-size:13px;"></textarea>
-                <small style="color:#999;">Enter test steps as JSON array. Will be converted to Test Management.</small>
-            </div>
-        </div>
-        
-        <div style="display:flex;gap:10px;margin-top:20px;">
-            <button class="btn btn-primary" onclick="saveWricefDetail()">Save Changes</button>
-            <button class="btn btn-secondary" onclick="closeModal('wricefDetailModal')">Close</button>
-        </div>
-    </div>
-</div>
-
-<style>
-.wricef-tab-content { display: none; }
-</style>
-
     <script>
     // ============== WRICEF PAGE FUNCTIONS ==============
     let currentWricefEditId = null;
-    let currentWricefDetailId = null;
 
     async function loadWricefList() {
-        if(!globalProjectId) {
-            document.getElementById("wricefTableBody").innerHTML = '<tr><td colspan="8" style="text-align:center;color:#94a3b8;">Select a project first.</td></tr>';
-            return;
-        }
-        
         try {
-            const resp = await fetch("/api/wricef_items?project_id=" + globalProjectId);
+            const resp = await fetch("/api/wricef?project_id=" + globalProjectId);
             const items = await resp.json();
             const tbody = document.getElementById("wricefTableBody");
             if (!items.length) {
@@ -5277,91 +4986,22 @@ async function deleteScenario() {
                 return;
             }
             tbody.innerHTML = items.map(w => `
-                <tr onclick="openWricefDetail(${w.id})" style="cursor:pointer;">
-                    <td><strong>${w.code || 'WR-'+w.id}</strong></td>
-                    <td><span class="pill blue">${w.wricef_type || '-'}</span></td>
-                    <td>${w.title || '-'}</td>
+                <tr>
+                    <td><strong>${w.wricef_id || '-'}</strong></td>
+                    <td><span class="badge" style="background:#e0e7ff;color:#3730a3;">${w.type || '-'}</span></td>
+                    <td>${w.name || '-'}</td>
                     <td>${w.complexity || '-'}</td>
-                    <td><span class="pill ${w.status === 'Deployed' ? 'green' : w.status === 'In Progress' ? 'orange' : 'blue'}">${w.status || '-'}</span></td>
-                    <td>${w.owner || '-'}</td>
-                    <td style="color:var(--primary);" onclick="event.stopPropagation(); openWricefDetail(${w.id})">View</td>
+                    <td><span class="badge ${w.priority === 'High' ? 'badge-danger' : w.priority === 'Medium' ? 'badge-warning' : 'badge-success'}">${w.priority || '-'}</span></td>
+                    <td><span class="badge ${w.status === 'Deployed' ? 'badge-success' : w.status === 'In Progress' ? 'badge-warning' : 'badge-info'}">${w.status || '-'}</span></td>
+                    <td>${w.assigned_to || '-'}</td>
+                    <td>
+                        <button class="btn btn-sm" onclick="editWricefItem(${w.id})">Edit</button>
+                        <button class="btn btn-sm" style="color:#ef4444;" onclick="deleteWricefItem(${w.id})">Del</button>
+                    </td>
                 </tr>
             `).join('');
         } catch(e) {
             console.error("Error loading WRICEF:", e);
-        }
-    }
-
-    function switchWricefTab(tabId, tabEl) {
-        document.querySelectorAll('#wricefDetailModal .tab-item').forEach(el => el.classList.remove('active'));
-        tabEl.classList.add('active');
-        document.querySelectorAll('.wricef-tab-content').forEach(el => el.style.display = 'none');
-        document.getElementById(tabId).style.display = 'block';
-    }
-
-    async function openWricefDetail(id) {
-        currentWricefDetailId = id;
-        try {
-            const resp = await fetch("/api/wricef_items/" + id);
-            const w = await resp.json();
-            
-            document.getElementById("wricefDetailTitle").textContent = `${w.code || 'WR-'+id}: ${w.title || 'WRICEF Item'}`;
-            document.getElementById("wricefDetailFS").value = w.fs_content || '';
-            document.getElementById("wricefDetailTS").value = w.ts_content || '';
-            document.getElementById("wricefDetailUnitTest").value = w.unit_test_steps || '[]';
-            
-            document.getElementById("wricefDetailModal").style.display = "flex";
-        } catch(e) {
-            console.error("Error loading WRICEF detail:", e);
-            showToast("Error loading WRICEF details");
-        }
-    }
-
-    async function saveWricefDetail() {
-        if(!currentWricefDetailId) return;
-        
-        const data = {
-            fs_content: document.getElementById("wricefDetailFS").value,
-            ts_content: document.getElementById("wricefDetailTS").value,
-            unit_test_steps: document.getElementById("wricefDetailUnitTest").value
-        };
-        
-        try {
-            await fetch("/api/wricef_items/" + currentWricefDetailId, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(data)
-            });
-            showToast("WRICEF details saved!");
-        } catch(e) {
-            console.error("Error saving WRICEF detail:", e);
-            showToast("Error saving details");
-        }
-    }
-
-    async function convertWricefToUnitTest() {
-        if(!currentWricefDetailId) return;
-        
-        if(!confirm('Convert unit test steps to Test Management?')) return;
-        
-        try {
-            const response = await fetch(`/api/wricef_items/${currentWricefDetailId}/convert-to-unit-test`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ owner: 'System' })
-            });
-            
-            const result = await response.json();
-            
-            if(response.ok) {
-                showToast(`✓ Created Unit Test: ${result.test_code}`);
-                closeModal('wricefDetailModal');
-            } else {
-                showToast('Error: ' + result.error);
-            }
-        } catch(error) {
-            console.error('Error converting:', error);
-            showToast('Conversion failed');
         }
     }
 
