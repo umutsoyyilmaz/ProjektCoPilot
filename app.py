@@ -1807,6 +1807,65 @@ def update_new_requirement(req_id):
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
 
+
+@app.route('/api/new-requirements/<int:req_id>/convert', methods=['POST'])
+def convert_requirement(req_id):
+    try:
+        requirement = Requirement.query.get(req_id)
+        if not requirement:
+            return jsonify({"error": "Not found"}), 404
+
+        if requirement.conversion_status and requirement.conversion_status.lower() == 'converted':
+            return jsonify({"error": "Already converted"}), 400
+
+        classification = (requirement.classification or '').strip()
+        conversion_type = None
+        created_item = None
+
+        if classification == 'Fit':
+            created_item = ConfigItem(
+                title=requirement.title,
+                config_type=requirement.module or 'standard',
+                description=requirement.description,
+                status='planned',
+                project_id=requirement.project_id,
+                requirement_id=requirement.id
+            )
+            conversion_type = 'config'
+        elif classification in ('Gap', 'PartialFit', 'Partial Fit'):
+            created_item = WricefItem(
+                title=requirement.title,
+                wricef_type='E',
+                description=requirement.description,
+                status='identified',
+                module=requirement.module,
+                project_id=requirement.project_id,
+                requirement_id=requirement.id
+            )
+            conversion_type = 'wricef'
+        else:
+            return jsonify({"error": "Invalid classification for conversion"}), 400
+
+        db.session.add(created_item)
+        db.session.flush()
+
+        requirement.conversion_status = 'converted'
+        requirement.conversion_type = conversion_type
+        requirement.conversion_id = created_item.id
+        requirement.converted_item_type = conversion_type
+        requirement.converted_item_id = created_item.id
+        requirement.converted_at = datetime.utcnow()
+
+        db.session.commit()
+        return jsonify({
+            "message": "Converted successfully",
+            "conversion_type": conversion_type,
+            "created_item_id": created_item.id
+        }), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
 # ============== WRICEF ITEMS API (Phase 3.6 ORM) ==============
 @app.route('/api/wricef_items', methods=['GET'])
 def get_wricef_items():
@@ -1905,6 +1964,32 @@ def delete_wricef_item(item_id):
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
 
+
+@app.route('/api/wricef-items/<int:item_id>/convert-to-test', methods=['POST'])
+def convert_wricef_to_test(item_id):
+    try:
+        item = WricefItem.query.get(item_id)
+        if not item:
+            return jsonify({"error": "Not found"}), 404
+
+        code = f"TST-{int(datetime.utcnow().timestamp())}"
+        test_case = TestCase(
+            project_id=item.project_id,
+            code=code,
+            test_type='unit',
+            title=f"Unit Test: {item.title}",
+            source_type='wricef',
+            source_id=item.id,
+            status='not_started',
+            steps=item.unit_test_steps
+        )
+        db.session.add(test_case)
+        db.session.commit()
+        return jsonify({"status": "success", "id": test_case.id}), 201
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
 # ============== CONFIG ITEMS API (Phase 3.7 ORM) ==============
 @app.route('/api/config_items', methods=['GET'])
 def get_config_items():
@@ -1986,6 +2071,32 @@ def delete_config_item(item_id):
             return jsonify({"error": "Not found"}), 404
         db.session.commit()
         return jsonify({"status": "success"})
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+
+@app.route('/api/config-items/<int:item_id>/convert-to-test', methods=['POST'])
+def convert_config_to_test(item_id):
+    try:
+        item = ConfigItem.query.get(item_id)
+        if not item:
+            return jsonify({"error": "Not found"}), 404
+
+        code = f"TST-{int(datetime.utcnow().timestamp())}"
+        test_case = TestCase(
+            project_id=item.project_id,
+            code=code,
+            test_type='unit',
+            title=f"Unit Test: {item.title}",
+            source_type='config',
+            source_id=item.id,
+            status='not_started',
+            steps=item.unit_test_steps
+        )
+        db.session.add(test_case)
+        db.session.commit()
+        return jsonify({"status": "success", "id": test_case.id}), 201
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500

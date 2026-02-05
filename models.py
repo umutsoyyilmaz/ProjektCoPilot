@@ -224,6 +224,8 @@ class Requirement(db.Model):
     priority = db.Column(db.String(20), nullable=True, default='Medium')
     acceptance_criteria = db.Column(db.Text, nullable=True)
     conversion_status = db.Column(db.String(20), nullable=False, default='None')
+    conversion_type = db.Column(db.String(20), nullable=True)
+    conversion_id = db.Column(db.Integer, nullable=True)
     converted_item_id = db.Column(db.Integer, nullable=True)
     converted_item_type = db.Column(db.String(20), nullable=True)
     converted_at = db.Column(db.DateTime, nullable=True)
@@ -250,6 +252,8 @@ class Requirement(db.Model):
             'priority': self.priority,
             'acceptance_criteria': self.acceptance_criteria,
             'conversion_status': self.conversion_status,
+            'conversion_type': self.conversion_type,
+            'conversion_id': self.conversion_id,
             'converted_item_id': self.converted_item_id,
             'converted_item_type': self.converted_item_type,
             'converted_at': self.converted_at.isoformat() if self.converted_at else None,
