@@ -167,7 +167,7 @@ class Scenario(db.Model):
     included_scenario_ids = db.Column(db.Text, nullable=True)
     status = db.Column(db.String(20), nullable=True, default='Draft')
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-
+    analyses = db.relationship('Analysis', backref='scenario', lazy='dynamic', cascade='all, delete-orphan')
 
     def to_dict(self):
         return {
@@ -189,22 +189,18 @@ class Scenario(db.Model):
 class Analysis(db.Model):
     __tablename__ = 'analyses'  # Match existing database table (or create new)
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    session_id = db.Column(db.Integer, nullable=False, index=True)
-    analysis_type = db.Column(db.String(50), nullable=True)
+    scenario_id = db.Column(db.Integer, db.ForeignKey('scenarios.id', ondelete='CASCADE'), nullable=False, index=True)
+    code = db.Column(db.String(20), nullable=False)
     title = db.Column(db.String(200), nullable=False)
-    content = db.Column(db.Text, nullable=True)
+    description = db.Column(db.Text, nullable=True)
+    owner = db.Column(db.String(50), nullable=True)
     status = db.Column(db.String(20), nullable=True, default='Draft')
+    workshop_date = db.Column(db.Date, nullable=True)
+    notes = db.Column(db.Text, nullable=True)
     created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
-    def to_dict(self):
-        return {
-            'id': self.id,
-            'session_id': self.session_id,
-            'analysis_type': self.analysis_type,
-            'title': self.title,
-            'content': self.content,
-            'status': self.status,
-            'created_at': self.created_at.isoformat() if self.created_at else None
-        }
+    updated_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    requirements = db.relationship('Requirement', backref='analysis', lazy='dynamic', cascade='all, delete-orphan')
 
 
 class Requirement(db.Model):

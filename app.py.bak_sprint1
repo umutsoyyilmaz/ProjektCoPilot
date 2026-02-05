@@ -3,7 +3,7 @@ from datetime import datetime, date
 import sqlite3
 import os
 
-from models import db, Project, Scenario, Requirement, WricefItem, ConfigItem, TestCase, Analysis
+from models import db, Project, Scenario, Requirement, WricefItem, ConfigItem, TestCase
 
 app = Flask(__name__)
 
@@ -1508,131 +1508,6 @@ def delete_scenario(id):
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
 
-
-
-# ============== ANALYSES API (Epic A) ==============
-
-@app.route('/api/scenarios/<int:scenario_id>/analyses', methods=['GET'])
-def get_analyses_by_scenario(scenario_id):
-    """List all analyses for a scenario (through analysis_sessions)"""
-    try:
-        conn = get_db_connection()
-        rows = conn.execute("""
-            SELECT DISTINCT a.id, a.session_id, a.analysis_type, a.title, a.content, a.status, a.created_at
-            FROM analyses a
-            INNER JOIN analysis_sessions s ON a.session_id = s.id
-            WHERE s.scenario_id = ?
-            ORDER BY a.created_at DESC
-        """, (scenario_id,)).fetchall()
-        conn.close()
-        return jsonify([dict(row) for row in rows])
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-
-@app.route('/api/scenarios/<int:scenario_id>/analyses', methods=['POST'])
-def create_analysis(scenario_id):
-    """Create a new analysis for a scenario (via a session)"""
-    try:
-        data = request.json
-        title = data.get('title')
-        if not title:
-            return jsonify({"error": "title required"}), 400
-
-        scenario = Scenario.query.get(scenario_id)
-        if not scenario:
-            return jsonify({"error": "Scenario not found"}), 404
-
-        session_id = data.get('session_id')
-        conn = get_db_connection()
-        if session_id:
-            session = conn.execute(
-                "SELECT id FROM analysis_sessions WHERE id = ? AND scenario_id = ?",
-                (session_id, scenario_id)
-            ).fetchone()
-            if not session:
-                conn.close()
-                return jsonify({"error": "Session not found for this scenario"}), 404
-        else:
-            row = conn.execute(
-                "SELECT id FROM analysis_sessions WHERE scenario_id = ? ORDER BY created_at DESC LIMIT 1",
-                (scenario_id,)
-            ).fetchone()
-            if row:
-                session_id = row["id"]
-            else:
-                session_name = data.get('session_name') or f"Auto Session - {title}"
-                cursor = conn.execute(
-                    "INSERT INTO analysis_sessions (project_id, session_name, status, scenario_id) VALUES (?, ?, ?, ?)",
-                    (scenario.project_id, session_name, 'Planned', scenario_id)
-                )
-                conn.commit()
-                session_id = cursor.lastrowid
-        conn.close()
-
-        analysis = Analysis(
-            session_id=session_id,
-            title=title,
-            analysis_type=data.get('analysis_type'),
-            content=data.get('content', data.get('description')),
-            status=data.get('status', 'Draft')
-        )
-        db.session.add(analysis)
-        db.session.commit()
-        return jsonify({"status": "success", "id": analysis.id}), 201
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"error": str(e)}), 500
-
-
-@app.route('/api/analyses/<int:id>', methods=['GET'])
-def get_analysis_detail(id):
-    """Get a single analysis detail"""
-    try:
-        analysis = Analysis.query.get(id)
-        if analysis:
-            return jsonify(analysis.to_dict())
-        return jsonify({"error": "Not found"}), 404
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
-
-
-@app.route('/api/analyses/<int:id>', methods=['PUT'])
-def update_analysis(id):
-    """Update an analysis"""
-    try:
-        data = request.json
-        analysis = Analysis.query.get(id)
-        if not analysis:
-            return jsonify({"error": "Not found"}), 404
-        
-        analysis.title = data.get('title', analysis.title)
-        analysis.analysis_type = data.get('analysis_type', analysis.analysis_type)
-        if 'content' in data:
-            analysis.content = data['content']
-        elif 'description' in data:
-            analysis.content = data['description']
-        analysis.status = data.get('status', analysis.status)
-        
-        db.session.commit()
-        return jsonify({"status": "success"})
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"error": str(e)}), 500
-
-
-@app.route('/api/analyses/<int:id>', methods=['DELETE'])
-def delete_analysis(id):
-    """Delete an analysis"""
-    try:
-        deleted = Analysis.query.filter(Analysis.id == id).delete()
-        if deleted == 0:
-            return jsonify({"error": "Not found"}), 404
-        db.session.commit()
-        return jsonify({"status": "success"})
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"error": str(e)}), 500
 
 
 # ============== WRICEF CRUD APIs ==============
