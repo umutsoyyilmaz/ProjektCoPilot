@@ -93,7 +93,7 @@ PROJECT
 | 3.4 | Workshop → Scenario link | ✅ |
 | 3.5 | Auto-ID (S-001) | ✅ |
 | 3.6 | Workshop list: Scenario column | ✅ |
-| 3.7 | Workshop detail: Scenario info | 📋 |
+| 3.7 | Workshop detail: Scenario info | ✅ |
 | 3.8 | Gap ↔ Decision linking UI | 📋 |
 | 3.9 | Gap → WRICEF linking UI | 📋 |
 | 3.10 | Risk → Scenario/Gap/WRICEF links | 📋 |

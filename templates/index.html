@@ -1886,7 +1886,10 @@ async function loadSessionDetail(sessionId) {
         document.getElementById('sessionDetailTitle').textContent = session.session_name;
         document.getElementById('sessionDetailSubtitle').textContent = `${session.module || 'Module'} | ${session.process_name || 'Process'}`;
         document.getElementById('sessionDetailStatus').textContent = session.status;
-        document.getElementById('detailScenario').textContent = session.scenario_name || 'Not Assigned';
+        const scenarioLabel = session.scenario_code && session.scenario_name
+            ? `${session.scenario_code} - ${session.scenario_name}`
+            : (session.scenario_name || session.scenario_code || 'Not Assigned');
+        document.getElementById('detailScenario').textContent = scenarioLabel;
         
         loadQuestionsForSession(sessionId);
         loadGapsForSession(sessionId);
